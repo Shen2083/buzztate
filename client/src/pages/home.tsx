@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { Search, CheckSquare, Square, X } from "lucide-react"; // Icons for better UX
 
-// ⚡ The Pro Language List: 30+ Options
+// ⚡ The Pro Language List
 const ALL_LANGUAGES = [
   "Spanish", "French", "German", "Japanese", "Italian", "Portuguese", 
   "Chinese (Simplified)", "Chinese (Traditional)", "Korean", "Russian",
@@ -13,20 +14,45 @@ export default function Home() {
   const [inputText, setInputText] = useState("");
   const [style, setStyle] = useState("Modern Slang");
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Spanish", "French", "German"]);
+  const [searchQuery, setSearchQuery] = useState(""); // 🔍 New Search State
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Toggle Language Logic
+  // Filter the list based on search
+  const filteredLanguages = ALL_LANGUAGES.filter(lang => 
+    lang.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Toggle Single Language
   const toggleLanguage = (lang: string) => {
     if (selectedLanguages.includes(lang)) {
       setSelectedLanguages(selectedLanguages.filter(l => l !== lang));
     } else {
-      if (selectedLanguages.length < 10) {
+      if (selectedLanguages.length < 15) { // Increased limit slightly
         setSelectedLanguages([...selectedLanguages, lang]);
       } else {
-        alert("Please select max 10 languages at a time for speed.");
+        alert("For best speed, select max 15 languages at once.");
       }
     }
+  };
+
+  // ✅ New "Select All" Logic
+  const selectAllFiltered = () => {
+    // Combine current selection with new filtered ones (removing duplicates)
+    const newSelection = Array.from(new Set([...selectedLanguages, ...filteredLanguages]));
+    
+    if (newSelection.length > 15) {
+       // Safety cap: only take the first 15
+       setSelectedLanguages(newSelection.slice(0, 15));
+       alert("Limit reached: Selected the first 15 languages to prevent timeout.");
+    } else {
+       setSelectedLanguages(newSelection);
+    }
+  };
+
+  // ❌ Clear Selection
+  const clearSelection = () => {
+    setSelectedLanguages([]);
   };
 
   const handleBuzztate = async () => {
@@ -55,12 +81,11 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Translation failed. Please try again.");
+      alert("Translation failed. Try selecting fewer languages.");
     }
     setLoading(false);
   };
 
-  // 📥 CSV Export Function
   const downloadCSV = () => {
     if (results.length === 0) return;
     const headers = ["Language", "Style", "Original Text", "Translation", "Reality Check"];
@@ -126,26 +151,54 @@ export default function Home() {
         {/* Right Column: Languages & Actions */}
         <div className="space-y-6 flex flex-col">
           <div className="bg-gray-800 p-5 rounded-xl border border-gray-700 flex-grow flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Target Markets ({selectedLanguages.length})
-              </label>
-              <button onClick={() => setSelectedLanguages([])} className="text-xs text-yellow-400 hover:text-white underline">Clear</button>
+            
+            {/* 🔍 Search & Tools Header */}
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Select Markets ({selectedLanguages.length})
+                </label>
+                <div className="flex gap-2">
+                  <button onClick={selectAllFiltered} className="text-[10px] bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-white transition">
+                    Select Visible
+                  </button>
+                  <button onClick={clearSelection} className="text-[10px] bg-red-900/50 hover:bg-red-900 text-red-200 px-2 py-1 rounded transition">
+                    Clear
+                  </button>
+                </div>
+              </div>
+              
+              {/* Search Bar */}
+              <input 
+                type="text" 
+                placeholder="🔍 Search languages..." 
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-yellow-400 outline-none"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <div className="grid grid-cols-3 gap-2 overflow-y-auto custom-scrollbar pr-2 flex-grow max-h-[300px]">
-              {ALL_LANGUAGES.map((lang) => (
+
+            {/* Language Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 overflow-y-auto custom-scrollbar pr-2 flex-grow max-h-[300px]">
+              {filteredLanguages.map((lang) => (
                 <button
                   key={lang}
                   onClick={() => toggleLanguage(lang)}
-                  className={`text-xs py-2 px-1 rounded-md border transition-all truncate ${
+                  className={`text-xs py-2 px-1 rounded-md border transition-all truncate flex items-center justify-center gap-1 ${
                     selectedLanguages.includes(lang)
                       ? "bg-yellow-400 text-black border-yellow-400 font-bold"
                       : "bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500"
                   }`}
                 >
+                  {selectedLanguages.includes(lang) && <span>✓</span>}
                   {lang}
                 </button>
               ))}
+              {filteredLanguages.length === 0 && (
+                <div className="col-span-3 text-center text-gray-500 text-sm py-4">
+                  No languages found
+                </div>
+              )}
             </div>
           </div>
 
