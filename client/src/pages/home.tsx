@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Search, CheckSquare, Square, X } from "lucide-react"; // Icons for better UX
+import { Search } from "lucide-react"; 
 
-// ⚡ The Pro Language List
 const ALL_LANGUAGES = [
   "Spanish", "French", "German", "Japanese", "Italian", "Portuguese", 
   "Chinese (Simplified)", "Chinese (Traditional)", "Korean", "Russian",
@@ -14,46 +13,36 @@ export default function Home() {
   const [inputText, setInputText] = useState("");
   const [style, setStyle] = useState("Modern Slang");
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Spanish", "French", "German"]);
-  const [searchQuery, setSearchQuery] = useState(""); // 🔍 New Search State
+  const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Filter the list based on search
   const filteredLanguages = ALL_LANGUAGES.filter(lang => 
     lang.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Toggle Single Language
   const toggleLanguage = (lang: string) => {
     if (selectedLanguages.includes(lang)) {
       setSelectedLanguages(selectedLanguages.filter(l => l !== lang));
     } else {
-      if (selectedLanguages.length < 15) { // Increased limit slightly
+      if (selectedLanguages.length < 15) {
         setSelectedLanguages([...selectedLanguages, lang]);
       } else {
-        alert("For best speed, select max 15 languages at once.");
+        alert("Select max 15 languages at once.");
       }
     }
   };
 
-  // ✅ New "Select All" Logic
   const selectAllFiltered = () => {
-    // Combine current selection with new filtered ones (removing duplicates)
     const newSelection = Array.from(new Set([...selectedLanguages, ...filteredLanguages]));
-    
     if (newSelection.length > 15) {
-       // Safety cap: only take the first 15
        setSelectedLanguages(newSelection.slice(0, 15));
-       alert("Limit reached: Selected the first 15 languages to prevent timeout.");
     } else {
        setSelectedLanguages(newSelection);
     }
   };
 
-  // ❌ Clear Selection
-  const clearSelection = () => {
-    setSelectedLanguages([]);
-  };
+  const clearSelection = () => setSelectedLanguages([]);
 
   const handleBuzztate = async () => {
     if (!inputText) return;
@@ -74,14 +63,11 @@ export default function Home() {
           style: style,
         }),
       });
-      
       const data = await response.json();
-      if (data.results) {
-        setResults(data.results);
-      }
+      if (data.results) setResults(data.results);
     } catch (error) {
-      console.error("Error:", error);
-      alert("Translation failed. Try selecting fewer languages.");
+      console.error(error);
+      alert("Error translating.");
     }
     setLoading(false);
   };
@@ -108,139 +94,134 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8 font-sans flex flex-col items-center">
+    <div className="min-h-screen bg-black text-white p-6 font-sans flex flex-col items-center">
       
       {/* ⚡ Header */}
-      <div className="max-w-4xl w-full text-center mb-8">
-        <h1 className="text-5xl font-extrabold text-yellow-400 mb-2 flex justify-center items-center gap-3">
-          <span>⚡</span> Buzztate
-        </h1>
-        <p className="text-gray-400 text-sm tracking-widest uppercase">The Pro Translation Suite</p>
+      <div className="max-w-5xl w-full flex justify-between items-center mb-8 border-b border-gray-800 pb-6">
+        <div>
+          <h1 className="text-3xl font-extrabold text-yellow-400 flex items-center gap-2">
+            <span>⚡</span> Buzztate
+          </h1>
+          <p className="text-gray-500 text-xs tracking-widest uppercase mt-1">Pro Translation Suite</p>
+        </div>
+        {results.length > 0 && (
+          <button onClick={downloadCSV} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm">
+            <span>📥</span> Download CSV
+          </button>
+        )}
       </div>
 
-      {/* 🎛️ Main Interface */}
-      <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 🎛️ Main Control Panel */}
+      <div className="max-w-5xl w-full bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl overflow-hidden mb-10">
         
-        {/* Left Column: Inputs */}
-        <div className="space-y-6">
+        {/* Top Section: Text Input */}
+        <div className="p-6 border-b border-gray-800">
           <textarea
-            className="w-full p-5 rounded-xl bg-gray-800 border border-gray-700 focus:border-yellow-400 outline-none h-48 text-lg transition-all shadow-inner resize-none"
-            placeholder="Paste your caption, app description, or marketing copy..."
+            className="w-full bg-transparent text-xl text-gray-200 placeholder-gray-600 outline-none resize-none h-32"
+            placeholder="What do you want to translate today?"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
           />
-
-          <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Vibe Check</label>
-            <select 
-              className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white focus:border-yellow-400 outline-none"
-              value={style}
-              onChange={(e) => setStyle(e.target.value)}
-            >
-              <option>Modern Slang</option>
-              <option>Professional / Corporate</option>
-              <option>Gen Z Influencer</option>
-              <option>App Store Description (ASO)</option>
-              <option>Persuasive Marketing Copy</option>
-              <option>Romantic Poet</option>
-              <option>Angry New Yorker</option>
-            </select>
-          </div>
         </div>
 
-        {/* Right Column: Languages & Actions */}
-        <div className="space-y-6 flex flex-col">
-          <div className="bg-gray-800 p-5 rounded-xl border border-gray-700 flex-grow flex flex-col">
-            
-            {/* 🔍 Search & Tools Header */}
-            <div className="flex flex-col gap-3 mb-4">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Select Markets ({selectedLanguages.length})
-                </label>
-                <div className="flex gap-2">
-                  <button onClick={selectAllFiltered} className="text-[10px] bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-white transition">
-                    Select Visible
-                  </button>
-                  <button onClick={clearSelection} className="text-[10px] bg-red-900/50 hover:bg-red-900 text-red-200 px-2 py-1 rounded transition">
-                    Clear
-                  </button>
-                </div>
+        {/* Middle Section: Settings Bar */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gray-900/50">
+          
+          {/* Vibe Selector */}
+          <div className="col-span-1">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Vibe</label>
+            <div className="relative">
+              <select 
+                className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-yellow-400 outline-none appearance-none font-medium"
+                value={style}
+                onChange={(e) => setStyle(e.target.value)}
+              >
+                <option>Modern Slang</option>
+                <option>Professional / Corporate</option>
+                <option>Gen Z Influencer</option>
+                <option>App Store Description</option>
+                <option>Marketing Copy</option>
+                <option>Romantic Poet</option>
+                <option>Angry New Yorker</option>
+              </select>
+              <div className="absolute right-3 top-3.5 pointer-events-none text-gray-500">▼</div>
+            </div>
+          </div>
+
+          {/* Language Search & Tools */}
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                Target Markets <span className="text-yellow-400">({selectedLanguages.length})</span>
+              </label>
+              <div className="flex gap-2">
+                 <button onClick={selectAllFiltered} className="text-[10px] text-gray-400 hover:text-white underline">Select All</button>
+                 <button onClick={clearSelection} className="text-[10px] text-gray-400 hover:text-red-400 underline">Clear</button>
               </div>
-              
-              {/* Search Bar */}
-              <input 
+            </div>
+            <div className="relative">
+               <input 
                 type="text" 
-                placeholder="🔍 Search languages..." 
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-yellow-400 outline-none"
+                placeholder="Search languages..." 
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 pl-10 text-sm focus:border-yellow-400 outline-none"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              <span className="absolute left-3 top-3 text-gray-500">🔍</span>
             </div>
-
-            {/* Language Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 overflow-y-auto custom-scrollbar pr-2 flex-grow max-h-[300px]">
-              {filteredLanguages.map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => toggleLanguage(lang)}
-                  className={`text-xs py-2 px-1 rounded-md border transition-all truncate flex items-center justify-center gap-1 ${
-                    selectedLanguages.includes(lang)
-                      ? "bg-yellow-400 text-black border-yellow-400 font-bold"
-                      : "bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500"
-                  }`}
-                >
-                  {selectedLanguages.includes(lang) && <span>✓</span>}
-                  {lang}
-                </button>
-              ))}
-              {filteredLanguages.length === 0 && (
-                <div className="col-span-3 text-center text-gray-500 text-sm py-4">
-                  No languages found
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-             <button
-              onClick={handleBuzztate}
-              disabled={loading}
-              className="bg-yellow-400 text-black font-extrabold py-4 rounded-xl hover:bg-yellow-300 transition-all shadow-lg disabled:opacity-50"
-            >
-              {loading ? "Buzzing..." : "⚡ TRANSLATE"}
-            </button>
-            {results.length > 0 && (
-              <button
-                onClick={downloadCSV}
-                className="bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-500 transition-all shadow-lg flex justify-center items-center gap-2"
-              >
-                <span>📥</span> Export CSV
-              </button>
-            )}
           </div>
         </div>
+
+        {/* Bottom Section: Language Chips */}
+        <div className="px-6 pb-6">
+          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar">
+            {filteredLanguages.map((lang) => (
+              <button
+                key={lang}
+                onClick={() => toggleLanguage(lang)}
+                className={`text-xs py-2 px-3 rounded-full border transition-all ${
+                  selectedLanguages.includes(lang)
+                    ? "bg-yellow-400 text-black border-yellow-400 font-bold shadow-lg shadow-yellow-400/20"
+                    : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-white"
+                }`}
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Button (Full Width Footer) */}
+        <button
+          onClick={handleBuzztate}
+          disabled={loading}
+          className="w-full bg-yellow-400 text-black font-extrabold py-5 hover:bg-yellow-300 transition-all text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? "BUZZING..." : "⚡ TRANSLATE NOW"}
+        </button>
       </div>
 
-      {/* 📊 Results Feed */}
-      <div className="max-w-4xl w-full mt-10 grid grid-cols-1 md:grid-cols-2 gap-4 pb-20">
+      {/* 📊 Results Grid */}
+      <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-4 pb-20">
         {results.map((item, index) => (
-          <div key={index} className="bg-gray-800 p-6 rounded-xl border border-gray-700 relative group hover:border-yellow-400/50 transition-all">
-            <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
-               <span className="text-xs text-yellow-400 uppercase font-bold tracking-widest flex items-center gap-2">
+          <div key={index} className="bg-gray-900 p-6 rounded-xl border border-gray-800 hover:border-yellow-400/30 transition-all group">
+            <div className="flex justify-between items-start mb-4">
+               <div className="flex items-center gap-2">
                  <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
-                 {item.language}
-               </span>
+                 <span className="text-sm font-bold text-gray-300 uppercase">{item.language}</span>
+               </div>
                <button 
                  onClick={() => {navigator.clipboard.writeText(item.translation); alert("Copied!");}}
-                 className="text-xs bg-gray-700 hover:bg-white hover:text-black px-3 py-1 rounded-full text-white transition-all"
+                 className="text-xs text-gray-500 hover:text-white bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded transition-colors"
                >
                  Copy
                </button>
             </div>
-            <div className="text-lg font-medium mb-4 leading-relaxed text-gray-100">{item.translation}</div>
-            <div className="bg-black/30 p-3 rounded-lg border border-white/5">
-              <span className="text-[10px] text-gray-500 uppercase font-bold block mb-1">Reality Check:</span>
+            
+            <p className="text-lg text-white mb-4 font-medium leading-relaxed">{item.translation}</p>
+            
+            <div className="pt-4 border-t border-gray-800">
+              <p className="text-xs text-gray-500 uppercase font-bold mb-1">Reality Check</p>
               <p className="text-sm text-gray-400 italic">"{item.reality_check}"</p>
             </div>
           </div>
