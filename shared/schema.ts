@@ -1,18 +1,38 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const translationStyles = [
+  "Modern Slang",
+  "Professional", 
+  "Romantic",
+  "Angry New Yorker",
+  "Gen Z"
+] as const;
+
+export const targetLanguages = [
+  "Spanish",
+  "French", 
+  "German",
+  "Japanese",
+  "Portuguese"
+] as const;
+
+export type TranslationStyle = typeof translationStyles[number];
+export type TargetLanguage = typeof targetLanguages[number];
+
+export const translateRequestSchema = z.object({
+  text: z.string().min(1, "Text is required"),
+  target_languages: z.array(z.enum(targetLanguages)).min(1, "Select at least one language"),
+  style: z.enum(translationStyles)
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
+export type TranslateRequest = z.infer<typeof translateRequestSchema>;
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export interface TranslationResult {
+  language: string;
+  translation: string;
+  reality_check: string;
+}
+
+export interface TranslateResponse {
+  results: TranslationResult[];
+}
