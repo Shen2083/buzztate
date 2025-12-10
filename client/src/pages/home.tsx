@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search } from "lucide-react"; 
+import { Search, ChevronDown, Check } from "lucide-react"; 
 
 const ALL_LANGUAGES = [
   "Spanish", "French", "German", "Japanese", "Italian", "Portuguese", 
@@ -97,42 +97,48 @@ export default function Home() {
     <div className="min-h-screen bg-black text-white p-6 font-sans flex flex-col items-center">
       
       {/* ⚡ Header */}
-      <div className="max-w-5xl w-full flex justify-between items-center mb-8 border-b border-gray-800 pb-6">
-        <div>
-          <h1 className="text-3xl font-extrabold text-yellow-400 flex items-center gap-2">
-            <span>⚡</span> Buzztate
-          </h1>
-          <p className="text-gray-500 text-xs tracking-widest uppercase mt-1">Pro Translation Suite</p>
+      <div className="max-w-7xl w-full flex justify-between items-center mb-10 border-b border-gray-800 pb-4">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">⚡</span>
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Buzztate</h1>
+            <p className="text-gray-500 text-xs uppercase tracking-widest font-semibold">Pro Suite</p>
+          </div>
         </div>
         {results.length > 0 && (
-          <button onClick={downloadCSV} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm">
-            <span>📥</span> Download CSV
+          <button onClick={downloadCSV} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-lg transition-all flex items-center gap-2 text-sm">
+            <span>📥</span> Export Report
           </button>
         )}
       </div>
 
-      {/* 🎛️ Main Control Panel */}
-      <div className="max-w-5xl w-full bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl overflow-hidden mb-10">
+      {/* 🎛️ Split Dashboard Layout */}
+      <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         
-        {/* Top Section: Text Input */}
-        <div className="p-6 border-b border-gray-800">
-          <textarea
-            className="w-full bg-transparent text-xl text-gray-200 placeholder-gray-600 outline-none resize-none h-32"
-            placeholder="What do you want to translate today?"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-          />
+        {/* Left Column: The Editor (Span 8) */}
+        <div className="lg:col-span-8 flex flex-col gap-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-1 flex-grow h-full min-h-[400px] flex flex-col">
+            <div className="p-4 border-b border-gray-800">
+               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Source Text</span>
+            </div>
+            <textarea
+              className="w-full h-full bg-transparent p-6 text-xl text-gray-200 placeholder-gray-600 outline-none resize-none flex-grow leading-relaxed"
+              placeholder="Type or paste your content here..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+            />
+          </div>
         </div>
 
-        {/* Middle Section: Settings Bar */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gray-900/50">
+        {/* Right Column: The Command Center (Span 4) */}
+        <div className="lg:col-span-4 flex flex-col gap-4">
           
-          {/* Vibe Selector */}
-          <div className="col-span-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Vibe</label>
+          {/* Vibe Card */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">Translation Vibe</label>
             <div className="relative">
               <select 
-                className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-yellow-400 outline-none appearance-none font-medium"
+                className="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-yellow-400 outline-none appearance-none font-medium transition-colors"
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
               >
@@ -144,84 +150,88 @@ export default function Home() {
                 <option>Romantic Poet</option>
                 <option>Angry New Yorker</option>
               </select>
-              <div className="absolute right-3 top-3.5 pointer-events-none text-gray-500">▼</div>
+              <div className="absolute right-4 top-4 pointer-events-none text-gray-500">▼</div>
             </div>
           </div>
 
-          {/* Language Search & Tools */}
-          <div className="col-span-1 md:col-span-2">
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                Target Markets <span className="text-yellow-400">({selectedLanguages.length})</span>
-              </label>
-              <div className="flex gap-2">
-                 <button onClick={selectAllFiltered} className="text-[10px] text-gray-400 hover:text-white underline">Select All</button>
-                 <button onClick={clearSelection} className="text-[10px] text-gray-400 hover:text-red-400 underline">Clear</button>
-              </div>
+          {/* Language Card */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex-grow flex flex-col">
+            <div className="flex justify-between items-center mb-3">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Markets</label>
+              <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded">{selectedLanguages.length} Selected</span>
             </div>
-            <div className="relative">
+            
+            {/* Search */}
+            <div className="relative mb-3">
                <input 
                 type="text" 
-                placeholder="Search languages..." 
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 pl-10 text-sm focus:border-yellow-400 outline-none"
+                placeholder="Search..." 
+                className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2 pl-9 text-sm focus:border-yellow-400 outline-none"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <span className="absolute left-3 top-3 text-gray-500">🔍</span>
+              <span className="absolute left-3 top-2 text-gray-500 text-xs">🔍</span>
+            </div>
+
+            {/* List */}
+            <div className="flex-grow overflow-y-auto custom-scrollbar max-h-[300px] border border-gray-800 rounded-lg bg-black/50 p-2 space-y-1">
+              <div className="flex justify-between px-2 py-1 mb-1 border-b border-gray-800">
+                 <button onClick={selectAllFiltered} className="text-[10px] text-gray-400 hover:text-white">Select All</button>
+                 <button onClick={clearSelection} className="text-[10px] text-gray-400 hover:text-red-400">Clear</button>
+              </div>
+              
+              {filteredLanguages.map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => toggleLanguage(lang)}
+                  className={`w-full text-left text-sm py-2 px-3 rounded-md transition-all flex items-center justify-between group ${
+                    selectedLanguages.includes(lang)
+                      ? "bg-yellow-400 text-black font-bold"
+                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                  }`}
+                >
+                  {lang}
+                  {selectedLanguages.includes(lang) && <span className="text-xs">✓</span>}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
 
-        {/* Bottom Section: Language Chips */}
-        <div className="px-6 pb-6">
-          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar">
-            {filteredLanguages.map((lang) => (
-              <button
-                key={lang}
-                onClick={() => toggleLanguage(lang)}
-                className={`text-xs py-2 px-3 rounded-full border transition-all ${
-                  selectedLanguages.includes(lang)
-                    ? "bg-yellow-400 text-black border-yellow-400 font-bold shadow-lg shadow-yellow-400/20"
-                    : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-white"
-                }`}
-              >
-                {lang}
-              </button>
-            ))}
-          </div>
+          {/* Big Action Button */}
+          <button
+            onClick={handleBuzztate}
+            disabled={loading}
+            className="w-full bg-yellow-400 text-black font-extrabold py-5 rounded-xl hover:bg-yellow-300 transition-all text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+          >
+            {loading ? "BUZZING..." : "⚡ TRANSLATE NOW"}
+          </button>
         </div>
-
-        {/* Action Button (Full Width Footer) */}
-        <button
-          onClick={handleBuzztate}
-          disabled={loading}
-          className="w-full bg-yellow-400 text-black font-extrabold py-5 hover:bg-yellow-300 transition-all text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? "BUZZING..." : "⚡ TRANSLATE NOW"}
-        </button>
       </div>
 
       {/* 📊 Results Grid */}
-      <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-4 pb-20">
+      <div className="max-w-7xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
         {results.map((item, index) => (
           <div key={index} className="bg-gray-900 p-6 rounded-xl border border-gray-800 hover:border-yellow-400/30 transition-all group">
-            <div className="flex justify-between items-start mb-4">
+            <div className="flex justify-between items-start mb-4 border-b border-gray-800 pb-3">
                <div className="flex items-center gap-2">
                  <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
-                 <span className="text-sm font-bold text-gray-300 uppercase">{item.language}</span>
+                 <span className="text-sm font-bold text-gray-200 uppercase tracking-wide">{item.language}</span>
                </div>
                <button 
                  onClick={() => {navigator.clipboard.writeText(item.translation); alert("Copied!");}}
-                 className="text-xs text-gray-500 hover:text-white bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded transition-colors"
+                 className="text-xs text-gray-500 hover:text-white bg-black hover:bg-gray-700 px-3 py-1.5 rounded transition-colors font-medium border border-gray-800"
                >
-                 Copy
+                 Copy Text
                </button>
             </div>
             
-            <p className="text-lg text-white mb-4 font-medium leading-relaxed">{item.translation}</p>
+            <p className="text-lg text-white mb-5 font-medium leading-relaxed">{item.translation}</p>
             
-            <div className="pt-4 border-t border-gray-800">
-              <p className="text-xs text-gray-500 uppercase font-bold mb-1">Reality Check</p>
+            <div className="bg-black/40 p-3 rounded-lg border border-white/5">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] text-gray-500 uppercase font-bold">Meaning</span>
+                <div className="h-[1px] bg-gray-800 flex-grow"></div>
+              </div>
               <p className="text-sm text-gray-400 italic">"{item.reality_check}"</p>
             </div>
           </div>
