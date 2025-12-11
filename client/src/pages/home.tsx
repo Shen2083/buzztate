@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Search, ChevronDown, Check, Download, Info } from "lucide-react"; 
+import { Search, ChevronDown, Check, Download, Info, Globe, Zap } from "lucide-react"; 
 
 const ALL_LANGUAGES = [
   "Spanish", "French", "German", "Japanese", "Italian", "Portuguese", 
@@ -108,6 +108,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <span className="text-2xl">⚡</span>
             <span className="font-bold text-xl tracking-tight">Buzztate</span>
+            <span className="text-[10px] uppercase bg-gray-800 text-gray-400 px-2 py-0.5 rounded ml-2 tracking-widest border border-gray-700">Mass Localization</span>
           </div>
           <div>
             <button 
@@ -115,7 +116,7 @@ export default function Home() {
               className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2"
             >
               <Info size={16} />
-              <span>About</span>
+              <span>How it Works</span>
             </button>
           </div>
         </div>
@@ -127,15 +128,18 @@ export default function Home() {
         {/* Left: Input Editor */}
         <div className="lg:col-span-8 flex flex-col gap-4">
           <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-1 flex-grow min-h-[500px] flex flex-col relative group focus-within:border-gray-700 transition-colors">
-            <div className="p-4 border-b border-gray-800 flex justify-between items-center">
-               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Source Content</span>
+            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/30 rounded-t-xl">
+               <div className="flex items-center gap-2">
+                 <Globe size={14} className="text-gray-500" />
+                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Master Content (Source)</span>
+               </div>
                {inputText.length > 0 && (
                  <span className="text-xs text-gray-600">{inputText.length} chars</span>
                )}
             </div>
             <textarea
               className="w-full h-full bg-transparent p-6 text-xl text-gray-200 placeholder-gray-600 outline-none resize-none flex-grow leading-relaxed font-light"
-              placeholder="Paste your app description, email draft, or caption here..."
+              placeholder="Paste your campaign copy, app description, or email draft here. We will adapt the vibe for all selected markets instantly..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
             />
@@ -148,7 +152,7 @@ export default function Home() {
           <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 shadow-xl">
             {/* Style Selector */}
             <div className="mb-6">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">Target Vibe</label>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">Global Vibe Setting</label>
               <div className="relative">
                 <select 
                   className="w-full p-4 rounded-xl bg-black border border-gray-700 text-white focus:border-yellow-400 outline-none appearance-none font-medium transition-colors cursor-pointer"
@@ -170,11 +174,13 @@ export default function Home() {
             {/* Language Selector */}
             <div className="flex-grow flex flex-col">
               <div className="flex justify-between items-center mb-3">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Languages</label>
-                {selectedLanguages.length > 0 && (
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Markets</label>
+                {selectedLanguages.length > 0 ? (
                   <span className="text-[10px] bg-yellow-400 text-black px-2 py-0.5 rounded-full font-bold">
-                    {selectedLanguages.length}
+                    {selectedLanguages.length} Active
                   </span>
+                ) : (
+                  <span className="text-[10px] text-gray-600">0 Selected</span>
                 )}
               </div>
               
@@ -182,7 +188,7 @@ export default function Home() {
                 <Search className="absolute left-3 top-2.5 text-gray-500" size={14} />
                 <input 
                   type="text" 
-                  placeholder="Search..." 
+                  placeholder="Search 30+ markets..." 
                   className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2 pl-9 text-sm focus:border-yellow-400 outline-none"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -220,10 +226,13 @@ export default function Home() {
             >
               {loading ? (
                 <>
-                  <span className="animate-spin">⚡</span> Generating...
+                  <span className="animate-spin"><Zap size={18} fill="black" /></span> Adapting...
                 </>
               ) : (
-                "TRANSLATE NOW"
+                <>
+                  <Zap size={18} fill="black" />
+                  <span>ADAPT ALL MARKETS</span>
+                </>
               )}
             </button>
           </div>
@@ -234,14 +243,18 @@ export default function Home() {
       {results.length > 0 && (
         <div className="max-w-7xl w-full p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex justify-between items-end mb-6 border-b border-gray-800 pb-4">
-            <h2 className="text-2xl font-bold text-white">Results</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-1">Localized Assets</h2>
+              <p className="text-gray-500 text-sm">Generated for {results.length} markets with "{style}" vibe.</p>
+            </div>
             
+            {/* 📥 CSV Button */}
             <button 
               onClick={downloadCSV} 
               className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm shadow-lg hover:shadow-green-500/20"
             >
               <Download size={16} />
-              <span>Download CSV Report</span>
+              <span>Export All to CSV</span>
             </button>
           </div>
 
@@ -251,7 +264,9 @@ export default function Home() {
                 <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>
                 
                 <div className="flex justify-between items-start mb-4">
-                   <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">{item.language}</span>
+                   <span className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                     <Globe size={12} /> {item.language}
+                   </span>
                    <button 
                      onClick={() => {navigator.clipboard.writeText(item.translation); alert("Copied!");}}
                      className="text-[10px] text-gray-500 hover:text-white bg-black hover:bg-gray-700 px-2 py-1 rounded transition-colors border border-gray-800"
@@ -272,7 +287,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* ℹ️ About / SEO Footer (With Credit) */}
+      {/* ℹ️ About / SEO Footer (Updated Copy) */}
       <div ref={aboutSectionRef} className="w-full bg-gray-900 border-t border-gray-800 mt-auto py-16 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
           
@@ -282,7 +297,8 @@ export default function Home() {
               <span className="font-bold text-lg text-white">Buzztate</span>
             </div>
             <p className="text-gray-500 text-sm leading-relaxed">
-              The AI-powered translation suite designed for nuance, slang, and professional context.
+              **One Input, Global Output.** <br/>
+              Buzztate is a mass-adaptation engine. We don't just translate words; we apply cultural nuance to your campaigns across 30+ markets instantly.
             </p>
             <div className="mt-8 flex flex-col gap-1">
                <p className="text-gray-600 text-xs">© 2025 Buzztate Inc.</p>
@@ -294,16 +310,16 @@ export default function Home() {
 
           <div className="col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <h4 className="text-white font-bold mb-4">For Creators</h4>
-              <p className="text-gray-500 text-sm">Translate captions into <strong>Gen Z Slang</strong> and internet subculture tones to connect with global audiences on TikTok & Instagram.</p>
+              <h4 className="text-white font-bold mb-4">Scale Your Content</h4>
+              <p className="text-gray-500 text-sm">Paste your master copy once. We generate <strong>localized assets for 30+ regions</strong> simultaneously, maintaining your brand's specific "vibe."</p>
             </div>
             <div>
-              <h4 className="text-white font-bold mb-4">For Business</h4>
-              <p className="text-gray-500 text-sm">Draft emails in rough English and convert them to <strong>Corporate Style</strong> German, Japanese, or French instantly.</p>
+              <h4 className="text-white font-bold mb-4">Unified Brand Voice</h4>
+              <p className="text-gray-500 text-sm">Ensure your <strong>Corporate</strong> or <strong>Gen Z</strong> tone is consistent whether you are posting in Tokyo, Berlin, or São Paulo.</p>
             </div>
             <div>
-              <h4 className="text-white font-bold mb-4">For Developers</h4>
-              <p className="text-gray-500 text-sm">Generate <strong>ASO-optimized</strong> app store descriptions in 30+ languages without sounding like a robot.</p>
+              <h4 className="text-white font-bold mb-4">Bulk Export</h4>
+              <p className="text-gray-500 text-sm">Don't copy-paste 30 times. Hit one button to <strong>Export a Master CSV</strong> containing every translation and reality check for your team.</p>
             </div>
           </div>
 
