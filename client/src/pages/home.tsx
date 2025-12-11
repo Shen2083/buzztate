@@ -237,6 +237,42 @@ export default function Home() {
           </div>
         ))}
       </div>
+      {/* ... (Your existing Results Grid is above this) ... */}
+
+      {/* SEO Content Section: Visible to users and Google */}
+      <div className="max-w-7xl w-full mt-24 mb-12 pt-12 border-t border-gray-800 text-gray-400">
+        <h2 className="text-2xl font-bold text-white mb-8 text-center">Why use Buzztate?</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+            <h3 className="text-yellow-400 font-bold mb-3 text-lg">For Content Creators</h3>
+            <p className="text-sm leading-relaxed">
+              Globalize your content without losing your voice. Translate your captions into 
+              <strong className="text-gray-300"> Gen Z Slang</strong>, internet subculture tones, or specific regional dialects to connect authentically on TikTok and Instagram.
+            </p>
+          </div>
+
+          <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+            <h3 className="text-yellow-400 font-bold mb-3 text-lg">For Professionals</h3>
+            <p className="text-sm leading-relaxed">
+              Draft an email in rough English and let our <strong className="text-gray-300">Corporate Style</strong> engine 
+              polish it into executive-level German, Japanese, or French. Perfect for cross-border business communication.
+            </p>
+          </div>
+
+          <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+            <h3 className="text-yellow-400 font-bold mb-3 text-lg">For App Developers</h3>
+            <p className="text-sm leading-relaxed">
+              Stop using robotic auto-translations for your App Store descriptions. Use Buzztate to generate 
+              <strong className="text-gray-300"> ASO-optimized marketing copy</strong> that actually converts users in 30+ local markets.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-16 text-center">
+          <p className="text-xs text-gray-600 uppercase tracking-widest">© 2025 Buzztate Inc. The AI Translation Suite.</p>
+        </div>
+      </div>
     </div>
   );
 }
