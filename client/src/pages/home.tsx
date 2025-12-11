@@ -17,7 +17,6 @@ export default function Home() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   
-  // Reference for smooth scrolling to the footer
   const aboutSectionRef = useRef<HTMLDivElement>(null);
 
   const filteredLanguages = ALL_LANGUAGES.filter(lang => 
@@ -103,14 +102,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col items-center">
       
-      {/* ⚡ Header (Minimal) */}
+      {/* ⚡ Header (Clean - No GitHub Link) */}
       <nav className="w-full border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <span className="text-2xl">⚡</span>
             <span className="font-bold text-xl tracking-tight">Buzztate</span>
           </div>
-          <div className="flex items-center gap-6">
+          <div>
             <button 
               onClick={scrollToAbout}
               className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2"
@@ -118,14 +117,6 @@ export default function Home() {
               <Info size={16} />
               <span>About</span>
             </button>
-            <a 
-              href="https://github.com/Shen2083/buzztate" 
-              target="_blank" 
-              rel="noreferrer"
-              className="text-sm text-gray-400 hover:text-white transition-colors"
-            >
-              GitHub
-            </a>
           </div>
         </div>
       </nav>
@@ -245,7 +236,7 @@ export default function Home() {
           <div className="flex justify-between items-end mb-6 border-b border-gray-800 pb-4">
             <h2 className="text-2xl font-bold text-white">Results</h2>
             
-            {/* 📥 CSV Button (Now located with the results) */}
+            {/* 📥 CSV Button */}
             <button 
               onClick={downloadCSV} 
               className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm shadow-lg hover:shadow-green-500/20"
@@ -282,7 +273,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* ℹ️ About / SEO Footer (Clean & Professional) */}
+      {/* ℹ️ About / SEO Footer */}
       <div ref={aboutSectionRef} className="w-full bg-gray-900 border-t border-gray-800 mt-auto py-16 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
           
