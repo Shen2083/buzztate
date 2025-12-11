@@ -102,7 +102,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col items-center">
       
-      {/* ⚡ Header (Clean - No GitHub Link) */}
+      {/* ⚡ Header */}
       <nav className="w-full border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -236,7 +236,6 @@ export default function Home() {
           <div className="flex justify-between items-end mb-6 border-b border-gray-800 pb-4">
             <h2 className="text-2xl font-bold text-white">Results</h2>
             
-            {/* 📥 CSV Button */}
             <button 
               onClick={downloadCSV} 
               className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm shadow-lg hover:shadow-green-500/20"
@@ -273,7 +272,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* ℹ️ About / SEO Footer */}
+      {/* ℹ️ About / SEO Footer (With Credit) */}
       <div ref={aboutSectionRef} className="w-full bg-gray-900 border-t border-gray-800 mt-auto py-16 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
           
@@ -285,7 +284,12 @@ export default function Home() {
             <p className="text-gray-500 text-sm leading-relaxed">
               The AI-powered translation suite designed for nuance, slang, and professional context.
             </p>
-            <p className="text-gray-600 text-xs mt-6">© 2025 Buzztate Inc.</p>
+            <div className="mt-8 flex flex-col gap-1">
+               <p className="text-gray-600 text-xs">© 2025 Buzztate Inc.</p>
+               <p className="text-gray-700 text-xs flex items-center gap-1">
+                 Made with <span className="text-red-900">♥</span> by Shen
+               </p>
+            </div>
           </div>
 
           <div className="col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8">
