@@ -171,9 +171,12 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-800 bg-black py-12 text-center">
-        <p className="text-gray-500 text-sm">© 2025 Buzztate Inc. All rights reserved.</p>
+      {/* 📧 Footer Contact */}
+      <footer className="w-full text-center py-8 border-t border-gray-900 mt-auto opacity-50 hover:opacity-100 transition-opacity">
+        <p className="text-xs text-gray-600">
+          Need help? <a href="mailto:teamz@buzztate.com" className="text-gray-400 hover:text-yellow-400 transition-colors">teamz@buzztate.com</a>
+        </p>
+        <p className="text-[10px] text-gray-700 mt-2">© 2025 Buzztate. All rights reserved.</p>
       </footer>
     </div>
   );
