@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronDown, Check, Download, Info, Globe, Zap, Lock } from "lucide-react"; 
+import { Search, ChevronDown, Check, Zap, Lock, Globe, History, Layout, Clock, Copy } from "lucide-react"; 
 import { supabase } from "@/lib/supabase";
 
 const ALL_LANGUAGES = [
@@ -16,60 +16,12 @@ const PRO_STYLES = [
 ];
 
 export default function Home({ session }: { session: any }) {
+  // User State
   const [isPro, setIsPro] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false); // New state for button loading
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  // ---------------------------------------------------------
-  // 1. CHECK PRO STATUS (Database)
-  // ---------------------------------------------------------
-  useEffect(() => {
-    async function checkProStatus() {
-      console.log("🔍 Checking status for user:", session.user.email);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('is_pro')
-        .eq('id', session.user.id)
-        .single();
-
-      if (data && data.is_pro) {
-        setIsPro(true);
-        console.log("✅ User is PRO");
-      } else {
-        console.log("ℹ️ User is FREE");
-      }
-    }
-    checkProStatus();
-  }, [session]);
-
-  // ---------------------------------------------------------
-  // 2. HANDLE STRIPE CHECKOUT
-  // ---------------------------------------------------------
-  const handleCheckout = async () => {
-    setCheckoutLoading(true);
-    try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { 
-           "Content-Type": "application/json",
-           "X-User-ID": session.user.id // Send ID so Webhook knows who to upgrade
-        },
-      });
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert("Could not connect to payment server.");
-      }
-    } catch (error) {
-      console.error("Checkout failed:", error);
-      alert("Something went wrong. Please try again.");
-    }
-    setCheckoutLoading(false);
-  };
-
-  // ---------------------------------------------------------
-  // 3. APP LOGIC (Translation)
-  // ---------------------------------------------------------
+  // App State
+  const [activeTab, setActiveTab] = useState("create"); // 'create' | 'history'
   const [inputText, setInputText] = useState("");
   const [style, setStyle] = useState("Modern Slang");
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Spanish"]);
@@ -77,20 +29,74 @@ export default function Home({ session }: { session: any }) {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // History State
+  const [history, setHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  // 1. CHECK PRO STATUS
+  useEffect(() => {
+    async function checkProStatus() {
+      const { data } = await supabase
+        .from('profiles')
+        .select('is_pro')
+        .eq('id', session.user.id)
+        .single();
+
+      if (data && data.is_pro) setIsPro(true);
+    }
+    checkProStatus();
+  }, [session]);
+
+  // 2. FETCH HISTORY (When tab changes)
+  useEffect(() => {
+    if (activeTab === "history") {
+      fetchHistory();
+    }
+  }, [activeTab]);
+
+  const fetchHistory = async () => {
+    setHistoryLoading(true);
+    const { data, error } = await supabase
+      .from('translations')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+
+    if (data) setHistory(data);
+    if (error) console.error("History fetch error:", error);
+    setHistoryLoading(false);
+  };
+
+  // 3. HANDLE CHECKOUT
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { 
+           "Content-Type": "application/json",
+           "X-User-ID": session.user.id 
+        },
+      });
+      const data = await response.json();
+      if (data.url) window.location.href = data.url;
+    } catch (error) {
+      alert("Something went wrong with checkout.");
+    }
+    setCheckoutLoading(false);
+  };
+
+  // 4. TRANSLATION LOGIC
   const filteredLanguages = ALL_LANGUAGES.filter(lang => 
     lang.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const toggleLanguage = (lang: string) => {
     if (!isPro) {
-      if (selectedLanguages.includes(lang)) {
-        setSelectedLanguages([]); 
-      } else {
-        setSelectedLanguages([lang]); // Free limit: 1
-      }
+      if (selectedLanguages.includes(lang)) setSelectedLanguages([]); 
+      else setSelectedLanguages([lang]);
       return;
     }
-    // Pro Logic
     if (selectedLanguages.includes(lang)) {
       setSelectedLanguages(selectedLanguages.filter(l => l !== lang));
     } else {
@@ -99,35 +105,15 @@ export default function Home({ session }: { session: any }) {
   };
 
   const selectAllFiltered = () => {
-    if (!isPro) {
-      alert("Upgrade to Pro to select multiple languages at once! ⚡");
-      return;
-    }
+    if (!isPro) return alert("Upgrade to Pro to select multiple languages!");
     const newSelection = Array.from(new Set([...selectedLanguages, ...filteredLanguages]));
-    if (newSelection.length > 15) {
-       setSelectedLanguages(newSelection.slice(0, 15));
-    } else {
-       setSelectedLanguages(newSelection);
-    }
-  };
-
-  const clearSelection = () => setSelectedLanguages([]);
-
-  const handleStyleChange = (e: any) => {
-    const newStyle = e.target.value;
-    if (!isPro && PRO_STYLES.includes(newStyle)) {
-      alert(`The "${newStyle}" vibe is for Pro users only! Upgrade to unlock.`);
-      return;
-    }
-    setStyle(newStyle);
+    setSelectedLanguages(newSelection.slice(0, 15));
   };
 
   const handleBuzztate = async () => {
     if (!inputText) return;
-    if (selectedLanguages.length === 0) {
-      alert("Please select a language!");
-      return;
-    }
+    if (selectedLanguages.length === 0) return alert("Please select a language!");
+
     setLoading(true);
     setResults([]);
 
@@ -139,40 +125,31 @@ export default function Home({ session }: { session: any }) {
           text: inputText,
           target_languages: selectedLanguages,
           style: style,
+          userId: session.user.id // Critical for saving history
         }),
       });
       const data = await response.json();
       if (data.results) setResults(data.results);
     } catch (error) {
-      console.error(error);
       alert("Error translating.");
     }
     setLoading(false);
   };
 
   const downloadCSV = () => {
-    if (!isPro) {
-      alert("CSV Export is a Pro feature! ⚡ Upgrade to download.");
-      return;
-    }
+    if (!isPro) return alert("Upgrade to unlock CSV export!");
     if (results.length === 0) return;
-    const headers = ["Language", "Style", "Original Text", "Translation", "Reality Check"];
+
+    const headers = ["Language", "Style", "Original", "Translation", "Meaning"];
     const rows = results.map(item => [
-      item.language,
-      style,
-      `"${inputText.replace(/"/g, '""')}"`,
-      `"${item.translation.replace(/"/g, '""')}"`,
-      `"${item.reality_check.replace(/"/g, '""')}"`
+      item.language, style, `"${inputText.replace(/"/g, '""')}"`, 
+      `"${item.translation.replace(/"/g, '""')}"`, `"${item.reality_check.replace(/"/g, '""')}"`
     ]);
     const csvContent = [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `buzztate_export.csv`);
-    document.body.appendChild(link);
+    link.href = URL.createObjectURL(new Blob([csvContent], { type: "text/csv;charset=utf-8;" }));
+    link.download = `buzztate_export.csv`;
     link.click();
-    document.body.removeChild(link);
   };
 
   return (
@@ -183,17 +160,12 @@ export default function Home({ session }: { session: any }) {
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <span className="text-2xl">⚡</span>
-            <span className="font-bold text-xl tracking-tight hidden sm:block">Buzztate</span>
+            <span className="font-bold text-xl hidden sm:block">Buzztate</span>
             {isPro ? (
               <span className="text-[10px] bg-yellow-400 text-black px-2 py-0.5 rounded ml-2 font-bold uppercase">PRO SUITE</span>
             ) : (
               <span className="text-[10px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded ml-2 font-bold uppercase">FREE STARTER</span>
             )}
-
-            {/* Signature */}
-            <span className="hidden md:flex items-center gap-1 text-[10px] text-gray-600 ml-3 border-l border-gray-800 pl-3">
-              by Shen <span className="text-red-900">♥</span>
-            </span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -216,163 +188,188 @@ export default function Home({ session }: { session: any }) {
         </div>
       </nav>
 
-      {/* 🎛️ Main Workspace */}
-      <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 mt-6">
-
-        {/* Left: Input */}
-        <div className="lg:col-span-8 flex flex-col gap-4">
-          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-1 flex-grow min-h-[500px] flex flex-col relative group focus-within:border-gray-700 transition-colors">
-            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/30 rounded-t-xl">
-               <div className="flex items-center gap-2">
-                 <Globe size={14} className="text-gray-500" />
-                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Source Content</span>
-               </div>
-               {inputText.length > 0 && (
-                 <span className="text-xs text-gray-600">{inputText.length} chars</span>
-               )}
-            </div>
-            <textarea
-              className="w-full h-full bg-transparent p-6 text-xl text-gray-200 placeholder-gray-600 outline-none resize-none flex-grow leading-relaxed font-light"
-              placeholder={isPro ? "Paste your text here..." : "Paste your text here (Free Plan: 1 language at a time)..."}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Right: Tools Panel */}
-        <div className="lg:col-span-4 flex flex-col gap-4">
-          <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 shadow-xl">
-
-            {/* Style Selector */}
-            <div className="mb-6">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block flex justify-between">
-                <span>Vibe Setting</span>
-                {!isPro && <span className="text-yellow-400 text-[10px] flex items-center gap-1"><Lock size={10}/> Pro Locked</span>}
-              </label>
-              <div className="relative">
-                <select 
-                  className={`w-full p-4 rounded-xl bg-black border border-gray-700 text-white focus:border-yellow-400 outline-none appearance-none font-medium transition-colors cursor-pointer ${!isPro && "text-gray-400"}`}
-                  value={style}
-                  onChange={handleStyleChange}
-                >
-                  <option>Modern Slang</option>
-                  <option disabled={!isPro}>Professional / Corporate {isPro ? "" : "(Pro)"}</option>
-                  <option disabled={!isPro}>Gen Z Influencer {isPro ? "" : "(Pro)"}</option>
-                  <option disabled={!isPro}>App Store Description {isPro ? "" : "(Pro)"}</option>
-                  <option disabled={!isPro}>Marketing Copy {isPro ? "" : "(Pro)"}</option>
-                  <option disabled={!isPro}>Romantic Poet {isPro ? "" : "(Pro)"}</option>
-                  <option disabled={!isPro}>Angry New Yorker {isPro ? "" : "(Pro)"}</option>
-                </select>
-                <ChevronDown className="absolute right-4 top-4 text-gray-500 pointer-events-none" size={16} />
-              </div>
-            </div>
-
-            {/* Language Selector */}
-            <div className="flex-grow flex flex-col">
-              <div className="flex justify-between items-center mb-3">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Markets</label>
-                {!isPro && <span className="text-[10px] text-gray-500">Free: 1 Max</span>}
-              </div>
-
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-2.5 text-gray-500" size={14} />
-                <input 
-                  type="text" 
-                  placeholder="Search languages..." 
-                  className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2 pl-9 text-sm focus:border-yellow-400 outline-none"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              <div className="h-[250px] overflow-y-auto custom-scrollbar border border-gray-800 rounded-lg bg-black/30 p-1 space-y-0.5">
-                 <div className="sticky top-0 bg-black/90 backdrop-blur z-10 p-2 border-b border-gray-800 flex justify-between">
-                   <button onClick={selectAllFiltered} className={`text-[10px] uppercase font-bold tracking-wide ${isPro ? "text-gray-400 hover:text-white" : "text-gray-700 cursor-not-allowed"}`}>
-                     {isPro ? "Select All" : "Select All (Pro)"}
-                   </button>
-                   <button onClick={clearSelection} className="text-[10px] text-gray-500 hover:text-red-400 uppercase font-bold tracking-wide">Clear</button>
-                </div>
-
-                {filteredLanguages.map((lang) => (
-                  <button
-                    key={lang}
-                    onClick={() => toggleLanguage(lang)}
-                    className={`w-full text-left text-sm py-2 px-3 rounded-md transition-all flex items-center justify-between group ${
-                      selectedLanguages.includes(lang)
-                        ? "bg-yellow-400 text-black font-bold"
-                        : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                    }`}
-                  >
-                    {lang}
-                    {selectedLanguages.includes(lang) && <Check size={14} />}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={handleBuzztate}
-              disabled={loading}
-              className="w-full bg-yellow-400 text-black font-extrabold py-5 rounded-xl hover:bg-yellow-300 transition-all text-lg mt-6 flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.2)]"
-            >
-              {loading ? (
-                <>
-                  <span className="animate-spin"><Zap size={18} fill="black" /></span> Adapting...
-                </>
-              ) : (
-                <>
-                  <Zap size={18} fill="black" />
-                  <span>{isPro ? "ADAPT ALL MARKETS" : "TRANSLATE (FREE)"}</span>
-                </>
-              )}
-            </button>
-          </div>
+      {/* 📂 Tab Navigation */}
+      <div className="w-full max-w-7xl px-6 mt-8">
+        <div className="flex gap-6 border-b border-gray-800">
+          <button 
+            onClick={() => setActiveTab("create")}
+            className={`pb-4 flex items-center gap-2 text-sm font-bold transition-all ${
+              activeTab === "create" ? "text-yellow-400 border-b-2 border-yellow-400" : "text-gray-500 hover:text-white"
+            }`}
+          >
+            <Layout size={16} /> Create
+          </button>
+          <button 
+            onClick={() => setActiveTab("history")}
+            className={`pb-4 flex items-center gap-2 text-sm font-bold transition-all ${
+              activeTab === "history" ? "text-yellow-400 border-b-2 border-yellow-400" : "text-gray-500 hover:text-white"
+            }`}
+          >
+            <History size={16} /> History
+          </button>
         </div>
       </div>
 
-      {/* Results */}
-      {results.length > 0 && (
-        <div className="max-w-7xl w-full p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex justify-between items-end mb-6 border-b border-gray-800 pb-4">
-            <h2 className="text-2xl font-bold text-white">Results</h2>
-            <button 
-              onClick={downloadCSV} 
-              className={`font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm ${isPro ? "bg-green-600 hover:bg-green-500 text-white shadow-lg" : "bg-gray-800 text-gray-500 cursor-not-allowed"}`}
-            >
-              {!isPro && <Lock size={14} />}
-              <span>{isPro ? "Download CSV" : "CSV (Pro Only)"}</span>
-            </button>
-          </div>
+      {/* ---------------- CREATE MODE ---------------- */}
+      {activeTab === "create" && (
+        <>
+          <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 mt-2">
 
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
-            {results.map((item, index) => (
-              <div key={index} className="bg-gray-900 p-6 rounded-xl border border-gray-800 hover:border-yellow-400/30 transition-all group relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>
-
-                <div className="flex justify-between items-start mb-4">
-                   <span className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                     <Globe size={12} /> {item.language}
-                   </span>
-                   <button 
-                     onClick={() => {navigator.clipboard.writeText(item.translation); alert("Copied!");}}
-                     className="text-[10px] text-gray-500 hover:text-white bg-black hover:bg-gray-700 px-2 py-1 rounded transition-colors border border-gray-800"
-                   >
-                     COPY
-                   </button>
+            {/* Input */}
+            <div className="lg:col-span-8 flex flex-col gap-4">
+              <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-1 flex-grow min-h-[500px] flex flex-col relative group focus-within:border-gray-700 transition-colors">
+                <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/30 rounded-t-xl">
+                   <div className="flex items-center gap-2">
+                     <Globe size={14} className="text-gray-500" />
+                     <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Source Content</span>
+                   </div>
+                   {inputText.length > 0 && <span className="text-xs text-gray-600">{inputText.length} chars</span>}
                 </div>
-
-                <p className="text-lg text-white mb-6 font-medium leading-relaxed">{item.translation}</p>
-
-                <div className="bg-black/40 p-3 rounded-lg border border-white/5">
-                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Literal Meaning</p>
-                  <p className="text-sm text-gray-400 italic">"{item.reality_check}"</p>
-                </div>
+                <textarea
+                  className="w-full h-full bg-transparent p-6 text-xl text-gray-200 placeholder-gray-600 outline-none resize-none flex-grow leading-relaxed font-light"
+                  placeholder={isPro ? "Paste your text here..." : "Paste your text here (Free Plan: 1 language at a time)..."}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                />
               </div>
-            ))}
+            </div>
+
+            {/* Tools */}
+            <div className="lg:col-span-4 flex flex-col gap-4">
+              <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 shadow-xl">
+                <div className="mb-6">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block flex justify-between">
+                    <span>Vibe Setting</span>
+                    {!isPro && <span className="text-yellow-400 text-[10px] flex items-center gap-1"><Lock size={10}/> Locked</span>}
+                  </label>
+                  <div className="relative">
+                    <select 
+                      className={`w-full p-4 rounded-xl bg-black border border-gray-700 text-white focus:border-yellow-400 outline-none appearance-none font-medium transition-colors cursor-pointer ${!isPro && "text-gray-400"}`}
+                      value={style}
+                      onChange={(e) => {
+                        if (!isPro && PRO_STYLES.includes(e.target.value)) return alert("Upgrade to unlock!");
+                        setStyle(e.target.value);
+                      }}
+                    >
+                      <option>Modern Slang</option>
+                      {PRO_STYLES.map(s => <option key={s} disabled={!isPro}>{s} {isPro ? "" : "(Pro)"}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-4 text-gray-500 pointer-events-none" size={16} />
+                  </div>
+                </div>
+
+                <div className="flex-grow flex flex-col">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Markets</label>
+                  </div>
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-2.5 text-gray-500" size={14} />
+                    <input 
+                      type="text" 
+                      placeholder="Search..." 
+                      className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2 pl-9 text-sm focus:border-yellow-400 outline-none"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <div className="h-[250px] overflow-y-auto border border-gray-800 rounded-lg bg-black/30 p-1 space-y-0.5">
+                     <div className="sticky top-0 bg-black/90 backdrop-blur z-10 p-2 border-b border-gray-800 flex justify-between">
+                       <button onClick={selectAllFiltered} className="text-[10px] uppercase font-bold tracking-wide text-gray-400 hover:text-white">Select All</button>
+                       <button onClick={() => setSelectedLanguages([])} className="text-[10px] text-gray-500 hover:text-red-400 uppercase font-bold tracking-wide">Clear</button>
+                    </div>
+                    {filteredLanguages.map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => toggleLanguage(lang)}
+                        className={`w-full text-left text-sm py-2 px-3 rounded-md transition-all flex items-center justify-between ${
+                          selectedLanguages.includes(lang) ? "bg-yellow-400 text-black font-bold" : "text-gray-400 hover:bg-gray-800"
+                        }`}
+                      >
+                        {lang} {selectedLanguages.includes(lang) && <Check size={14} />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleBuzztate}
+                  disabled={loading}
+                  className="w-full bg-yellow-400 text-black font-extrabold py-5 rounded-xl hover:bg-yellow-300 transition-all text-lg mt-6 flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.2)]"
+                >
+                  {loading ? <><span className="animate-spin"><Zap size={18} fill="black" /></span> Adapting...</> : <><Zap size={18} fill="black" /><span>TRANSLATE</span></>}
+                </button>
+              </div>
+            </div>
           </div>
+
+          {/* Results */}
+          {results.length > 0 && (
+            <div className="max-w-7xl w-full p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-between items-end mb-6 border-b border-gray-800 pb-4">
+                <h2 className="text-2xl font-bold text-white">Results</h2>
+                <button onClick={downloadCSV} className={`font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm ${isPro ? "bg-green-600 text-white" : "bg-gray-800 text-gray-500"}`}>
+                  {!isPro && <Lock size={14} />} <span>{isPro ? "Download CSV" : "CSV (Pro Only)"}</span>
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+                {results.map((item, index) => (
+                  <div key={index} className="bg-gray-900 p-6 rounded-xl border border-gray-800 relative">
+                    <div className="flex justify-between items-start mb-4">
+                       <span className="text-sm font-bold text-gray-400 uppercase flex items-center gap-2"><Globe size={12} /> {item.language}</span>
+                       <button onClick={() => navigator.clipboard.writeText(item.translation)} className="text-[10px] text-gray-500 bg-black px-2 py-1 rounded border border-gray-800 hover:text-white">COPY</button>
+                    </div>
+                    <p className="text-lg text-white mb-6 font-medium">{item.translation}</p>
+                    <div className="bg-black/40 p-3 rounded-lg border border-white/5">
+                      <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Literal Meaning</p>
+                      <p className="text-sm text-gray-400 italic">"{item.reality_check}"</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ---------------- HISTORY MODE ---------------- */}
+      {activeTab === "history" && (
+        <div className="max-w-7xl w-full p-6 animate-in fade-in">
+          {historyLoading ? (
+            <div className="text-center text-gray-500 py-20">Loading history...</div>
+          ) : history.length === 0 ? (
+            <div className="text-center text-gray-500 py-20 border border-gray-800 rounded-2xl bg-gray-900/20">
+              <Clock size={48} className="mx-auto mb-4 opacity-50" />
+              <p>No translations found yet.</p>
+              <button onClick={() => setActiveTab("create")} className="text-yellow-400 hover:underline mt-2">Create your first one</button>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {history.map((record) => (
+                <div key={record.id} className="bg-gray-900/40 border border-gray-800 p-6 rounded-xl flex flex-col md:flex-row gap-6 hover:border-gray-700 transition-colors">
+                  <div className="flex-1">
+                    <div className="flex gap-2 items-center mb-2">
+                       <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded uppercase">{record.language}</span>
+                       <span className="text-xs text-gray-500">{new Date(record.created_at).toLocaleDateString()}</span>
+                       <span className="text-xs text-gray-500 border border-gray-800 px-2 rounded-full">{record.style}</span>
+                    </div>
+                    <p className="text-gray-300 font-medium text-lg">{record.translated_text}</p>
+                    <p className="text-gray-500 text-sm mt-2 italic">Original: "{record.original_text}"</p>
+                  </div>
+                  <div className="flex items-center">
+                    <button 
+                      onClick={() => {navigator.clipboard.writeText(record.translated_text); alert("Copied!")}} 
+                      className="p-2 hover:bg-gray-800 rounded-lg text-gray-500 hover:text-white transition-colors"
+                    >
+                      <Copy size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
+
     </div>
   );
 }

@@ -1,46 +1,59 @@
-import OpenAI from 'openai';
+import { createClient } from '@supabase/supabase-js';
+import OpenAI from "openai";
 
-// Initialize OpenAI with your Key
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Init Supabase (Service Role to bypass RLS for writing if needed, but we'll use standard auth flow)
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL as string,
+  process.env.SUPABASE_SERVICE_ROLE_KEY as string 
+);
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req, res) {
-  // Only allow POST requests
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+
+  const { text, target_languages, style, userId } = req.body; // Added userId
+
+  if (!text || !target_languages || target_languages.length === 0) {
+    return res.status(400).json({ error: "Missing text or languages" });
   }
 
   try {
-    const { text, target_languages, style } = req.body;
+    const prompt = `
+      Translate the following text: "${text}"
+      Target Languages: ${target_languages.join(", ")}
+      Style/Vibe: ${style} (Make it distinct!)
 
-    const systemPrompt = `
-      You are 'Buzztate', a witty translation engine.
-      1. Translate the input text into these languages: ${target_languages.join(", ")}.
-      2. Apply this style: "${style}".
-      3. Provide a 'reality_check': a literal back-translation into English.
-      4. Return JSON only:
-      {
-        "results": [
-          { "language": "Language Name", "translation": "Translated Text", "reality_check": "Literal Meaning" }
-        ]
-      }
+      Return JSON format: { "results": [ { "language": "Spanish", "translation": "...", "reality_check": "Literal meaning..." } ] }
     `;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: text },
-      ],
+      messages: [{ role: "system", content: "You are a professional translator engine." }, { role: "user", content: prompt }],
+      model: "gpt-3.5-turbo",
       response_format: { type: "json_object" },
     });
 
     const data = JSON.parse(completion.choices[0].message.content);
-    return res.status(200).json(data);
+
+    // --- NEW: Save to History ---
+    if (userId) {
+        const historyRecords = data.results.map(item => ({
+            user_id: userId,
+            original_text: text,
+            translated_text: item.translation,
+            language: item.language,
+            style: style
+        }));
+
+        const { error } = await supabase.from('translations').insert(historyRecords);
+        if (error) console.error("Failed to save history:", error);
+    }
+    // ----------------------------
+
+    res.status(200).json(data);
 
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Translation failed", details: error.message });
+    console.error("Translation error:", error);
+    res.status(500).json({ error: "Translation failed" });
   }
 }
