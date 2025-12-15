@@ -15,17 +15,32 @@ const PRO_STYLES = [
   "Marketing Copy", "Romantic Poet", "Angry New Yorker"
 ];
 
-export default function Home() {
-  const [location] = useLocation();
-  const [isPro, setIsPro] = useState(false); // Default to Free
+export default function Home({ session }: { session: any }) { // Receive session prop
+    const [isPro, setIsPro] = useState(false);
+    const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // Check URL for ?plan=pro (Simulating Auth for now)
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.get("plan") === "pro") {
-      setIsPro(true);
-    }
-  }, []);
+    // 1. Fetch the User's "Pro Status" from Supabase
+    useEffect(() => {
+      async function checkProStatus() {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('is_pro')
+            .eq('id', session.user.id)
+            .single();
+
+          if (data && data.is_pro) {
+            setIsPro(true);
+          }
+        } catch (error) {
+          console.error("Error checking pro status:", error);
+        } finally {
+          setLoadingProfile(false);
+        }
+      }
+
+      checkProStatus();
+    }, [session]);
 
   const [inputText, setInputText] = useState("");
   const [style, setStyle] = useState("Modern Slang");

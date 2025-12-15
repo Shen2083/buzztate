@@ -4,7 +4,29 @@ import { Check, X, Zap, Globe, Lock } from "lucide-react";
 export default function Landing() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-yellow-400 selection:text-black">
-      
+      // Inside Landing component...
+      const handleCheckout = async () => {
+        setLoading(true);
+
+        // Get current user (if any)
+        const { data: { session } } = await supabase.auth.getSession();
+
+        // If not logged in, force them to login first!
+        if (!session) {
+          alert("Please create an account or log in before upgrading!");
+          setLocation("/auth"); // Redirect to login
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/checkout", {
+            method: "POST",
+            headers: { 
+               "Content-Type": "application/json",
+               // Send the User ID to the backend
+               "X-User-ID": session.user.id 
+            },
+          });
       {/* Navigation */}
       <nav className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
         <div className="flex items-center gap-2">
