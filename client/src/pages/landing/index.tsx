@@ -1,14 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { Check, X, Zap, Globe, Lock } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase"; // ✅ Added this import
+import { supabase } from "@/lib/supabase";
 
 export default function Landing() {
   const [loading, setLoading] = useState(false);
   const [, setLocation] = useLocation();
 
   // ---------------------------------------------------------
-  // 🧠 LOGIC SECTION (Must be before the 'return')
+  // 🧠 LOGIC SECTION
   // ---------------------------------------------------------
   const handleCheckout = async () => {
     setLoading(true);
@@ -29,7 +29,7 @@ export default function Landing() {
         method: "POST",
         headers: { 
            "Content-Type": "application/json",
-           "X-User-ID": session.user.id // Send ID so we know who paid
+           "X-User-ID": session.user.id
         },
       });
 
@@ -48,7 +48,7 @@ export default function Landing() {
   };
 
   // ---------------------------------------------------------
-  // 🎨 UI SECTION (The HTML)
+  // 🎨 UI SECTION
   // ---------------------------------------------------------
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-yellow-400 selection:text-black">
@@ -100,4 +100,74 @@ export default function Landing() {
           <p className="text-gray-400">One input. 30+ global outputs. Scale your content instantly.</p>
         </div>
         <div className="p-8 rounded-2xl bg-gray-900/50 border border-gray-800">
-          <div className="w-12 h-12 bg-yellow-400/1
+          <div className="w-12 h-12 bg-yellow-400/10 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-400">
+            <Zap size={24} />
+          </div>
+          <h3 className="text-xl font-bold mb-2">Vibe Matching</h3>
+          <p className="text-gray-400">Don't sound robotic. Sound like a local, an executive, or an influencer.</p>
+        </div>
+        <div className="p-8 rounded-2xl bg-gray-900/50 border border-gray-800">
+          <div className="w-12 h-12 bg-yellow-400/10 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-400">
+            <Lock size={24} />
+          </div>
+          <h3 className="text-xl font-bold mb-2">Enterprise Security</h3>
+          <p className="text-gray-400">Your data is processed securely and never trained on without permission.</p>
+        </div>
+      </div>
+
+      {/* Pricing Section */}
+      <div className="max-w-5xl mx-auto px-6 mt-32 mb-20">
+        <h2 className="text-4xl font-bold text-center mb-12">Simple Pricing</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+          {/* Free Tier */}
+          <div className="p-8 rounded-3xl border border-gray-800 bg-black flex flex-col">
+            <h3 className="text-2xl font-bold text-gray-400">Starter</h3>
+            <div className="text-4xl font-bold mt-4 mb-2">$0 <span className="text-lg text-gray-500 font-normal">/ month</span></div>
+            <p className="text-gray-500 mb-8">Perfect for testing the waters.</p>
+
+            <ul className="space-y-4 mb-8 flex-grow">
+              <li className="flex gap-3 text-gray-300"><Check size={20} /> Translate 1 language at a time</li>
+              <li className="flex gap-3 text-gray-300"><Check size={20} /> Access "Modern Slang" vibe only</li>
+              <li className="flex gap-3 text-gray-500"><X size={20} /> No CSV Export</li>
+              <li className="flex gap-3 text-gray-500"><X size={20} /> No Bulk Processing</li>
+            </ul>
+
+            <Link href="/auth">
+              <span className="w-full block text-center py-4 rounded-xl border border-gray-700 hover:bg-gray-900 cursor-pointer font-bold transition-all">
+                Start for Free
+              </span>
+            </Link>
+          </div>
+
+          {/* Pro Tier */}
+          <div className="p-8 rounded-3xl border border-yellow-400 bg-gray-900/20 relative flex flex-col">
+            <div className="absolute top-0 right-0 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">
+              POPULAR
+            </div>
+            <h3 className="text-2xl font-bold text-white">Pro Suite</h3>
+            <div className="text-4xl font-bold mt-4 mb-2">$10 <span className="text-lg text-gray-500 font-normal">/ month</span></div>
+            <p className="text-gray-400 mb-8">For serious creators & marketers.</p>
+
+            <ul className="space-y-4 mb-8 flex-grow">
+              <li className="flex gap-3 text-white"><Check size={20} className="text-yellow-400" /> <strong>Unlimited</strong> Languages at once</li>
+              <li className="flex gap-3 text-white"><Check size={20} className="text-yellow-400" /> <strong>All Vibes</strong> (Gen Z, Corporate, etc)</li>
+              <li className="flex gap-3 text-white"><Check size={20} className="text-yellow-400" /> <strong>Download CSV Reports</strong></li>
+              <li className="flex gap-3 text-white"><Check size={20} className="text-yellow-400" /> Priority Server Access</li>
+            </ul>
+
+            <button onClick={handleCheckout} disabled={loading} className="w-full block text-center py-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-bold cursor-pointer transition-all shadow-lg disabled:opacity-50">
+              {loading ? "Loading..." : "Upgrade to Pro"}
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-gray-800 py-10 text-center text-gray-600 text-sm">
+        © 2025 Buzztate Inc.
+      </div>
+    </div>
+  );
+}
