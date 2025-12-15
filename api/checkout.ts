@@ -1,24 +1,19 @@
 import Stripe from 'stripe';
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+
 export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const userId = req.headers['x-user-id'];
+
+  if (!userId) {
+    return res.status(400).json({ error: "User ID is required" });
+  }
+
   try {
-    // 1. debug: Check if Key exists (Don't reveal the whole key, just the start)
-    const key = process.env.STRIPE_SECRET_KEY;
-    if (!key) throw new Error("CRITICAL: STRIPE_SECRET_KEY is missing from env vars.");
-
-    // 2. debug: Check if Stripe initializes
-    console.log("Initializing Stripe with key starting:", key.substring(0, 8));
-    const stripe = new Stripe(key);
-
-    if (req.method !== 'POST') {
-       // If we get here, Stripe loaded successfully!
-       return res.status(200).json({ status: "Alive", message: "Stripe loaded correctly. Send a POST request to test checkout." });
-    }
-
-    // 3. The actual checkout logic
-    const userId = req.headers['x-user-id'];
-    if (!userId) throw new Error("Missing 'X-User-ID' in headers.");
-
     const session = await stripe.checkout.sessions.create({
       client_reference_id: userId,
       metadata: { user_id: userId },
@@ -28,9 +23,9 @@ export default async function handler(req, res) {
             currency: 'usd',
             product_data: {
               name: 'Buzztate Pro Suite',
-              description: 'Unlimited languages, CSV exports, and all vibe styles.',
+              description: 'Unlimited languages, CSV exports, and GPT-4o intelligence.',
             },
-            unit_amount: 1000, 
+            unit_amount: 1000, // $10.00
             recurring: { interval: 'month' },
           },
           quantity: 1,
@@ -43,13 +38,9 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ url: session.url });
 
-  } catch (error: any) {
-    // 4. CATCH THE CRASH and print it
-    console.error("Server Crash:", error);
-    return res.status(500).json({ 
-      error: "Server Crash Diagnostic", 
-      details: error.message, 
-      stack: error.stack 
-    });
+  } catch (error) {
+    // In production, log the error internally, but give the user a generic message
+    console.error("Stripe Checkout Error:", error);
+    return res.status(500).json({ error: "Could not initiate checkout. Please try again later." });
   }
 }
