@@ -1,91 +1,128 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useLocation } from "wouter";
-import { Loader2 } from "lucide-react";
+import { Zap, Loader2 } from "lucide-react";
 
 export default function AuthPage() {
-  const [loading, setLoading] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false); // Toggle between Login/Signup
-  const [, setLocation] = useLocation();
+  const [loading, setLoading] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    let error;
-    if (isSignUp) {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      error = signUpError;
-      if (!error) alert("Check your email for the confirmation link!");
-    } else {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      error = signInError;
-      if (!error) setLocation("/app");
-    }
+    try {
+      if (isLogin) {
+        // --- LOG IN LOGIC ---
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        // Successful login automatically updates session, App.tsx handles redirect
+        window.location.href = "/"; 
+      } else {
+        // --- SIGN UP LOGIC (The Fix) ---
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
 
-    if (error) alert(error.message);
-    setLoading(false);
+        if (error) throw error;
+
+        // CHECK: Did we get a session immediately?
+        if (data.session) {
+          // Yes -> Email confirmation is OFF. Go straight to app.
+          window.location.href = "/";
+        } else {
+          // No -> Email confirmation is ON. Show the alert.
+          alert("Success! Please check your email for the confirmation link.");
+          setIsLogin(true); // Switch back to login view
+        }
+      }
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+
+      {/* Brand Logo */}
+      <div className="mb-8 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="bg-yellow-400 p-3 rounded-full mb-4 shadow-[0_0_30px_rgba(250,204,21,0.3)]">
+          <Zap size={32} className="text-black" fill="black" />
+        </div>
+        <h1 className="text-4xl font-black text-white tracking-tighter">Buzztate</h1>
+        <p className="text-gray-500 mt-2">Localize the Vibe.</p>
+      </div>
+
+      {/* Auth Card */}
       <div className="w-full max-w-md bg-gray-900 border border-gray-800 p-8 rounded-2xl shadow-2xl">
-        <div className="text-center mb-8">
-          <span className="text-4xl">⚡</span>
-          <h1 className="text-2xl font-bold mt-4">Welcome to Buzztate</h1>
-          <p className="text-gray-400 text-sm mt-2">
-            {isSignUp ? "Create an account to get started" : "Log in to your account"}
-          </p>
+        <div className="flex gap-4 mb-8 border-b border-gray-800 pb-1">
+          <button
+            onClick={() => setIsLogin(true)}
+            className={`flex-1 pb-3 text-sm font-bold transition-all ${
+              isLogin ? "text-yellow-400 border-b-2 border-yellow-400" : "text-gray-500 hover:text-white"
+            }`}
+          >
+            LOG IN
+          </button>
+          <button
+            onClick={() => setIsLogin(false)}
+            className={`flex-1 pb-3 text-sm font-bold transition-all ${
+              !isLogin ? "text-yellow-400 border-b-2 border-yellow-400" : "text-gray-500 hover:text-white"
+            }`}
+          >
+            SIGN UP
+          </button>
         </div>
 
-        <form onSubmit={handleAuth} className="space-y-4">
+        <form onSubmit={handleAuth} className="flex flex-col gap-4">
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Email</label>
+            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Email</label>
             <input
               type="email"
               required
-              className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none"
+              className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none transition-colors"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Password</label>
+            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Password</label>
             <input
               type="password"
               required
-              className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none"
+              minLength={6}
+              className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none transition-colors"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
           <button
+            type="submit"
             disabled={loading}
-            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 rounded-lg transition-all flex justify-center items-center gap-2 mt-6"
+            className="mt-4 bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 rounded-lg transition-all flex justify-center items-center gap-2"
           >
-            {loading && <Loader2 className="animate-spin" size={18} />}
-            {isSignUp ? "Sign Up" : "Log In"}
+            {loading ? (
+              <Loader2 className="animate-spin" size={20} />
+            ) : (
+              isLogin ? "ENTER DASHBOARD" : "CREATE ACCOUNT"
+            )}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm">
-          <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-gray-400 hover:text-white underline"
-          >
-            {isSignUp ? "Already have an account? Log In" : "Need an account? Sign Up"}
-          </button>
-        </div>
+        <p className="text-center text-xs text-gray-600 mt-6">
+          By continuing, you agree to our Terms of Service.
+        </p>
       </div>
     </div>
   );
