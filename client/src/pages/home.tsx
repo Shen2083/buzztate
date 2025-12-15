@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
-import { Search, ChevronDown, Check, Download, Info, Globe, Zap } from "lucide-react"; 
+import { useState, useRef, useEffect } from "react";
+import { useLocation } from "wouter";
+import { Search, ChevronDown, Check, Download, Info, Globe, Zap, Lock } from "lucide-react"; 
 
 const ALL_LANGUAGES = [
   "Spanish", "French", "German", "Japanese", "Italian", "Portuguese", 
@@ -9,33 +10,62 @@ const ALL_LANGUAGES = [
   "Indonesian", "Malay", "Czech", "Hungarian", "Romanian", "Ukrainian"
 ];
 
+const PRO_STYLES = [
+  "Professional / Corporate", "Gen Z Influencer", "App Store Description", 
+  "Marketing Copy", "Romantic Poet", "Angry New Yorker"
+];
+
 export default function Home() {
+  const [location] = useLocation();
+  const [isPro, setIsPro] = useState(false); // Default to Free
+
+  // Check URL for ?plan=pro (Simulating Auth for now)
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("plan") === "pro") {
+      setIsPro(true);
+    }
+  }, []);
+
   const [inputText, setInputText] = useState("");
   const [style, setStyle] = useState("Modern Slang");
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Spanish", "French", "German"]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Spanish"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   
-  const aboutSectionRef = useRef<HTMLDivElement>(null);
-
   const filteredLanguages = ALL_LANGUAGES.filter(lang => 
     lang.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const toggleLanguage = (lang: string) => {
+    // FREE PLAN LIMIT: Only 1 Language
+    if (!isPro) {
+      if (selectedLanguages.includes(lang)) {
+        setSelectedLanguages([]); // Deselect
+      } else {
+        setSelectedLanguages([lang]); // Replace with new one (max 1)
+      }
+      return;
+    }
+
+    // PRO PLAN: Unlimited (Safety cap at 15)
     if (selectedLanguages.includes(lang)) {
       setSelectedLanguages(selectedLanguages.filter(l => l !== lang));
     } else {
       if (selectedLanguages.length < 15) {
         setSelectedLanguages([...selectedLanguages, lang]);
       } else {
-        alert("Select max 15 languages at once.");
+        alert("Even Pros have limits! Select max 15 to prevent timeout.");
       }
     }
   };
 
   const selectAllFiltered = () => {
+    if (!isPro) {
+      alert("Upgrade to Pro to select multiple languages at once! ⚡");
+      return;
+    }
     const newSelection = Array.from(new Set([...selectedLanguages, ...filteredLanguages]));
     if (newSelection.length > 15) {
        setSelectedLanguages(newSelection.slice(0, 15));
@@ -46,14 +76,19 @@ export default function Home() {
 
   const clearSelection = () => setSelectedLanguages([]);
   
-  const scrollToAbout = () => {
-    aboutSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+  const handleStyleChange = (e: any) => {
+    const newStyle = e.target.value;
+    if (!isPro && PRO_STYLES.includes(newStyle)) {
+      alert(`The "${newStyle}" vibe is for Pro users only! Upgrade to unlock.`);
+      return;
+    }
+    setStyle(newStyle);
   };
 
   const handleBuzztate = async () => {
     if (!inputText) return;
     if (selectedLanguages.length === 0) {
-      alert("Please select at least one language!");
+      alert("Please select a language!");
       return;
     }
     setLoading(true);
@@ -79,6 +114,11 @@ export default function Home() {
   };
 
   const downloadCSV = () => {
+    if (!isPro) {
+      alert("CSV Export is a Pro feature! ⚡ Upgrade to download.");
+      return;
+    }
+    // ... (Existing CSV Logic)
     if (results.length === 0) return;
     const headers = ["Language", "Style", "Original Text", "Translation", "Reality Check"];
     const rows = results.map(item => [
@@ -102,22 +142,26 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col items-center">
       
-      {/* ⚡ Header */}
+      {/* ⚡ App Header */}
       <nav className="w-full border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <span className="text-2xl">⚡</span>
-            <span className="font-bold text-xl tracking-tight">Buzztate</span>
-            <span className="text-[10px] uppercase bg-gray-800 text-gray-400 px-2 py-0.5 rounded ml-2 tracking-widest border border-gray-700">Mass Localization</span>
+            <span className="font-bold text-xl tracking-tight hidden sm:block">Buzztate</span>
+            {isPro ? (
+              <span className="text-[10px] bg-yellow-400 text-black px-2 py-0.5 rounded ml-2 font-bold uppercase">PRO SUITE</span>
+            ) : (
+              <span className="text-[10px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded ml-2 font-bold uppercase">FREE STARTER</span>
+            )}
           </div>
-          <div>
-            <button 
-              onClick={scrollToAbout}
-              className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2"
-            >
-              <Info size={16} />
-              <span>How it Works</span>
-            </button>
+          
+          <div className="flex items-center gap-4">
+            {!isPro && (
+              <a href="/app?plan=pro" className="text-xs bg-gray-800 hover:bg-yellow-400 hover:text-black border border-gray-600 px-3 py-1.5 rounded-full transition-all">
+                Upgrade to Pro ($10)
+              </a>
+            )}
+            <a href="/" className="text-sm text-gray-400 hover:text-white">Exit</a>
           </div>
         </div>
       </nav>
@@ -125,21 +169,18 @@ export default function Home() {
       {/* 🎛️ Main Workspace */}
       <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 mt-6">
         
-        {/* Left: Input Editor */}
+        {/* Left: Input */}
         <div className="lg:col-span-8 flex flex-col gap-4">
-          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-1 flex-grow min-h-[500px] flex flex-col relative group focus-within:border-gray-700 transition-colors">
+          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-1 flex-grow min-h-[500px] flex flex-col">
             <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/30 rounded-t-xl">
                <div className="flex items-center gap-2">
                  <Globe size={14} className="text-gray-500" />
-                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Master Content (Source)</span>
+                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Source Content</span>
                </div>
-               {inputText.length > 0 && (
-                 <span className="text-xs text-gray-600">{inputText.length} chars</span>
-               )}
             </div>
             <textarea
               className="w-full h-full bg-transparent p-6 text-xl text-gray-200 placeholder-gray-600 outline-none resize-none flex-grow leading-relaxed font-light"
-              placeholder="Paste your campaign copy, app description, or email draft here. We will adapt the vibe for all selected markets instantly..."
+              placeholder={isPro ? "Paste your text here..." : "Paste your text here (Free Plan: 1 language at a time)..."}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
             />
@@ -148,24 +189,26 @@ export default function Home() {
 
         {/* Right: Tools Panel */}
         <div className="lg:col-span-4 flex flex-col gap-4">
-          
           <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 shadow-xl">
+            
             {/* Style Selector */}
             <div className="mb-6">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">Global Vibe Setting</label>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block flex justify-between">
+                <span>Vibe Setting</span>
+                {!isPro && <span className="text-yellow-400 text-[10px] flex items-center gap-1"><Lock size={10}/> Pro Locked</span>}
+              </label>
               <div className="relative">
                 <select 
-                  className="w-full p-4 rounded-xl bg-black border border-gray-700 text-white focus:border-yellow-400 outline-none appearance-none font-medium transition-colors cursor-pointer"
+                  className={`w-full p-4 rounded-xl bg-black border border-gray-700 text-white focus:border-yellow-400 outline-none appearance-none font-medium transition-colors cursor-pointer ${!isPro && "text-gray-400"}`}
                   value={style}
-                  onChange={(e) => setStyle(e.target.value)}
+                  onChange={handleStyleChange}
                 >
                   <option>Modern Slang</option>
-                  <option>Professional / Corporate</option>
-                  <option>Gen Z Influencer</option>
-                  <option>App Store Description</option>
-                  <option>Marketing Copy</option>
-                  <option>Romantic Poet</option>
-                  <option>Angry New Yorker</option>
+                  <option disabled={!isPro}>Professional / Corporate {isPro ? "" : "(Pro)"}</option>
+                  <option disabled={!isPro}>Gen Z Influencer {isPro ? "" : "(Pro)"}</option>
+                  <option disabled={!isPro}>App Store Description {isPro ? "" : "(Pro)"}</option>
+                  <option disabled={!isPro}>Marketing Copy {isPro ? "" : "(Pro)"}</option>
+                  <option disabled={!isPro}>Romantic Poet {isPro ? "" : "(Pro)"}</option>
                 </select>
                 <ChevronDown className="absolute right-4 top-4 text-gray-500 pointer-events-none" size={16} />
               </div>
@@ -175,20 +218,14 @@ export default function Home() {
             <div className="flex-grow flex flex-col">
               <div className="flex justify-between items-center mb-3">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Markets</label>
-                {selectedLanguages.length > 0 ? (
-                  <span className="text-[10px] bg-yellow-400 text-black px-2 py-0.5 rounded-full font-bold">
-                    {selectedLanguages.length} Active
-                  </span>
-                ) : (
-                  <span className="text-[10px] text-gray-600">0 Selected</span>
-                )}
+                {!isPro && <span className="text-[10px] text-gray-500">Free: 1 Max</span>}
               </div>
               
               <div className="relative mb-3">
                 <Search className="absolute left-3 top-2.5 text-gray-500" size={14} />
                 <input 
                   type="text" 
-                  placeholder="Search 30+ markets..." 
+                  placeholder="Search languages..." 
                   className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2 pl-9 text-sm focus:border-yellow-400 outline-none"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -196,8 +233,10 @@ export default function Home() {
               </div>
 
               <div className="h-[250px] overflow-y-auto custom-scrollbar border border-gray-800 rounded-lg bg-black/30 p-1 space-y-0.5">
-                <div className="sticky top-0 bg-black/90 backdrop-blur z-10 p-2 border-b border-gray-800 flex justify-between">
-                   <button onClick={selectAllFiltered} className="text-[10px] text-gray-400 hover:text-white uppercase font-bold tracking-wide">Select All</button>
+                 <div className="sticky top-0 bg-black/90 backdrop-blur z-10 p-2 border-b border-gray-800 flex justify-between">
+                   <button onClick={selectAllFiltered} className={`text-[10px] uppercase font-bold tracking-wide ${isPro ? "text-gray-400 hover:text-white" : "text-gray-700 cursor-not-allowed"}`}>
+                     {isPro ? "Select All" : "Select All (Pro)"}
+                   </button>
                    <button onClick={clearSelection} className="text-[10px] text-gray-500 hover:text-red-400 uppercase font-bold tracking-wide">Clear</button>
                 </div>
                 
@@ -218,47 +257,32 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Action Button */}
             <button
               onClick={handleBuzztate}
               disabled={loading}
-              className="w-full bg-yellow-400 text-black font-extrabold py-5 rounded-xl hover:bg-yellow-300 transition-all text-lg shadow-[0_0_20px_rgba(250,204,21,0.2)] disabled:opacity-50 disabled:shadow-none mt-6 flex justify-center items-center gap-2"
+              className="w-full bg-yellow-400 text-black font-extrabold py-5 rounded-xl hover:bg-yellow-300 transition-all text-lg mt-6 flex justify-center items-center gap-2"
             >
-              {loading ? (
-                <>
-                  <span className="animate-spin"><Zap size={18} fill="black" /></span> Adapting...
-                </>
-              ) : (
-                <>
-                  <Zap size={18} fill="black" />
-                  <span>ADAPT ALL MARKETS</span>
-                </>
-              )}
+              {loading ? "Adapting..." : isPro ? "ADAPT ALL MARKETS" : "TRANSLATE (FREE)"}
             </button>
           </div>
         </div>
       </div>
 
-      {/* 📊 Results Section */}
+      {/* Results */}
       {results.length > 0 && (
-        <div className="max-w-7xl w-full p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="max-w-7xl w-full p-6">
           <div className="flex justify-between items-end mb-6 border-b border-gray-800 pb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-1">Localized Assets</h2>
-              <p className="text-gray-500 text-sm">Generated for {results.length} markets with "{style}" vibe.</p>
-            </div>
-            
-            {/* 📥 CSV Button */}
+            <h2 className="text-2xl font-bold text-white">Results</h2>
             <button 
               onClick={downloadCSV} 
-              className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm shadow-lg hover:shadow-green-500/20"
+              className={`font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm ${isPro ? "bg-green-600 hover:bg-green-500 text-white" : "bg-gray-800 text-gray-500 cursor-not-allowed"}`}
             >
-              <Download size={16} />
-              <span>Export All to CSV</span>
+              {!isPro && <Lock size={14} />}
+              <span>{isPro ? "Download CSV" : "CSV (Pro Only)"}</span>
             </button>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* ... (Existing Results Grid - Same as before) ... */}
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
             {results.map((item, index) => (
               <div key={index} className="bg-gray-900 p-6 rounded-xl border border-gray-800 hover:border-yellow-400/30 transition-all group relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>
@@ -286,46 +310,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      {/* ℹ️ About / SEO Footer (Updated Copy) */}
-      <div ref={aboutSectionRef} className="w-full bg-gray-900 border-t border-gray-800 mt-auto py-16 px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-          
-          <div className="col-span-1">
-             <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">⚡</span>
-              <span className="font-bold text-lg text-white">Buzztate</span>
-            </div>
-            <p className="text-gray-500 text-sm leading-relaxed">
-              **One Input, Global Output.** <br/>
-              Buzztate is a mass-adaptation engine. We don't just translate words; we apply cultural nuance to your campaigns across 30+ markets instantly.
-            </p>
-            <div className="mt-8 flex flex-col gap-1">
-               <p className="text-gray-600 text-xs">© 2025 Buzztate Inc.</p>
-               <p className="text-gray-700 text-xs flex items-center gap-1">
-                 Made with <span className="text-red-900">♥</span> by Shen
-               </p>
-            </div>
-          </div>
-
-          <div className="col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <h4 className="text-white font-bold mb-4">Scale Your Content</h4>
-              <p className="text-gray-500 text-sm">Paste your master copy once. We generate <strong>localized assets for 30+ regions</strong> simultaneously, maintaining your brand's specific "vibe."</p>
-            </div>
-            <div>
-              <h4 className="text-white font-bold mb-4">Unified Brand Voice</h4>
-              <p className="text-gray-500 text-sm">Ensure your <strong>Corporate</strong> or <strong>Gen Z</strong> tone is consistent whether you are posting in Tokyo, Berlin, or São Paulo.</p>
-            </div>
-            <div>
-              <h4 className="text-white font-bold mb-4">Bulk Export</h4>
-              <p className="text-gray-500 text-sm">Don't copy-paste 30 times. Hit one button to <strong>Export a Master CSV</strong> containing every translation and reality check for your team.</p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
     </div>
   );
 }
