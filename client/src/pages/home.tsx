@@ -68,10 +68,14 @@ export default function Home({ session }: { session: any }) {
   };
 
   // 3. HANDLE CHECKOUT
-  const handleCheckout = async () => {
+  // 1. Rename and Update this function
+  const handleBilling = async () => {
     setCheckoutLoading(true);
     try {
-      const response = await fetch("/api/checkout", {
+      // If PRO -> Go to Portal. If FREE -> Go to Checkout.
+      const endpoint = isPro ? "/api/portal" : "/api/checkout";
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { 
            "Content-Type": "application/json",
@@ -79,9 +83,13 @@ export default function Home({ session }: { session: any }) {
         },
       });
       const data = await response.json();
-      if (data.url) window.location.href = data.url;
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Could not connect to billing server.");
+      }
     } catch (error) {
-      alert("Something went wrong with checkout.");
+      alert("Something went wrong.");
     }
     setCheckoutLoading(false);
   };
@@ -171,7 +179,7 @@ export default function Home({ session }: { session: any }) {
           <div className="flex items-center gap-4">
             {!isPro && (
               <button 
-                onClick={handleCheckout} 
+                onClick={handleBilling}
                 disabled={checkoutLoading}
                 className="text-xs bg-gray-800 hover:bg-yellow-400 hover:text-black border border-gray-600 px-3 py-1.5 rounded-full transition-all disabled:opacity-50"
               >
