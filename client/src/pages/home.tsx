@@ -14,6 +14,8 @@ const PRO_STYLES = [
   "Professional / Corporate", "Gen Z Influencer", "App Store Description", 
   "Marketing Copy", "Romantic Poet", "Angry New Yorker"
 ];
+// ... keep imports ...
+import { supabase } from "@/lib/supabase"; // Make sure this is imported!
 
 export default function Home({ session }: { session: any }) { // Receive session prop
     const [isPro, setIsPro] = useState(false);
