@@ -20,10 +20,10 @@ export default function AuthPage() {
           password,
         });
         if (error) throw error;
-        // Successful login automatically updates session, App.tsx handles redirect
-        window.location.href = "/"; 
+        // FIX: Redirect to /app instead of /
+        window.location.href = "/app"; 
       } else {
-        // --- SIGN UP LOGIC (The Fix) ---
+        // --- SIGN UP LOGIC ---
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -33,12 +33,11 @@ export default function AuthPage() {
 
         // CHECK: Did we get a session immediately?
         if (data.session) {
-          // Yes -> Email confirmation is OFF. Go straight to app.
-          window.location.href = "/";
+          // FIX: Redirect to /app instead of /
+          window.location.href = "/app";
         } else {
-          // No -> Email confirmation is ON. Show the alert.
           alert("Success! Please check your email for the confirmation link.");
-          setIsLogin(true); // Switch back to login view
+          setIsLogin(true);
         }
       }
     } catch (error: any) {
