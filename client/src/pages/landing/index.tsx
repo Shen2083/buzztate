@@ -12,10 +12,10 @@ export default function Landing() {
           <span className="font-bold text-xl tracking-tight">Buzztate</span>
         </div>
         <div className="flex gap-4">
-          <Link href="/app?plan=free">
+          <Link href="/auth">
             <span className="text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors pt-2">Log In</span>
           </Link>
-          <Link href="/app?plan=pro">
+          <Link href="/auth">
             <span className="bg-yellow-400 hover:bg-yellow-300 text-black px-5 py-2 rounded-full font-bold text-sm cursor-pointer transition-all">
               Get Started
             </span>

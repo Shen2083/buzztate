@@ -1,29 +1,55 @@
-import { Switch, Route } from "wouter";
+import { useEffect, useState } from "react";
+import { Switch, Route, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
+import { supabase } from "@/lib/supabase"; // Import our new connection
 
-// Import Pages
 import Home from "@/pages/home";
-import Landing from "@/pages/landing"; 
+import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
+import AuthPage from "@/pages/auth"; // We will create this next
 
 function Router() {
+  const [session, setSession] = useState<any>(null);
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    // 1. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // 2. Listen for changes (Login/Logout)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      // Redirect to app if logged in, or landing if logged out
+      if (session && location === "/auth") setLocation("/app");
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <Switch>
-      {/* The Landing Page is now the root */}
       <Route path="/" component={Landing} />
-      
-      {/* The actual tool lives at /app */}
-      <Route path="/app" component={Home} />
-      
-      {/* 404 Handler */}
+
+      {/* The Login/Signup Page */}
+      <Route path="/auth" component={AuthPage} />
+
+      {/* Protected App Route */}
+      <Route path="/app">
+        {session ? <Home session={session} /> : <AuthPage />}
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router />
@@ -31,5 +57,3 @@ function App() {
     </QueryClientProvider>
   );
 }
-
-export default App;
