@@ -176,19 +176,17 @@ export default function Home({ session }: { session: any }) {
             )}
           </div>
           <div className="flex items-center gap-4">
-            {!isPro && (
               <button 
                 onClick={handleBilling} 
                 disabled={checkoutLoading}
                 className={`text-xs px-3 py-1.5 rounded-full transition-all disabled:opacity-50 border ${
                   isPro 
-                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-600"
-                    : "bg-gray-800 hover:bg-yellow-400 hover:text-black border-gray-600"
+                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-600" // Pro Style
+                    : "bg-gray-800 hover:bg-yellow-400 hover:text-black border-gray-600" // Free Style
                 }`}
               >
                 {checkoutLoading ? "..." : (isPro ? "Manage Subscription" : "Upgrade to Pro ($10)")}
               </button>
-            )}
           </div>
         </div>
       </nav>
