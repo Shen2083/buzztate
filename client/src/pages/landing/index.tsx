@@ -49,8 +49,8 @@ export default function Landing() {
             <span className="font-bold text-xl tracking-tight">Buzztate</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/auth">
-              <span className="text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors">Log In</span>
+            <Link href="/auth" className="text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors">
+              Log In
             </Link>
             <button 
               onClick={handleCheckout} 
@@ -73,16 +73,20 @@ export default function Landing() {
           The AI engine that adapts your content into Gen Z Slang, Corporate Speak, or Marketing Copy across 30+ languages instantly.
         </p>
 
+        {/* Buttons - Fixed Alignment */}
         <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md mx-auto">
-          <Link href="/auth">
-            <span className="flex-1 px-8 py-4 rounded-xl border border-gray-700 hover:bg-gray-900 text-white font-bold cursor-pointer transition-all text-center">
-              Try for Free
-            </span>
+          {/* Link behaves exactly like a button now */}
+          <Link 
+            href="/auth" 
+            className="flex-1 w-full px-8 py-4 rounded-xl border border-gray-700 hover:bg-gray-900 text-white font-bold cursor-pointer transition-all text-center flex items-center justify-center"
+          >
+            Try for Free
           </Link>
+
           <button 
             onClick={handleCheckout} 
             disabled={loading} 
-            className="flex-1 px-8 py-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-bold transition-all shadow-[0_0_20px_rgba(250,204,21,0.3)] disabled:opacity-50 text-center"
+            className="flex-1 w-full px-8 py-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-bold transition-all shadow-[0_0_20px_rgba(250,204,21,0.3)] disabled:opacity-50 text-center flex items-center justify-center"
           >
             {loading ? "..." : "Get Pro - $10/mo"}
           </button>
@@ -134,10 +138,8 @@ export default function Landing() {
               <li className="flex gap-4 text-gray-600 items-center"><X size={20} /> <span>No Bulk Processing</span></li>
             </ul>
 
-            <Link href="/auth">
-              <span className="w-full block text-center py-4 rounded-xl border border-gray-700 hover:bg-gray-800 hover:text-white cursor-pointer font-bold transition-all">
-                Start for Free
-              </span>
+            <Link href="/auth" className="w-full block text-center py-4 rounded-xl border border-gray-700 hover:bg-gray-800 hover:text-white cursor-pointer font-bold transition-all">
+              Start for Free
             </Link>
           </div>
 
