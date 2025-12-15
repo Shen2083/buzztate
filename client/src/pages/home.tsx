@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useState, useEffect } from "react";
 import { Search, ChevronDown, Check, Download, Info, Globe, Zap, Lock } from "lucide-react"; 
+import { supabase } from "@/lib/supabase";
 
 const ALL_LANGUAGES = [
   "Spanish", "French", "German", "Japanese", "Italian", "Portuguese", 
@@ -14,67 +14,87 @@ const PRO_STYLES = [
   "Professional / Corporate", "Gen Z Influencer", "App Store Description", 
   "Marketing Copy", "Romantic Poet", "Angry New Yorker"
 ];
-// ... keep imports ...
-import { supabase } from "@/lib/supabase"; // Make sure this is imported!
 
-export default function Home({ session }: { session: any }) { // Receive session prop
-    const [isPro, setIsPro] = useState(false);
-    const [loadingProfile, setLoadingProfile] = useState(true);
+export default function Home({ session }: { session: any }) {
+  const [isPro, setIsPro] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false); // New state for button loading
 
-    // 1. Fetch the User's "Pro Status" from Supabase
-    useEffect(() => {
-      async function checkProStatus() {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('is_pro')
-            .eq('id', session.user.id)
-            .single();
+  // ---------------------------------------------------------
+  // 1. CHECK PRO STATUS (Database)
+  // ---------------------------------------------------------
+  useEffect(() => {
+    async function checkProStatus() {
+      console.log("🔍 Checking status for user:", session.user.email);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_pro')
+        .eq('id', session.user.id)
+        .single();
 
-          if (data && data.is_pro) {
-            setIsPro(true);
-          }
-        } catch (error) {
-          console.error("Error checking pro status:", error);
-        } finally {
-          setLoadingProfile(false);
-        }
+      if (data && data.is_pro) {
+        setIsPro(true);
+        console.log("✅ User is PRO");
+      } else {
+        console.log("ℹ️ User is FREE");
       }
+    }
+    checkProStatus();
+  }, [session]);
 
-      checkProStatus();
-    }, [session]);
+  // ---------------------------------------------------------
+  // 2. HANDLE STRIPE CHECKOUT
+  // ---------------------------------------------------------
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { 
+           "Content-Type": "application/json",
+           "X-User-ID": session.user.id // Send ID so Webhook knows who to upgrade
+        },
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Could not connect to payment server.");
+      }
+    } catch (error) {
+      console.error("Checkout failed:", error);
+      alert("Something went wrong. Please try again.");
+    }
+    setCheckoutLoading(false);
+  };
 
+  // ---------------------------------------------------------
+  // 3. APP LOGIC (Translation)
+  // ---------------------------------------------------------
   const [inputText, setInputText] = useState("");
   const [style, setStyle] = useState("Modern Slang");
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Spanish"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   const filteredLanguages = ALL_LANGUAGES.filter(lang => 
     lang.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const toggleLanguage = (lang: string) => {
-    // FREE PLAN LIMIT: Only 1 Language
     if (!isPro) {
       if (selectedLanguages.includes(lang)) {
-        setSelectedLanguages([]); // Deselect
+        setSelectedLanguages([]); 
       } else {
-        setSelectedLanguages([lang]); // Replace with new one (max 1)
+        setSelectedLanguages([lang]); // Free limit: 1
       }
       return;
     }
-
-    // PRO PLAN: Unlimited (Safety cap at 15)
+    // Pro Logic
     if (selectedLanguages.includes(lang)) {
       setSelectedLanguages(selectedLanguages.filter(l => l !== lang));
     } else {
-      if (selectedLanguages.length < 15) {
-        setSelectedLanguages([...selectedLanguages, lang]);
-      } else {
-        alert("Even Pros have limits! Select max 15 to prevent timeout.");
-      }
+      if (selectedLanguages.length < 15) setSelectedLanguages([...selectedLanguages, lang]);
     }
   };
 
@@ -92,7 +112,7 @@ export default function Home({ session }: { session: any }) { // Receive session
   };
 
   const clearSelection = () => setSelectedLanguages([]);
-  
+
   const handleStyleChange = (e: any) => {
     const newStyle = e.target.value;
     if (!isPro && PRO_STYLES.includes(newStyle)) {
@@ -135,7 +155,6 @@ export default function Home({ session }: { session: any }) { // Receive session
       alert("CSV Export is a Pro feature! ⚡ Upgrade to download.");
       return;
     }
-    // ... (Existing CSV Logic)
     if (results.length === 0) return;
     const headers = ["Language", "Style", "Original Text", "Translation", "Reality Check"];
     const rows = results.map(item => [
@@ -158,7 +177,7 @@ export default function Home({ session }: { session: any }) { // Receive session
 
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col items-center">
-      
+
       {/* ⚡ App Header */}
       <nav className="w-full border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
@@ -170,30 +189,47 @@ export default function Home({ session }: { session: any }) { // Receive session
             ) : (
               <span className="text-[10px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded ml-2 font-bold uppercase">FREE STARTER</span>
             )}
+
+            {/* Signature */}
+            <span className="hidden md:flex items-center gap-1 text-[10px] text-gray-600 ml-3 border-l border-gray-800 pl-3">
+              by Shen <span className="text-red-900">♥</span>
+            </span>
           </div>
-          
+
           <div className="flex items-center gap-4">
             {!isPro && (
-              <a href="/app?plan=pro" className="text-xs bg-gray-800 hover:bg-yellow-400 hover:text-black border border-gray-600 px-3 py-1.5 rounded-full transition-all">
-                Upgrade to Pro ($10)
-              </a>
+              <button 
+                onClick={handleCheckout} 
+                disabled={checkoutLoading}
+                className="text-xs bg-gray-800 hover:bg-yellow-400 hover:text-black border border-gray-600 px-3 py-1.5 rounded-full transition-all disabled:opacity-50"
+              >
+                {checkoutLoading ? "..." : "Upgrade to Pro ($10)"}
+              </button>
             )}
-            <a href="/" className="text-sm text-gray-400 hover:text-white">Exit</a>
+            <button 
+              onClick={async () => { await supabase.auth.signOut(); window.location.href = "/"; }}
+              className="text-sm text-gray-400 hover:text-white"
+            >
+              Exit
+            </button>
           </div>
         </div>
       </nav>
 
       {/* 🎛️ Main Workspace */}
       <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 mt-6">
-        
+
         {/* Left: Input */}
         <div className="lg:col-span-8 flex flex-col gap-4">
-          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-1 flex-grow min-h-[500px] flex flex-col">
+          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-1 flex-grow min-h-[500px] flex flex-col relative group focus-within:border-gray-700 transition-colors">
             <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/30 rounded-t-xl">
                <div className="flex items-center gap-2">
                  <Globe size={14} className="text-gray-500" />
                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Source Content</span>
                </div>
+               {inputText.length > 0 && (
+                 <span className="text-xs text-gray-600">{inputText.length} chars</span>
+               )}
             </div>
             <textarea
               className="w-full h-full bg-transparent p-6 text-xl text-gray-200 placeholder-gray-600 outline-none resize-none flex-grow leading-relaxed font-light"
@@ -207,7 +243,7 @@ export default function Home({ session }: { session: any }) { // Receive session
         {/* Right: Tools Panel */}
         <div className="lg:col-span-4 flex flex-col gap-4">
           <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 shadow-xl">
-            
+
             {/* Style Selector */}
             <div className="mb-6">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block flex justify-between">
@@ -226,6 +262,7 @@ export default function Home({ session }: { session: any }) { // Receive session
                   <option disabled={!isPro}>App Store Description {isPro ? "" : "(Pro)"}</option>
                   <option disabled={!isPro}>Marketing Copy {isPro ? "" : "(Pro)"}</option>
                   <option disabled={!isPro}>Romantic Poet {isPro ? "" : "(Pro)"}</option>
+                  <option disabled={!isPro}>Angry New Yorker {isPro ? "" : "(Pro)"}</option>
                 </select>
                 <ChevronDown className="absolute right-4 top-4 text-gray-500 pointer-events-none" size={16} />
               </div>
@@ -237,7 +274,7 @@ export default function Home({ session }: { session: any }) { // Receive session
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Markets</label>
                 {!isPro && <span className="text-[10px] text-gray-500">Free: 1 Max</span>}
               </div>
-              
+
               <div className="relative mb-3">
                 <Search className="absolute left-3 top-2.5 text-gray-500" size={14} />
                 <input 
@@ -256,7 +293,7 @@ export default function Home({ session }: { session: any }) { // Receive session
                    </button>
                    <button onClick={clearSelection} className="text-[10px] text-gray-500 hover:text-red-400 uppercase font-bold tracking-wide">Clear</button>
                 </div>
-                
+
                 {filteredLanguages.map((lang) => (
                   <button
                     key={lang}
@@ -277,9 +314,18 @@ export default function Home({ session }: { session: any }) { // Receive session
             <button
               onClick={handleBuzztate}
               disabled={loading}
-              className="w-full bg-yellow-400 text-black font-extrabold py-5 rounded-xl hover:bg-yellow-300 transition-all text-lg mt-6 flex justify-center items-center gap-2"
+              className="w-full bg-yellow-400 text-black font-extrabold py-5 rounded-xl hover:bg-yellow-300 transition-all text-lg mt-6 flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.2)]"
             >
-              {loading ? "Adapting..." : isPro ? "ADAPT ALL MARKETS" : "TRANSLATE (FREE)"}
+              {loading ? (
+                <>
+                  <span className="animate-spin"><Zap size={18} fill="black" /></span> Adapting...
+                </>
+              ) : (
+                <>
+                  <Zap size={18} fill="black" />
+                  <span>{isPro ? "ADAPT ALL MARKETS" : "TRANSLATE (FREE)"}</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -287,23 +333,23 @@ export default function Home({ session }: { session: any }) { // Receive session
 
       {/* Results */}
       {results.length > 0 && (
-        <div className="max-w-7xl w-full p-6">
+        <div className="max-w-7xl w-full p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex justify-between items-end mb-6 border-b border-gray-800 pb-4">
             <h2 className="text-2xl font-bold text-white">Results</h2>
             <button 
               onClick={downloadCSV} 
-              className={`font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm ${isPro ? "bg-green-600 hover:bg-green-500 text-white" : "bg-gray-800 text-gray-500 cursor-not-allowed"}`}
+              className={`font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm ${isPro ? "bg-green-600 hover:bg-green-500 text-white shadow-lg" : "bg-gray-800 text-gray-500 cursor-not-allowed"}`}
             >
               {!isPro && <Lock size={14} />}
               <span>{isPro ? "Download CSV" : "CSV (Pro Only)"}</span>
             </button>
           </div>
-          {/* ... (Existing Results Grid - Same as before) ... */}
+
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
             {results.map((item, index) => (
               <div key={index} className="bg-gray-900 p-6 rounded-xl border border-gray-800 hover:border-yellow-400/30 transition-all group relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>
-                
+
                 <div className="flex justify-between items-start mb-4">
                    <span className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                      <Globe size={12} /> {item.language}
@@ -315,9 +361,9 @@ export default function Home({ session }: { session: any }) { // Receive session
                      COPY
                    </button>
                 </div>
-                
+
                 <p className="text-lg text-white mb-6 font-medium leading-relaxed">{item.translation}</p>
-                
+
                 <div className="bg-black/40 p-3 rounded-lg border border-white/5">
                   <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Literal Meaning</p>
                   <p className="text-sm text-gray-400 italic">"{item.reality_check}"</p>
