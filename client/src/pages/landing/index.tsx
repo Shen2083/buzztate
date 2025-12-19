@@ -131,6 +131,10 @@ export default function Landing() {
             <p className="text-gray-500 mb-8 h-12">Perfect for testing the waters and quick translations.</p>
 
             <ul className="space-y-5 mb-10 flex-grow">
+              <li className="flex items-center gap-3 text-gray-400">
+                <Check size={18} className="text-gray-500" />
+                <span>Standard AI Model</span>
+              </li>
               <li className="flex gap-4 text-gray-300 items-center"><Check size={20} className="text-gray-500" /> <span>Translate 1 language</span></li>
               <li className="flex gap-4 text-gray-300 items-center"><Check size={20} className="text-gray-500" /> <span>"Modern Slang" Vibe</span></li>
               <li className="flex gap-4 text-gray-600 items-center"><X size={20} /> <span>No CSV Export</span></li>
@@ -152,6 +156,10 @@ export default function Landing() {
             <p className="text-gray-300 mb-8 h-12">For creators & marketers who need to scale.</p>
 
             <ul className="space-y-5 mb-10 flex-grow">
+              <li className="flex items-center gap-3 text-white font-bold">
+                <Zap size={18} className="text-yellow-400" />
+                <span>Superior AI Model</span>
+              </li>
               <li className="flex gap-4 text-white items-center"><Check size={20} className="text-yellow-400" /> <span><strong>Unlimited</strong> Languages</span></li>
               <li className="flex gap-4 text-white items-center"><Check size={20} className="text-yellow-400" /> <span><strong>All 7 Vibes</strong> (Pro + Gen Z)</span></li>
               <li className="flex gap-4 text-white items-center"><Check size={20} className="text-yellow-400" /> <span><strong>Download CSV Reports</strong></span></li>
