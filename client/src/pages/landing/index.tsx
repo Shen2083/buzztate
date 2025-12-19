@@ -52,13 +52,12 @@ export default function Landing() {
             <Link href="/auth" className="text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors">
               Log In
             </Link>
-            <button 
-              onClick={handleCheckout} 
-              disabled={loading} 
-              className="bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-full font-bold text-sm transition-all disabled:opacity-50"
+            <Link 
+              href="/auth" 
+              className="bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-full font-bold text-sm transition-all"
             >
-              {loading ? "Loading..." : "Get Started"}
-            </button>
+              Get Started
+            </Link>
           </div>
         </div>
       </nav>
