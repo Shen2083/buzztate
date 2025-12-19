@@ -53,7 +53,7 @@ export default function Landing() {
               Log In
             </Link>
             <Link 
-              href="/auth" 
+              href="/auth?mode=signup" 
               className="bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-full font-bold text-sm transition-all"
             >
               Get Started

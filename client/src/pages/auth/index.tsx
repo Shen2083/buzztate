@@ -3,7 +3,10 @@ import { supabase } from "@/lib/supabase";
 import { Zap, Loader2 } from "lucide-react";
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("mode") !== "signup"; // Returns false (Sign Up) if mode is signup
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
