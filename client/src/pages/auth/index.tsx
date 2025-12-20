@@ -3,13 +3,25 @@ import { supabase } from "@/lib/supabase";
 import { Zap, Loader2 } from "lucide-react";
 
 export default function AuthPage() {
+  // 1. Capture URL parameters
+  const params = new URLSearchParams(window.location.search);
+  const intent = params.get("intent"); // Check if user wants 'pro'
+
   const [isLogin, setIsLogin] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
     return params.get("mode") !== "signup"; // Returns false (Sign Up) if mode is signup
   });
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Helper to determine where to send the user
+  const getRedirectUrl = () => {
+    // If they came from "Get Pro", send them to dashboard with a checkout trigger
+    if (intent === "pro") return "/app?action=checkout";
+    // Otherwise, just go to the dashboard
+    return "/app";
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +35,9 @@ export default function AuthPage() {
           password,
         });
         if (error) throw error;
-        // FIX: Redirect to /app instead of /
-        window.location.href = "/app"; 
+
+        // ✅ Redirect with intent preserved
+        window.location.href = getRedirectUrl(); 
       } else {
         // --- SIGN UP LOGIC ---
         const { data, error } = await supabase.auth.signUp({
@@ -36,8 +49,8 @@ export default function AuthPage() {
 
         // CHECK: Did we get a session immediately?
         if (data.session) {
-          // FIX: Redirect to /app instead of /
-          window.location.href = "/app";
+          // ✅ Redirect with intent preserved
+          window.location.href = getRedirectUrl();
         } else {
           alert("Success! Please check your email for the confirmation link.");
           setIsLogin(true);

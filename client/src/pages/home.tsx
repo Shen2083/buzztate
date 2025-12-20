@@ -68,7 +68,6 @@ export default function Home({ session }: { session: any }) {
   };
 
   // 3. HANDLE CHECKOUT
-  // 1. Rename and Update this function
   const handleBilling = async () => {
     setCheckoutLoading(true);
     try {
@@ -93,6 +92,21 @@ export default function Home({ session }: { session: any }) {
     }
     setCheckoutLoading(false);
   };
+
+  // 🚀 NEW: Auto-Trigger Checkout if URL says "?action=checkout"
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("action") === "checkout") {
+      // Only trigger if we aren't already loading and user isn't Pro yet
+      if (!isPro && !checkoutLoading) {
+        console.log("🚀 Auto-triggering checkout...");
+        handleBilling();
+
+        // Clean the URL so it doesn't trigger again on refresh
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [session, isPro]); // Dependencies ensure it runs once session/status is ready
 
   // 4. TRANSLATION LOGIC
   const filteredLanguages = ALL_LANGUAGES.filter(lang => 
@@ -175,6 +189,7 @@ export default function Home({ session }: { session: any }) {
               <span className="text-[10px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded ml-2 font-bold uppercase">FREE STARTER</span>
             )}
           </div>
+
           <div className="flex items-center gap-4">
               <button 
                 onClick={handleBilling} 
@@ -222,11 +237,11 @@ export default function Home({ session }: { session: any }) {
             <div className="lg:col-span-8 flex flex-col gap-4">
               <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-1 flex-grow min-h-[500px] flex flex-col relative group focus-within:border-gray-700 transition-colors">
                 <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/30 rounded-t-xl">
-                   <div className="flex items-center gap-2">
-                     <Globe size={14} className="text-gray-500" />
-                     <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Source Content</span>
-                   </div>
-                   {inputText.length > 0 && <span className="text-xs text-gray-600">{inputText.length} chars</span>}
+                    <div className="flex items-center gap-2">
+                      <Globe size={14} className="text-gray-500" />
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Source Content</span>
+                    </div>
+                    {inputText.length > 0 && <span className="text-xs text-gray-600">{inputText.length} chars</span>}
                 </div>
                 <textarea
                   className="w-full h-full bg-transparent p-6 text-xl text-gray-200 placeholder-gray-600 outline-none resize-none flex-grow leading-relaxed font-light"
@@ -276,10 +291,10 @@ export default function Home({ session }: { session: any }) {
                     />
                   </div>
                   <div className="h-[250px] overflow-y-auto border border-gray-800 rounded-lg bg-black/30 p-1 space-y-0.5">
-                     <div className="sticky top-0 bg-black/90 backdrop-blur z-10 p-2 border-b border-gray-800 flex justify-between">
-                       <button onClick={selectAllFiltered} className="text-[10px] uppercase font-bold tracking-wide text-gray-400 hover:text-white">Select All</button>
-                       <button onClick={() => setSelectedLanguages([])} className="text-[10px] text-gray-500 hover:text-red-400 uppercase font-bold tracking-wide">Clear</button>
-                    </div>
+                      <div className="sticky top-0 bg-black/90 backdrop-blur z-10 p-2 border-b border-gray-800 flex justify-between">
+                        <button onClick={selectAllFiltered} className="text-[10px] uppercase font-bold tracking-wide text-gray-400 hover:text-white">Select All</button>
+                        <button onClick={() => setSelectedLanguages([])} className="text-[10px] text-gray-500 hover:text-red-400 uppercase font-bold tracking-wide">Clear</button>
+                     </div>
                     {filteredLanguages.map((lang) => (
                       <button
                         key={lang}
@@ -318,8 +333,8 @@ export default function Home({ session }: { session: any }) {
                 {results.map((item, index) => (
                   <div key={index} className="bg-gray-900 p-6 rounded-xl border border-gray-800 relative">
                     <div className="flex justify-between items-start mb-4">
-                       <span className="text-sm font-bold text-gray-400 uppercase flex items-center gap-2"><Globe size={12} /> {item.language}</span>
-                       <button onClick={() => navigator.clipboard.writeText(item.translation)} className="text-[10px] text-gray-500 bg-black px-2 py-1 rounded border border-gray-800 hover:text-white">COPY</button>
+                        <span className="text-sm font-bold text-gray-400 uppercase flex items-center gap-2"><Globe size={12} /> {item.language}</span>
+                        <button onClick={() => navigator.clipboard.writeText(item.translation)} className="text-[10px] text-gray-500 bg-black px-2 py-1 rounded border border-gray-800 hover:text-white">COPY</button>
                     </div>
                     <p className="text-lg text-white mb-6 font-medium">{item.translation}</p>
                     <div className="bg-black/40 p-3 rounded-lg border border-white/5">
@@ -351,9 +366,9 @@ export default function Home({ session }: { session: any }) {
                 <div key={record.id} className="bg-gray-900/40 border border-gray-800 p-6 rounded-xl flex flex-col md:flex-row gap-6 hover:border-gray-700 transition-colors">
                   <div className="flex-1">
                     <div className="flex gap-2 items-center mb-2">
-                       <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded uppercase">{record.language}</span>
-                       <span className="text-xs text-gray-500">{new Date(record.created_at).toLocaleDateString()}</span>
-                       <span className="text-xs text-gray-500 border border-gray-800 px-2 rounded-full">{record.style}</span>
+                        <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded uppercase">{record.language}</span>
+                        <span className="text-xs text-gray-500">{new Date(record.created_at).toLocaleDateString()}</span>
+                        <span className="text-xs text-gray-500 border border-gray-800 px-2 rounded-full">{record.style}</span>
                     </div>
                     <p className="text-gray-300 font-medium text-lg">{record.translated_text}</p>
                     <p className="text-gray-500 text-sm mt-2 italic">Original: "{record.original_text}"</p>

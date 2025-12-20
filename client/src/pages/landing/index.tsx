@@ -1,42 +1,9 @@
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { Check, X, Zap, Globe, Lock } from "lucide-react";
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 
 export default function Landing() {
-  const [loading, setLoading] = useState(false);
-  const [, setLocation] = useLocation();
-
-  const handleCheckout = async () => {
-    setLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-      alert("Please create an account or log in before upgrading!");
-      setLocation("/auth");
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { 
-           "Content-Type": "application/json",
-           "X-User-ID": session.user.id
-        },
-      });
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert("Could not initiate checkout. Please check API keys.");
-      }
-    } catch (error) {
-      console.error("Checkout failed:", error);
-      alert("Something went wrong. Please try again.");
-    }
-    setLoading(false);
-  };
+  // ⚡ Logic removed: We now handle everything via URL "intents" 
+  // passed to the Auth and Home pages.
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-yellow-400 selection:text-black flex flex-col">
@@ -49,9 +16,11 @@ export default function Landing() {
             <span className="font-bold text-xl tracking-tight">Buzztate</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/auth" className="text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors">
+            {/* 1. Log In -> Explicitly asks for 'login' mode */}
+            <Link href="/auth?mode=login" className="text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors">
               Log In
             </Link>
+            {/* 2. Get Started -> Explicitly asks for 'signup' mode */}
             <Link 
               href="/auth?mode=signup" 
               className="bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-full font-bold text-sm transition-all"
@@ -72,23 +41,23 @@ export default function Landing() {
           The AI engine that adapts your content into Gen Z Slang, Corporate Speak, or Marketing Copy across 30+ languages instantly.
         </p>
 
-        {/* Buttons - Fixed Alignment */}
+        {/* Buttons - Updated to use Links with Intent */}
         <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md mx-auto">
-          {/* Link behaves exactly like a button now */}
+          {/* 3. Try For Free -> Standard Signup */}
           <Link 
-            href="/auth" 
+            href="/auth?mode=signup" 
             className="flex-1 w-full px-8 py-4 rounded-xl border border-gray-700 hover:bg-gray-900 text-white font-bold cursor-pointer transition-all text-center flex items-center justify-center"
           >
             Try for Free
           </Link>
 
-          <button 
-            onClick={handleCheckout} 
-            disabled={loading} 
-            className="flex-1 w-full px-8 py-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-bold transition-all shadow-[0_0_20px_rgba(250,204,21,0.3)] disabled:opacity-50 text-center flex items-center justify-center"
+          {/* 4. Get Pro -> Signup + Intent to Checkout */}
+          <Link 
+            href="/auth?mode=signup&intent=pro" 
+            className="flex-1 w-full px-8 py-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-bold transition-all shadow-[0_0_20px_rgba(250,204,21,0.3)] text-center flex items-center justify-center cursor-pointer"
           >
-            {loading ? "..." : "Get Pro - $10/mo"}
-          </button>
+            Get Pro - $10/mo
+          </Link>
         </div>
       </div>
 
@@ -131,6 +100,7 @@ export default function Landing() {
             <p className="text-gray-500 mb-8 h-12">Perfect for testing the waters and quick translations.</p>
 
             <ul className="space-y-5 mb-10 flex-grow">
+              {/* ✨ Added AI Distinction */}
               <li className="flex items-center gap-3 text-gray-400">
                 <Check size={18} className="text-gray-500" />
                 <span>Standard AI Model</span>
@@ -141,7 +111,7 @@ export default function Landing() {
               <li className="flex gap-4 text-gray-600 items-center"><X size={20} /> <span>No Bulk Processing</span></li>
             </ul>
 
-            <Link href="/auth" className="w-full block text-center py-4 rounded-xl border border-gray-700 hover:bg-gray-800 hover:text-white cursor-pointer font-bold transition-all">
+            <Link href="/auth?mode=signup" className="w-full block text-center py-4 rounded-xl border border-gray-700 hover:bg-gray-800 hover:text-white cursor-pointer font-bold transition-all">
               Start for Free
             </Link>
           </div>
@@ -156,6 +126,7 @@ export default function Landing() {
             <p className="text-gray-300 mb-8 h-12">For creators & marketers who need to scale.</p>
 
             <ul className="space-y-5 mb-10 flex-grow">
+              {/* ✨ Added AI Distinction */}
               <li className="flex items-center gap-3 text-white font-bold">
                 <Zap size={18} className="text-yellow-400" />
                 <span>Superior AI Model</span>
@@ -166,13 +137,12 @@ export default function Landing() {
               <li className="flex gap-4 text-white items-center"><Check size={20} className="text-yellow-400" /> <span>Priority Server Access</span></li>
             </ul>
 
-            <button 
-              onClick={handleCheckout} 
-              disabled={loading} 
-              className="w-full block text-center py-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold cursor-pointer transition-all shadow-lg hover:shadow-yellow-400/20 disabled:opacity-50"
+            <Link 
+              href="/auth?mode=signup&intent=pro" 
+              className="w-full block text-center py-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold cursor-pointer transition-all shadow-lg hover:shadow-yellow-400/20"
             >
-              {loading ? "Processing..." : "Upgrade to Pro"}
-            </button>
+              Upgrade to Pro
+            </Link>
           </div>
 
         </div>
