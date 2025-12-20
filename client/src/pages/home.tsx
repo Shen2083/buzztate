@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronDown, Check, Zap, Lock, Globe, History, Layout, Clock, Copy } from "lucide-react"; 
+import { Search, ChevronDown, Check, Zap, Lock, Globe, History, Layout, Clock, Copy, LogOut } from "lucide-react"; 
 import { supabase } from "@/lib/supabase";
 
 const ALL_LANGUAGES = [
@@ -71,9 +71,7 @@ export default function Home({ session }: { session: any }) {
   const handleBilling = async () => {
     setCheckoutLoading(true);
     try {
-      // If PRO -> Go to Portal. If FREE -> Go to Checkout.
       const endpoint = isPro ? "/api/portal" : "/api/checkout";
-
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { 
@@ -93,22 +91,25 @@ export default function Home({ session }: { session: any }) {
     setCheckoutLoading(false);
   };
 
-  // 🚀 NEW: Auto-Trigger Checkout if URL says "?action=checkout"
+  // 4. HANDLE LOGOUT (New!)
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/"; // Redirect to landing page
+  };
+
+  // 5. AUTO-TRIGGER CHECKOUT
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("action") === "checkout") {
-      // Only trigger if we aren't already loading and user isn't Pro yet
       if (!isPro && !checkoutLoading) {
         console.log("🚀 Auto-triggering checkout...");
         handleBilling();
-
-        // Clean the URL so it doesn't trigger again on refresh
         window.history.replaceState({}, '', window.location.pathname);
       }
     }
-  }, [session, isPro]); // Dependencies ensure it runs once session/status is ready
+  }, [session, isPro]);
 
-  // 4. TRANSLATION LOGIC
+  // 6. TRANSLATION LOGIC
   const filteredLanguages = ALL_LANGUAGES.filter(lang => 
     lang.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -147,7 +148,7 @@ export default function Home({ session }: { session: any }) {
           text: inputText,
           target_languages: selectedLanguages,
           style: style,
-          userId: session.user.id // Critical for saving history
+          userId: session.user.id
         }),
       });
       const data = await response.json();
@@ -196,11 +197,20 @@ export default function Home({ session }: { session: any }) {
                 disabled={checkoutLoading}
                 className={`text-xs px-3 py-1.5 rounded-full transition-all disabled:opacity-50 border ${
                   isPro 
-                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-600" // Pro Style
-                    : "bg-gray-800 hover:bg-yellow-400 hover:text-black border-gray-600" // Free Style
+                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-600" 
+                    : "bg-gray-800 hover:bg-yellow-400 hover:text-black border-gray-600"
                 }`}
               >
                 {checkoutLoading ? "..." : (isPro ? "Manage Subscription" : "Upgrade to Pro ($10)")}
+              </button>
+
+              {/* 🚪 LOGOUT BUTTON (Added Here) */}
+              <button 
+                onClick={handleLogout}
+                className="text-gray-500 hover:text-white transition-colors"
+                title="Log Out"
+              >
+                <LogOut size={20} />
               </button>
           </div>
         </div>
@@ -232,7 +242,6 @@ export default function Home({ session }: { session: any }) {
       {activeTab === "create" && (
         <>
           <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 mt-2">
-
             {/* Input */}
             <div className="lg:col-span-8 flex flex-col gap-4">
               <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-1 flex-grow min-h-[500px] flex flex-col relative group focus-within:border-gray-700 transition-colors">
