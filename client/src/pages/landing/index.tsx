@@ -174,6 +174,18 @@ export default function Landing() {
 
       {/* 📧 Footer Contact */}
       <footer className="w-full text-center py-8 border-t border-gray-900 mt-auto opacity-50 hover:opacity-100 transition-opacity">
+        <div className="max-w-7xl mx-auto px-6 py-10 border-t border-gray-900 grid grid-cols-2 md:grid-cols-4 gap-4 text-left mb-8">
+          <span className="col-span-full text-xs font-bold text-gray-500 uppercase mb-2">Popular Languages</span>
+
+          <Link href="/translate/spanish" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">Spanish Translator</Link>
+          <Link href="/translate/french" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">French Translator</Link>
+          <Link href="/translate/german" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">German Translator</Link>
+          <Link href="/translate/japanese" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">Japanese Translator</Link>
+          <Link href="/translate/italian" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">Italian Translator</Link>
+          <Link href="/translate/chinese" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">Chinese Translator</Link>
+          <Link href="/translate/portuguese" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">Portuguese Translator</Link>
+          <Link href="/translate/russian" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">Russian Translator</Link>
+        </div>
         <p className="text-xs text-gray-600">
           Need help? <a href="mailto:teamz@buzztate.com" className="text-gray-400 hover:text-yellow-400 transition-colors">teamz@buzztate.com</a>
         </p>

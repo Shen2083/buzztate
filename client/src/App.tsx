@@ -48,7 +48,14 @@ function Router() {
     </Switch>
   );
 }
+import LanguageLanding from "@/pages/landing/LanguageLanding";
 
+// ... inside your <Switch> or <Router> ...
+
+{/* Dynamic Route: Matches /translate/spanish, /translate/french, etc. */}
+<Route path="/translate/:lang">
+  {(params) => <LanguageLanding lang={params.lang} />}
+</Route>
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
