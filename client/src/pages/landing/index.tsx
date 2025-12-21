@@ -87,7 +87,31 @@ export default function Landing() {
           </div>
         </div>
       </div>
+      {/* SEO Content Section - Helps rank for "Bulk Translation" keywords */}
+      <div className="max-w-4xl mx-auto px-6 py-20 text-center">
+        <h2 className="text-3xl font-bold mb-6">How to Translate into Multiple Languages at Once</h2>
+        <p className="text-gray-400 text-lg leading-relaxed mb-8">
+          Most translators force you to copy-paste text one language at a time. 
+          <strong>Buzztate</strong> is different. Our AI engine allows you to 
+          <span className="text-white font-bold"> translate into multiple languages at once</span> 
+          with a single click.
+        </p>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+          <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+            <div className="text-yellow-400 font-bold text-xl mb-2">1. Paste Text</div>
+            <p className="text-gray-500 text-sm">Input your email, marketing copy, or slogan into the dashboard.</p>
+          </div>
+          <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+            <div className="text-yellow-400 font-bold text-xl mb-2">2. Select Languages</div>
+            <p className="text-gray-500 text-sm">Tick the boxes for Spanish, French, German, or 30+ others simultaneously.</p>
+          </div>
+          <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+            <div className="text-yellow-400 font-bold text-xl mb-2">3. Localize</div>
+            <p className="text-gray-500 text-sm">Get perfectly adapted translations for every region instantly.</p>
+          </div>
+        </div>
+      </div>
       {/* Pricing Section */}
       <div className="max-w-5xl mx-auto px-6 py-32 w-full">
         <h2 className="text-4xl font-bold text-center mb-16">Simple Pricing</h2>
