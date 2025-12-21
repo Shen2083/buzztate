@@ -38,9 +38,9 @@ export default function Landing() {
           <span className="text-yellow-400">Localize the Vibe.</span>
         </h1>
         <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+          <strong>Translate into multiple languages at once.</strong> <br/>
           The AI engine that adapts your content into Gen Z Slang, Corporate Speak, or Marketing Copy across 30+ languages instantly.
         </p>
-
         {/* Buttons - Updated to use Links with Intent */}
         <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md mx-auto">
           {/* 3. Try For Free -> Standard Signup */}
