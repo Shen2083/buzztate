@@ -424,16 +424,49 @@ export default function Landing() {
       </div>
 
       {/* 📧 Footer */}
-      <footer className="w-full text-center py-8 border-t border-gray-900 mt-auto opacity-50 hover:opacity-100 transition-opacity">
-        <div className="max-w-7xl mx-auto px-6 py-10 border-t border-gray-900 grid grid-cols-2 md:grid-cols-4 gap-4 text-left mb-8">
-            <span className="col-span-full text-xs font-bold text-gray-500 uppercase mb-2">Popular Languages</span>
-            <Link href="/translate/spanish" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">Spanish Translator</Link>
-            <Link href="/translate/french" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">French Translator</Link>
-            <Link href="/translate/german" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">German Translator</Link>
-            <Link href="/translate/japanese" className="text-gray-600 hover:text-yellow-400 text-sm transition-colors">Japanese Translator</Link>
+      {/* 📧 Footer */}
+      <footer className="w-full text-center py-12 border-t border-gray-900 mt-auto bg-black">
+
+        {/* Expanded Popular Languages Section */}
+        <div className="max-w-7xl mx-auto px-6 mb-12">
+            <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Popular Language Translators</span>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
+                <Link href="/translate/spanish" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
+                  Spanish
+                </Link>
+                <Link href="/translate/french" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
+                  French
+                </Link>
+                <Link href="/translate/german" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
+                  German
+                </Link>
+                <Link href="/translate/japanese" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
+                  Japanese
+                </Link>
+                <Link href="/translate/italian" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
+                  Italian
+                </Link>
+                <Link href="/translate/chinese" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
+                  Chinese
+                </Link>
+                {/* Added a few more for a fuller look, you can remove them if you like */}
+                <Link href="/translate/portuguese" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium hidden md:block">
+                  Portuguese
+                </Link>
+                <Link href="/translate/russian" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium hidden md:block">
+                  Russian
+                </Link>
+            </div>
         </div>
-        <p className="text-xs text-gray-600">Need help? <a href="mailto:teamz@buzztate.com" className="text-gray-400 hover:text-yellow-400 transition-colors">teamz@buzztate.com</a></p>
-        <p className="text-[10px] text-gray-700 mt-2">© 2025 Buzztate. All rights reserved.</p>
+
+        {/* Contact & Copyright */}
+        <div className="border-t border-gray-900 pt-8">
+            <p className="text-sm text-gray-500 mb-2">
+            Need help? <a href="mailto:teamz@buzztate.com" className="text-yellow-400 hover:underline transition-colors">teamz@buzztate.com</a>
+            </p>
+            {/* ✅ Updated Year to 2026 */}
+            <p className="text-xs text-gray-600 mt-2">© 2026 Buzztate. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   );
