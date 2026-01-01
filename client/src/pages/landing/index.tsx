@@ -76,10 +76,14 @@ export default function Landing() {
       {/* Navigation */}
       <nav className="w-full border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-3xl">⚡</span>
-            <span className="font-bold text-xl tracking-tight">Buzztate</span>
-          </div>
+          {/* ✅ CLICKABLE LOGO */}
+          <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+              <span className="text-3xl">⚡</span>
+              <span className="font-bold text-xl tracking-tight">Buzztate</span>
+            </div>
+          </Link>
+
           <div className="flex items-center gap-4">
             <Link href="/auth?mode=login" className="text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors">
               Log In
