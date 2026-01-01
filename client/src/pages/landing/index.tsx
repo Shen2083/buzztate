@@ -237,7 +237,7 @@ export default function Landing() {
       {/* 🚀 DETAILED FEATURE SPOTLIGHTS */}
       <div className="w-full bg-black py-24">
 
-        {/* Spotlight 1: Vibe Engine */}
+        {/* Spotlight 1: Vibe Engine (Text Left, Visual Right) */}
         <div className="max-w-7xl mx-auto px-6 mb-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
@@ -294,7 +294,7 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* 🚀 NEW SPOTLIGHT: Smart AI (Pro Model) */}
+        {/* 🚀 NEW SPOTLIGHT: Smart AI (Pro Model) (Visual Left, Text Right) */}
         <div className="max-w-7xl mx-auto px-6 mb-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Visual for Smart AI */}
@@ -356,11 +356,11 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Spotlight 3: Workflow */}
+        {/* Spotlight 3: Workflow (Text Left, Visual Right) */}
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Visual for Workflow (Order swapped on large screens) */}
-            <div className="order-2 lg:order-1 relative">
+            {/* Visual for Workflow */}
+            <div className="order-2 lg:order-2 relative">
                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20"></div>
                <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
                   <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
@@ -401,7 +401,7 @@ export default function Landing() {
                </div>
             </div>
 
-            <div className="order-1 lg:order-2">
+            <div className="order-1 lg:order-1">
               <div className="inline-block px-3 py-1 rounded bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider mb-4">
                 Enterprise Workflow
               </div>
