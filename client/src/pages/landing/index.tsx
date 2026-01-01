@@ -1,8 +1,8 @@
 import { Link } from "wouter";
-import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers } from "lucide-react";
+import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot } from "lucide-react";
 import { useState } from "react";
 
-// ✅ UPDATED: All 7 Vibes are available
+// ✅ All 7 Vibes for Demo
 const DEMO_VIBES = [
   "Modern Slang", 
   "Professional / Corporate", 
@@ -12,13 +12,14 @@ const DEMO_VIBES = [
   "Romantic Poet", 
   "Angry New Yorker"
 ];
+
 const DEMO_LANGS = ["Spanish", "French", "German", "Japanese", "Italian", "Chinese"];
 
 export default function Landing() {
   // --- ADVANCED DEMO STATE ---
   const [demoText, setDemoText] = useState("");
   const [demoLoading, setDemoLoading] = useState(false);
-  const [demoResults, setDemoResults] = useState<any[]>([]); // Array for multiple results
+  const [demoResults, setDemoResults] = useState<any[]>([]); 
   const [demoVibe, setDemoVibe] = useState("Modern Slang");
   const [demoSelectedLangs, setDemoSelectedLangs] = useState<string[]>(["Spanish", "French"]); 
 
@@ -233,202 +234,171 @@ export default function Landing() {
         </div>
       </div>
 
-            {/* 🚀 DETAILED FEATURE SPOTLIGHTS */}
-            <div className="w-full bg-black py-24">
+      {/* 🚀 DETAILED FEATURE SPOTLIGHTS */}
+      <div className="w-full bg-black py-24">
 
-              {/* Spotlight 1: Vibe Engine */}
-              <div className="max-w-7xl mx-auto px-6 mb-32">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                  <div>
-                    <div className="inline-block px-3 py-1 rounded bg-yellow-400/10 text-yellow-400 text-xs font-bold uppercase tracking-wider mb-4">
-                      Beyond Literal Translation
-                    </div>
-                    <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-                      Stop sounding like a <br/><span className="text-gray-500">textbook robot.</span>
-                    </h2>
-                    <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                      Standard translators ignore context. Buzztate preserves your "Brand Voice" even when switching languages.
-                    </p>
-
-                    <ul className="space-y-6">
-                      <li className="flex gap-4">
-                         <div className="mt-1 bg-yellow-400 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
-                         <div>
-                           <h4 className="font-bold text-white text-lg">7 Distinct Vibes</h4>
-                           <p className="text-sm text-gray-500">From "Gen Z Influencer" to "Angry New Yorker" to "C-Suite Executive".</p>
-                         </div>
-                      </li>
-                      <li className="flex gap-4">
-                         <div className="mt-1 bg-yellow-400 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
-                         <div>
-                           <h4 className="font-bold text-white text-lg">Cultural Nuance Check</h4>
-                           <p className="text-sm text-gray-500">Our AI explains the <em>literal</em> meaning of the slang so you don't accidentally offend anyone.</p>
-                         </div>
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* Visual for Vibe */}
-                  <div className="relative">
-                     <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-2xl blur opacity-20"></div>
-                     <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
-                        {/* Message 1 */}
-                        <div className="flex gap-4 mb-6 opacity-50">
-                          <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center"><Globe size={20} /></div>
-                          <div className="bg-gray-800 p-4 rounded-xl rounded-tl-none max-w-sm">
-                             <p className="text-xs text-gray-500 uppercase font-bold mb-1">Standard Translator</p>
-                             <p className="text-gray-400">"Hello, how are you doing today?"</p>
-                          </div>
-                        </div>
-                        {/* Message 2 */}
-                        <div className="flex gap-4 justify-end">
-                          <div className="bg-yellow-400 p-4 rounded-xl rounded-tr-none max-w-sm">
-                             <p className="text-xs text-black/50 uppercase font-bold mb-1">Buzztate (Gen Z Vibe)</p>
-                             <p className="text-black font-bold">"Yo bestie, what's the tea today? ✨"</p>
-                          </div>
-                          <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center"><Sparkles size={20} className="text-black"/></div>
-                        </div>
-                     </div>
-                  </div>
-                </div>
+        {/* Spotlight 1: Vibe Engine */}
+        <div className="max-w-7xl mx-auto px-6 mb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <div className="inline-block px-3 py-1 rounded bg-yellow-400/10 text-yellow-400 text-xs font-bold uppercase tracking-wider mb-4">
+                Beyond Literal Translation
               </div>
+              <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
+                Stop sounding like a <br/><span className="text-gray-500">textbook robot.</span>
+              </h2>
+              <p className="text-xl text-gray-400 mb-8 leading-relaxed">
+                Standard translators ignore context. Buzztate preserves your "Brand Voice" even when switching languages.
+              </p>
 
-              {/* 🚀 NEW SPOTLIGHT: Smart AI (Pro Model) */}
-              <div className="max-w-7xl mx-auto px-6 mb-32">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                  {/* Visual for Smart AI */}
-                  <div className="order-2 lg:order-1 relative">
-                     <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl blur opacity-20"></div>
-                     <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl overflow-hidden">
-                        <div className="flex flex-col gap-6">
-                           <div className="bg-black/50 p-4 rounded-xl border border-gray-800 opacity-50">
-                              <div className="flex justify-between mb-2">
-                                 <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1"><Bot size={10}/> Standard Model</span>
-                                 <span className="text-[10px] text-gray-600">GPT-3.5</span>
-                              </div>
-                              <p className="text-gray-400 text-sm italic">"The cat is out of the bag."</p>
-                              <p className="text-gray-500 text-sm mt-1">↓ "El gato está fuera de la bolsa."</p>
-                              <p className="text-[10px] text-red-400 mt-2 font-bold uppercase tracking-wider">❌ Literal translation (Lost meaning)</p>
-                           </div>
+              <ul className="space-y-6">
+                <li className="flex gap-4">
+                   <div className="mt-1 bg-yellow-400 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
+                   <div>
+                     <h4 className="font-bold text-white text-lg">7 Distinct Vibes</h4>
+                     <p className="text-sm text-gray-500">From "Gen Z Influencer" to "Angry New Yorker" to "C-Suite Executive".</p>
+                   </div>
+                </li>
+                <li className="flex gap-4">
+                   <div className="mt-1 bg-yellow-400 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
+                   <div>
+                     <h4 className="font-bold text-white text-lg">Cultural Nuance Check</h4>
+                     <p className="text-sm text-gray-500">Our AI explains the <em>literal</em> meaning of the slang so you don't accidentally offend anyone.</p>
+                   </div>
+                </li>
+              </ul>
+            </div>
 
-                           <div className="bg-gradient-to-r from-yellow-400/10 to-orange-400/10 p-4 rounded-xl border border-yellow-400/30">
-                              <div className="flex justify-between mb-2">
-                                 <span className="text-[10px] font-bold text-yellow-400 uppercase flex items-center gap-1"><BrainCircuit size={10}/> Pro Model</span>
-                                 <span className="text-[10px] text-yellow-400">GPT-4o</span>
-                              </div>
-                              <p className="text-white text-sm italic">"The cat is out of the bag."</p>
-                              <p className="text-white text-sm mt-1">↓ "Se descubrió el pastel."</p>
-                              <p className="text-[10px] text-green-400 mt-2 font-bold uppercase tracking-wider">✅ Correct cultural idiom</p>
-                           </div>
+            {/* Visual for Vibe */}
+            <div className="relative">
+               <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-2xl blur opacity-20"></div>
+               <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
+                  {/* Message 1 */}
+                  <div className="flex gap-4 mb-6 opacity-50">
+                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center"><Globe size={20} /></div>
+                    <div className="bg-gray-800 p-4 rounded-xl rounded-tl-none max-w-sm">
+                       <p className="text-xs text-gray-500 uppercase font-bold mb-1">Standard Translator</p>
+                       <p className="text-gray-400">"Hello, how are you doing today?"</p>
+                    </div>
+                  </div>
+                  {/* Message 2 */}
+                  <div className="flex gap-4 justify-end">
+                    <div className="bg-yellow-400 p-4 rounded-xl rounded-tr-none max-w-sm">
+                       <p className="text-xs text-black/50 uppercase font-bold mb-1">Buzztate (Gen Z Vibe)</p>
+                       <p className="text-black font-bold">"Yo bestie, what's the tea today? ✨"</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center"><Sparkles size={20} className="text-black"/></div>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 🚀 NEW SPOTLIGHT: Smart AI (Pro Model) */}
+        <div className="max-w-7xl mx-auto px-6 mb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Visual for Smart AI */}
+            <div className="order-2 lg:order-1 relative">
+               <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl blur opacity-20"></div>
+               <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl overflow-hidden">
+                  <div className="flex flex-col gap-6">
+                     <div className="bg-black/50 p-4 rounded-xl border border-gray-800 opacity-50">
+                        <div className="flex justify-between mb-2">
+                           <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1"><Bot size={10}/> Standard Model</span>
+                           <span className="text-[10px] text-gray-600">GPT-3.5</span>
                         </div>
+                        <p className="text-gray-400 text-sm italic">"The cat is out of the bag."</p>
+                        <p className="text-gray-500 text-sm mt-1">↓ "El gato está fuera de la bolsa."</p>
+                        <p className="text-[10px] text-red-400 mt-2 font-bold uppercase tracking-wider">❌ Literal translation (Lost meaning)</p>
+                     </div>
+
+                     <div className="bg-gradient-to-r from-yellow-400/10 to-orange-400/10 p-4 rounded-xl border border-yellow-400/30">
+                        <div className="flex justify-between mb-2">
+                           <span className="text-[10px] font-bold text-yellow-400 uppercase flex items-center gap-1"><BrainCircuit size={10}/> Pro Model</span>
+                           <span className="text-[10px] text-yellow-400">GPT-4o</span>
+                        </div>
+                        <p className="text-white text-sm italic">"The cat is out of the bag."</p>
+                        <p className="text-white text-sm mt-1">↓ "Se descubrió el pastel."</p>
+                        <p className="text-[10px] text-green-400 mt-2 font-bold uppercase tracking-wider">✅ Correct cultural idiom</p>
                      </div>
                   </div>
+               </div>
+            </div>
 
-                  <div className="order-1 lg:order-2">
-                    <div className="inline-block px-3 py-1 rounded bg-pink-500/10 text-pink-400 text-xs font-bold uppercase tracking-wider mb-4">
-                      Intelligence Upgrade
-                    </div>
-                    <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-                      Smarter AI understands <br/><span className="text-gray-500">idioms & irony.</span>
-                    </h2>
-                    <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                      Unlock the power of <strong>GPT-4o</strong> with Buzztate Pro. It doesn't just translate words; it understands deep cultural context.
-                    </p>
-
-                    <ul className="space-y-6">
-                      <li className="flex gap-4">
-                         <div className="mt-1 bg-pink-500 rounded-full p-1 h-fit"><BrainCircuit size={12} className="text-black stroke-[3]" /></div>
-                         <div>
-                           <h4 className="font-bold text-white text-lg">Idiom Detection</h4>
-                           <p className="text-sm text-gray-500">Automatically converts metaphors like "break a leg" into the correct local equivalent.</p>
-                         </div>
-                      </li>
-                      <li className="flex gap-4">
-                         <div className="mt-1 bg-pink-500 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
-                         <div>
-                           <h4 className="font-bold text-white text-lg">Complex Grammar</h4>
-                           <p className="text-sm text-gray-500">Perfect handling of formal vs. informal pronouns (e.g., 'Tu' vs 'Usted').</p>
-                         </div>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
+            <div className="order-1 lg:order-2">
+              <div className="inline-block px-3 py-1 rounded bg-pink-500/10 text-pink-400 text-xs font-bold uppercase tracking-wider mb-4">
+                Intelligence Upgrade
               </div>
+              <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
+                Smarter AI understands <br/><span className="text-gray-500">idioms & irony.</span>
+              </h2>
+              <p className="text-xl text-gray-400 mb-8 leading-relaxed">
+                Unlock the power of <strong>GPT-4o</strong> with Buzztate Pro. It doesn't just translate words; it understands deep cultural context.
+              </p>
 
-              {/* Spotlight 3: Workflow */}
-              <div className="max-w-7xl mx-auto px-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                  {/* Visual for Workflow (Order swapped on large screens) */}
-                  <div className="order-2 lg:order-1 relative">
-                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20"></div>
-                     <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
-                        <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
-                           <div className="flex gap-2">
-                              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                           </div>
-                           <div className="text-xs text-gray-500 font-mono">export_2026.csv</div>
-                        </div>
-                        <div className="space-y-3 font-mono text-sm">
-                           <div className="grid grid-cols-3 text-gray-500 text-xs uppercase font-bold">
-                              <div>Language</div>
-                              <div>Style</div>
-                              <div>Output</div>
-                           </div>
-                           <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
-                              <div className="flex items-center gap-2"><Globe size={12}/> Spanish</div>
-                              <div className="text-yellow-400">Marketing</div>
-                              <div className="truncate">¡Descubre la magia ahora!</div>
-                           </div>
-                           <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
-                              <div className="flex items-center gap-2"><Globe size={12}/> French</div>
-                              <div className="text-yellow-400">Corporate</div>
-                              <div className="truncate">Nous vous prions d'agréer...</div>
-                           </div>
-                           <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
-                              <div className="flex items-center gap-2"><Globe size={12}/> Japanese</div>
-                              <div className="text-yellow-400">Slang</div>
-                              <div className="truncate">マジでヤバい！</div>
-                           </div>
-                        </div>
-                        <div className="mt-6 flex justify-center">
-                           <button className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
-                              <FileText size={16}/> Download CSV
-                           </button>
-                        </div>
+              <ul className="space-y-6">
+                <li className="flex gap-4">
+                   <div className="mt-1 bg-pink-500 rounded-full p-1 h-fit"><BrainCircuit size={12} className="text-black stroke-[3]" /></div>
+                   <div>
+                     <h4 className="font-bold text-white text-lg">Idiom Detection</h4>
+                     <p className="text-sm text-gray-500">Automatically converts metaphors like "break a leg" into the correct local equivalent.</p>
+                   </div>
+                </li>
+                <li className="flex gap-4">
+                   <div className="mt-1 bg-pink-500 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
+                   <div>
+                     <h4 className="font-bold text-white text-lg">Complex Grammar</h4>
+                     <p className="text-sm text-gray-500">Perfect handling of formal vs. informal pronouns (e.g., 'Tu' vs 'Usted').</p>
+                   </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Spotlight 3: Workflow */}
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Visual for Workflow (Order swapped on large screens) */}
+            <div className="order-2 lg:order-1 relative">
+               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20"></div>
+               <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
+                  <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
+                     <div className="flex gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                     </div>
+                     <div className="text-xs text-gray-500 font-mono">export_2026.csv</div>
+                  </div>
+                  <div className="space-y-3 font-mono text-sm">
+                     <div className="grid grid-cols-3 text-gray-500 text-xs uppercase font-bold">
+                        <div>Language</div>
+                        <div>Style</div>
+                        <div>Output</div>
+                     </div>
+                     <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
+                        <div className="flex items-center gap-2"><Globe size={12}/> Spanish</div>
+                        <div className="text-yellow-400">Marketing</div>
+                        <div className="truncate">¡Descubre la magia ahora!</div>
+                     </div>
+                     <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
+                        <div className="flex items-center gap-2"><Globe size={12}/> French</div>
+                        <div className="text-yellow-400">Corporate</div>
+                        <div className="truncate">Nous vous prions d'agréer...</div>
+                     </div>
+                     <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
+                        <div className="flex items-center gap-2"><Globe size={12}/> Japanese</div>
+                        <div className="text-yellow-400">Slang</div>
+                        <div className="truncate">マジでヤバい！</div>
                      </div>
                   </div>
-
-                  <div className="order-1 lg:order-2">
-                    <div className="inline-block px-3 py-1 rounded bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider mb-4">
-                      Enterprise Workflow
-                    </div>
-                    <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-                      Localization for <br/><span className="text-gray-500">speed demons.</span>
-                    </h2>
-                    <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                      Don't waste hours copying and pasting. Buzztate is built for marketers and agencies who need results yesterday.
-                    </p>
-
-                    <ul className="space-y-6">
-                      <li className="flex gap-4">
-                         <div className="mt-1 bg-blue-500 rounded-full p-1 h-fit"><Layers size={12} className="text-black stroke-[3]" /></div>
-                         <div>
-                           <h4 className="font-bold text-white text-lg">Bulk Processing</h4>
-                           <p className="text-sm text-gray-500">Select 30+ languages and translate them all in a single click.</p>
-                         </div>
-                      </li>
-                      <li className="flex gap-4">
-                         <div className="mt-1 bg-blue-500 rounded-full p-1 h-fit"><FileText size={12} className="text-black stroke-[3]" /></div>
-                         <div>
-                           <h4 className="font-bold text-white text-lg">One-Click CSV Export</h4>
-                           <p className="text-sm text-gray-500">Get a neat spreadsheet ready for your dev team or marketing dashboard.</p>
-                         </div>
-                      </li>
-                    </ul>
+                  <div className="mt-6 flex justify-center">
+                     <button className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+                        <FileText size={16}/> Download CSV
+                     </button>
                   </div>
-                </div>
+               </div>
             </div>
 
             <div className="order-1 lg:order-2">
@@ -524,7 +494,6 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* 📧 Footer */}
       {/* 📧 Footer */}
       <footer className="w-full text-center py-12 border-t border-gray-900 mt-auto bg-black">
 
