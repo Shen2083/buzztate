@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, MessageSquare, Briefcase } from "lucide-react";
 import { useState } from "react";
 
 // Demo options
@@ -12,7 +12,7 @@ export default function Landing() {
   const [demoLoading, setDemoLoading] = useState(false);
   const [demoResults, setDemoResults] = useState<any[]>([]); // Array for multiple results
   const [demoVibe, setDemoVibe] = useState("Modern Slang");
-  const [demoSelectedLangs, setDemoSelectedLangs] = useState<string[]>(["Spanish", "French"]); // Default 2 langs
+  const [demoSelectedLangs, setDemoSelectedLangs] = useState<string[]>(["Spanish", "French"]); 
 
   const toggleDemoLang = (lang: string) => {
     if (demoSelectedLangs.includes(lang)) {
@@ -34,24 +34,19 @@ export default function Landing() {
     setDemoResults([]);
 
     try {
-      // ⚡ TRICK: We send parallel requests to bypass the "1 language per request" Free limit
-      // This makes the demo feel powerful without changing your backend logic.
       const requests = demoSelectedLangs.map(lang => 
         fetch("/api/translate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: demoText,
-            target_languages: [lang], // Request 1 at a time
+            target_languages: [lang], 
             style: demoVibe,
-            // No userId = Anonymous/Free
           }),
         }).then(res => res.json())
       );
 
       const responses = await Promise.all(requests);
-
-      // Combine all results
       const combinedResults = responses
         .flatMap(r => r.results || [])
         .filter(Boolean);
@@ -106,8 +101,6 @@ export default function Landing() {
 
           {/* Widget Controls Header */}
           <div className="bg-gray-800/50 px-6 py-4 border-b border-gray-800 flex flex-col md:flex-row gap-4 justify-between items-center z-10 relative">
-
-             {/* Vibe Selector */}
              <div className="flex items-center gap-3">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                   <Wand2 size={12} className="text-yellow-400"/> Vibe:
@@ -120,8 +113,6 @@ export default function Landing() {
                   {DEMO_VIBES.map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
              </div>
-
-             {/* Language Pills */}
              <div className="flex items-center gap-2 flex-wrap justify-center">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-2">Target:</span>
                 {DEMO_LANGS.map(lang => (
@@ -205,10 +196,9 @@ export default function Landing() {
             </button>
           </div>
         </div>
-
       </div>
 
-      {/* ✅ Features Grid (Restored Tiles View) */}
+      {/* ✅ FEATURES SECTION 1: The Core Grid */}
       <div className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="p-8 rounded-2xl bg-black border border-gray-800 hover:border-gray-700 transition-colors group">
@@ -233,6 +223,144 @@ export default function Landing() {
             <p className="text-gray-400 leading-relaxed">Your data is processed securely via HTTPS and never used for training without permission.</p>
           </div>
         </div>
+      </div>
+
+      {/* 🚀 NEW: DETAILED FEATURE SPOTLIGHTS */}
+      <div className="w-full bg-black py-24">
+
+        {/* Spotlight 1: Vibe Engine */}
+        <div className="max-w-7xl mx-auto px-6 mb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <div className="inline-block px-3 py-1 rounded bg-yellow-400/10 text-yellow-400 text-xs font-bold uppercase tracking-wider mb-4">
+                Beyond Literal Translation
+              </div>
+              <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
+                Stop sounding like a <br/><span className="text-gray-500">textbook robot.</span>
+              </h2>
+              <p className="text-xl text-gray-400 mb-8 leading-relaxed">
+                Standard translators ignore context. Buzztate preserves your "Brand Voice" even when switching languages.
+              </p>
+
+              <ul className="space-y-6">
+                <li className="flex gap-4">
+                   <div className="mt-1 bg-yellow-400 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
+                   <div>
+                     <h4 className="font-bold text-white text-lg">7 Distinct Vibes</h4>
+                     <p className="text-sm text-gray-500">From "Gen Z Influencer" to "Angry New Yorker" to "C-Suite Executive".</p>
+                   </div>
+                </li>
+                <li className="flex gap-4">
+                   <div className="mt-1 bg-yellow-400 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
+                   <div>
+                     <h4 className="font-bold text-white text-lg">Cultural Nuance Check</h4>
+                     <p className="text-sm text-gray-500">Our AI explains the <em>literal</em> meaning of the slang so you don't accidentally offend anyone.</p>
+                   </div>
+                </li>
+              </ul>
+            </div>
+
+            {/* Visual for Vibe */}
+            <div className="relative">
+               <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-2xl blur opacity-20"></div>
+               <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
+                  {/* Message 1 */}
+                  <div className="flex gap-4 mb-6 opacity-50">
+                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center"><Globe size={20} /></div>
+                    <div className="bg-gray-800 p-4 rounded-xl rounded-tl-none max-w-sm">
+                       <p className="text-xs text-gray-500 uppercase font-bold mb-1">Standard Translator</p>
+                       <p className="text-gray-400">"Hello, how are you doing today?"</p>
+                    </div>
+                  </div>
+                  {/* Message 2 */}
+                  <div className="flex gap-4 justify-end">
+                    <div className="bg-yellow-400 p-4 rounded-xl rounded-tr-none max-w-sm">
+                       <p className="text-xs text-black/50 uppercase font-bold mb-1">Buzztate (Gen Z Vibe)</p>
+                       <p className="text-black font-bold">"Yo bestie, what's the tea today? ✨"</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center"><Sparkles size={20} className="text-black"/></div>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Spotlight 2: Workflow */}
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Visual for Workflow (Order swapped on large screens) */}
+            <div className="order-2 lg:order-1 relative">
+               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20"></div>
+               <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
+                  <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
+                     <div className="flex gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                     </div>
+                     <div className="text-xs text-gray-500 font-mono">export_2025.csv</div>
+                  </div>
+                  <div className="space-y-3 font-mono text-sm">
+                     <div className="grid grid-cols-3 text-gray-500 text-xs uppercase font-bold">
+                        <div>Language</div>
+                        <div>Style</div>
+                        <div>Output</div>
+                     </div>
+                     <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
+                        <div className="flex items-center gap-2"><Globe size={12}/> Spanish</div>
+                        <div className="text-yellow-400">Marketing</div>
+                        <div className="truncate">¡Descubre la magia ahora!</div>
+                     </div>
+                     <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
+                        <div className="flex items-center gap-2"><Globe size={12}/> French</div>
+                        <div className="text-yellow-400">Corporate</div>
+                        <div className="truncate">Nous vous prions d'agréer...</div>
+                     </div>
+                     <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
+                        <div className="flex items-center gap-2"><Globe size={12}/> Japanese</div>
+                        <div className="text-yellow-400">Slang</div>
+                        <div className="truncate">マジでヤバい！</div>
+                     </div>
+                  </div>
+                  <div className="mt-6 flex justify-center">
+                     <button className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+                        <FileText size={16}/> Download CSV
+                     </button>
+                  </div>
+               </div>
+            </div>
+
+            <div className="order-1 lg:order-2">
+              <div className="inline-block px-3 py-1 rounded bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider mb-4">
+                Enterprise Workflow
+              </div>
+              <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
+                Localization for <br/><span className="text-gray-500">speed demons.</span>
+              </h2>
+              <p className="text-xl text-gray-400 mb-8 leading-relaxed">
+                Don't waste hours copying and pasting. Buzztate is built for marketers and agencies who need results yesterday.
+              </p>
+
+              <ul className="space-y-6">
+                <li className="flex gap-4">
+                   <div className="mt-1 bg-blue-500 rounded-full p-1 h-fit"><Layers size={12} className="text-black stroke-[3]" /></div>
+                   <div>
+                     <h4 className="font-bold text-white text-lg">Bulk Processing</h4>
+                     <p className="text-sm text-gray-500">Select 30+ languages and translate them all in a single click.</p>
+                   </div>
+                </li>
+                <li className="flex gap-4">
+                   <div className="mt-1 bg-blue-500 rounded-full p-1 h-fit"><FileText size={12} className="text-black stroke-[3]" /></div>
+                   <div>
+                     <h4 className="font-bold text-white text-lg">One-Click CSV Export</h4>
+                     <p className="text-sm text-gray-500">Get a neat spreadsheet ready for your dev team or marketing dashboard.</p>
+                   </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* SEO Content Section */}
