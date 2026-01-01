@@ -429,7 +429,6 @@ export default function Landing() {
                     </ul>
                   </div>
                 </div>
-              </div>
             </div>
 
             <div className="order-1 lg:order-2">
