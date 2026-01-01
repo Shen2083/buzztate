@@ -1,9 +1,17 @@
 import { Link } from "wouter";
-import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, MessageSquare, Briefcase } from "lucide-react";
+import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers } from "lucide-react";
 import { useState } from "react";
 
-// Demo options
-const DEMO_VIBES = ["Modern Slang", "Professional / Corporate", "Marketing Copy", "Angry New Yorker"];
+// ✅ UPDATED: All 7 Vibes are available
+const DEMO_VIBES = [
+  "Modern Slang", 
+  "Professional / Corporate", 
+  "Gen Z Influencer", 
+  "App Store Description", 
+  "Marketing Copy", 
+  "Romantic Poet", 
+  "Angry New Yorker"
+];
 const DEMO_LANGS = ["Spanish", "French", "German", "Japanese", "Italian", "Chinese"];
 
 export default function Landing() {
