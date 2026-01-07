@@ -13,7 +13,6 @@ const DEMO_VIBES = [
   "Angry New Yorker"
 ];
 
-// ✅ UPDATED: Languages List
 const DEMO_LANGS = ["Spanish", "French", "German", "Japanese", "Italian", "Chinese", "Arabic"];
 
 export default function Landing() {
@@ -159,8 +158,8 @@ export default function Landing() {
              </div>
 
              {/* ✅ UPDATED: Scrollable Language List with Custom Arabic Button */}
-             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto mask-linear-gradient pb-2 md:pb-0">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 sticky left-0 bg-gray-800/50 md:bg-transparent pl-2 md:pl-0 z-10">Target:</span>
+             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto pb-2 md:pb-0">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 sticky left-0 bg-gray-800/90 md:bg-transparent pl-2 md:pl-0 z-10">Target:</span>
                 <div className="flex items-center gap-2 pr-4">
                   {DEMO_LANGS.map(lang => (
                     <button
