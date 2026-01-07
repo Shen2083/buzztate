@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot } from "lucide-react";
+import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot, ChevronDown, Mail, MessageSquare } from "lucide-react";
 import { useState } from "react";
 
 // ✅ All 7 Vibes for Demo
@@ -23,6 +23,10 @@ export default function Landing() {
   const [demoResults, setDemoResults] = useState<any[]>([]); 
   const [demoVibe, setDemoVibe] = useState("Modern Slang");
   const [demoSelectedLangs, setDemoSelectedLangs] = useState<string[]>(["Spanish", "French"]); 
+
+  // --- CONTACT FORM STATE ---
+  const [contactName, setContactName] = useState("");
+  const [contactMsg, setContactMsg] = useState("");
 
   const toggleDemoLang = (lang: string) => {
     if (demoSelectedLangs.includes(lang)) {
@@ -68,6 +72,16 @@ export default function Landing() {
       alert("Demo limit reached. Please sign up!");
     }
     setDemoLoading(false);
+  };
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactName || !contactMsg) return alert("Please fill in all fields");
+
+    // Construct Mailto Link
+    const subject = `Buzztate Inquiry from ${contactName}`;
+    const body = `${contactMsg}\n\n---\nSent via Buzztate Landing Page`;
+    window.location.href = `mailto:teamz@buzztate.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
   // -------------------------
 
@@ -241,7 +255,7 @@ export default function Landing() {
       {/* 🚀 DETAILED FEATURE SPOTLIGHTS */}
       <div className="w-full bg-black py-24">
 
-        {/* Spotlight 1: Vibe Engine (Text Left, Visual Right) */}
+        {/* Spotlight 1: Vibe Engine */}
         <div className="max-w-7xl mx-auto px-6 mb-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
@@ -298,7 +312,7 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* 🚀 NEW SPOTLIGHT: Smart AI (Pro Model) (Visual Left, Text Right) */}
+        {/* 🚀 NEW SPOTLIGHT: Smart AI (Pro Model) */}
         <div className="max-w-7xl mx-auto px-6 mb-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Visual for Smart AI */}
@@ -360,7 +374,7 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Spotlight 3: Workflow (Text Left, Visual Right) */}
+        {/* Spotlight 3: Workflow */}
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Visual for Workflow */}
@@ -438,6 +452,49 @@ export default function Landing() {
 
       </div>
 
+      {/* ✅ NEW: FAQ SECTION */}
+      <div className="max-w-4xl mx-auto px-6 py-20 border-b border-gray-900">
+        <h2 className="text-3xl font-bold mb-10 text-center">Frequently Asked Questions</h2>
+        <div className="space-y-4">
+           {/* Q1 */}
+           <div className="bg-gray-900/50 rounded-xl overflow-hidden border border-gray-800">
+             <details className="group">
+                <summary className="flex justify-between items-center p-6 cursor-pointer list-none">
+                   <span className="font-bold text-lg">How is this different from Google Translate?</span>
+                   <span className="transition group-open:rotate-180"><ChevronDown /></span>
+                </summary>
+                <div className="px-6 pb-6 text-gray-400 leading-relaxed">
+                   Google Translate focuses on literal word-for-word translation, which often sounds robotic or loses meaning. Buzztate's <strong>Vibe Engine</strong> understands context, slang, and tone, ensuring your message lands correctly in any culture.
+                </div>
+             </details>
+           </div>
+           {/* Q2 */}
+           <div className="bg-gray-900/50 rounded-xl overflow-hidden border border-gray-800">
+             <details className="group">
+                <summary className="flex justify-between items-center p-6 cursor-pointer list-none">
+                   <span className="font-bold text-lg">Is it free to use?</span>
+                   <span className="transition group-open:rotate-180"><ChevronDown /></span>
+                </summary>
+                <div className="px-6 pb-6 text-gray-400 leading-relaxed">
+                   Yes! You can use the Starter plan for free to translate shorter texts. For unlimited languages, bulk processing, and CSV exports, you can upgrade to the Pro plan for just $10/mo.
+                </div>
+             </details>
+           </div>
+           {/* Q3 */}
+           <div className="bg-gray-900/50 rounded-xl overflow-hidden border border-gray-800">
+             <details className="group">
+                <summary className="flex justify-between items-center p-6 cursor-pointer list-none">
+                   <span className="font-bold text-lg">Is my data secure?</span>
+                   <span className="transition group-open:rotate-180"><ChevronDown /></span>
+                </summary>
+                <div className="px-6 pb-6 text-gray-400 leading-relaxed">
+                   Absolutely. We use enterprise-grade encryption for all data transmission. We do not store your translated content permanently, and we never use your data to train our public models without permission.
+                </div>
+             </details>
+           </div>
+        </div>
+      </div>
+
       {/* SEO Content Section */}
       <div className="max-w-4xl mx-auto px-6 py-20 text-center border-b border-gray-900">
         <h2 className="text-3xl font-bold mb-6">How to Translate into Multiple Languages at Once</h2>
@@ -498,42 +555,62 @@ export default function Landing() {
         </div>
       </div>
 
+      {/* ✅ NEW: CONTACT FORM SECTION */}
+      <div className="bg-gray-900 py-24 border-t border-gray-800" id="contact">
+         <div className="max-w-3xl mx-auto px-6 text-center">
+            <h2 className="text-3xl font-bold mb-4">Get in Touch</h2>
+            <p className="text-gray-400 mb-10">Have questions about Enterprise plans or custom integrations?</p>
+
+            <form onSubmit={handleContactSubmit} className="bg-black p-8 rounded-2xl border border-gray-800 text-left space-y-4 shadow-xl">
+               <div>
+                  <label className="text-xs font-bold uppercase text-gray-500 mb-2 block">Your Name</label>
+                  <input 
+                    type="text" 
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    placeholder="John Doe"
+                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none"
+                  />
+               </div>
+               <div>
+                  <label className="text-xs font-bold uppercase text-gray-500 mb-2 block">Message</label>
+                  <textarea 
+                    value={contactMsg}
+                    onChange={(e) => setContactMsg(e.target.value)}
+                    placeholder="I'm interested in the API access..."
+                    rows={4}
+                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none resize-none"
+                  />
+               </div>
+               <button type="submit" className="w-full bg-white hover:bg-gray-200 text-black font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                  <Mail size={18}/> Send Message
+               </button>
+            </form>
+         </div>
+      </div>
+
       {/* 📧 Footer */}
       <footer className="w-full text-center py-12 border-t border-gray-900 mt-auto bg-black">
 
-        {/* Expanded Popular Languages Section */}
+        {/* Expanded Popular Languages Section (SEO Backlinks) */}
         <div className="max-w-7xl mx-auto px-6 mb-12">
             <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Popular Language Translators</span>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
-                <Link href="/translate/spanish" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
-                  Spanish
-                </Link>
-                <Link href="/translate/french" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
-                  French
-                </Link>
-                <Link href="/translate/german" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
-                  German
-                </Link>
-                <Link href="/translate/japanese" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
-                  Japanese
-                </Link>
-                <Link href="/translate/italian" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
-                  Italian
-                </Link>
-                <Link href="/translate/chinese" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium">
-                  Chinese
-                </Link>
-                {/* Added a few more for a fuller look, you can remove them if you like */}
-                <Link href="/translate/portuguese" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium hidden md:block">
-                  Portuguese
-                </Link>
-                <Link href="/translate/russian" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium hidden md:block">
-                  Russian
-                </Link>
-                 {/* ✅ Added Arabic link */}
-                <Link href="/translate/arabic" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium hidden md:block">
-                  Arabic
-                </Link>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 text-center">
+                <Link href="/translate/spanish" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Spanish Translator</Link>
+                <Link href="/translate/french" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">French Translator</Link>
+                <Link href="/translate/german" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">German Translator</Link>
+                <Link href="/translate/japanese" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Japanese Translator</Link>
+                <Link href="/translate/italian" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Italian Translator</Link>
+                <Link href="/translate/chinese" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Chinese Translator</Link>
+                <Link href="/translate/arabic" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Arabic Translator</Link>
+                <Link href="/translate/portuguese" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Portuguese Translator</Link>
+                <Link href="/translate/russian" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Russian Translator</Link>
+                <Link href="/translate/hindi" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Hindi Translator</Link>
+                <Link href="/translate/korean" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Korean Translator</Link>
+                <Link href="/translate/dutch" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Dutch Translator</Link>
+                <Link href="/translate/turkish" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Turkish Translator</Link>
+                <Link href="/translate/polish" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Polish Translator</Link>
+                <Link href="/translate/swedish" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Swedish Translator</Link>
             </div>
         </div>
 
