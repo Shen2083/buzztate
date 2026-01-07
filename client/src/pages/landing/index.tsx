@@ -13,7 +13,8 @@ const DEMO_VIBES = [
   "Angry New Yorker"
 ];
 
-const DEMO_LANGS = ["Spanish", "French", "German", "Japanese", "Italian", "Chinese"];
+// ✅ UPDATED: Added "Arabic" to the list
+const DEMO_LANGS = ["Spanish", "French", "German", "Japanese", "Italian", "Chinese", "Arabic"];
 
 export default function Landing() {
   // --- ADVANCED DEMO STATE ---
@@ -83,7 +84,6 @@ export default function Landing() {
               <span className="font-bold text-xl tracking-tight">Buzztate</span>
             </div>
           </Link>
-
           <div className="flex items-center gap-4">
             <Link href="/auth?mode=login" className="text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors">
               Log In
@@ -529,6 +529,10 @@ export default function Landing() {
                 </Link>
                 <Link href="/translate/russian" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium hidden md:block">
                   Russian
+                </Link>
+                 {/* ✅ Added Arabic link */}
+                <Link href="/translate/arabic" className="bg-gray-900 hover:bg-yellow-400 hover:text-black text-gray-300 text-sm py-3 px-4 rounded-lg transition-all font-medium hidden md:block">
+                  Arabic
                 </Link>
             </div>
         </div>
