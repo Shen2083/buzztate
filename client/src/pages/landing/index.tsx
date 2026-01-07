@@ -535,9 +535,9 @@ export default function Landing() {
       <div className="max-w-4xl mx-auto px-6 py-20 text-center border-b border-gray-900">
         <h2 className="text-3xl font-bold mb-6">How to Translate into Multiple Languages at Once</h2>
         <p className="text-gray-400 text-lg leading-relaxed mb-8">
-          Most translators force you to copy-paste text one language at a time. 
-          <strong>Buzztate</strong> is different. Our AI engine allows you to 
-          <span className="text-white font-bold"> translate into multiple languages at once</span> 
+          Most translators force you to copy-paste text one language at a time.{' '} 
+          <strong>Buzztate</strong> is different. Our AI engine allows you to{' '} 
+          <span className="text-white font-bold">translate into multiple languages at once</span>{' '}
           with a single click.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md mx-auto mt-10">
