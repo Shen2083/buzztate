@@ -13,7 +13,6 @@ const DEMO_VIBES = [
   "Angry New Yorker"
 ];
 
-// ✅ UPDATED: Added "Arabic" to the list
 const DEMO_LANGS = ["Spanish", "French", "German", "Japanese", "Italian", "Chinese", "Arabic"];
 
 export default function Landing() {
@@ -83,6 +82,14 @@ export default function Landing() {
     const body = `${contactMsg}\n\n---\nSent via Buzztate Landing Page`;
     window.location.href = `mailto:teamz@buzztate.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
+
+  // Helper for smooth scrolling
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   // -------------------------
 
   return (
@@ -98,6 +105,15 @@ export default function Landing() {
               <span className="font-bold text-xl tracking-tight">Buzztate</span>
             </div>
           </Link>
+
+          {/* ✅ NEW CENTER NAVIGATION (Hidden on mobile) */}
+          <div className="hidden md:flex items-center gap-8">
+             <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Features</button>
+             <button onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</button>
+             <button onClick={() => scrollToSection('faq')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">FAQ</button>
+             <button onClick={() => scrollToSection('contact')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Contact Us</button>
+          </div>
+
           <div className="flex items-center gap-4">
             <Link href="/auth?mode=login" className="text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors">
               Log In
@@ -226,7 +242,7 @@ export default function Landing() {
       </div>
 
       {/* ✅ FEATURES SECTION 1: The Core Grid */}
-      <div className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
+      <div id="features" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="p-8 rounded-2xl bg-black border border-gray-800 hover:border-gray-700 transition-colors group">
             <div className="w-12 h-12 bg-yellow-400/10 rounded-full flex items-center justify-center mb-6 text-yellow-400 group-hover:scale-110 transition-transform">
@@ -452,8 +468,8 @@ export default function Landing() {
 
       </div>
 
-      {/* ✅ NEW: FAQ SECTION */}
-      <div className="max-w-4xl mx-auto px-6 py-20 border-b border-gray-900">
+      {/* ✅ FAQ SECTION */}
+      <div id="faq" className="max-w-4xl mx-auto px-6 py-20 border-b border-gray-900">
         <h2 className="text-3xl font-bold mb-10 text-center">Frequently Asked Questions</h2>
         <div className="space-y-4">
            {/* Q1 */}
@@ -521,7 +537,7 @@ export default function Landing() {
       </div>
 
       {/* Pricing Section */}
-      <div className="max-w-5xl mx-auto px-6 py-32 w-full">
+      <div id="pricing" className="max-w-5xl mx-auto px-6 py-32 w-full">
         <h2 className="text-4xl font-bold text-center mb-16">Simple Pricing</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Free Tier */}
@@ -555,8 +571,8 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ✅ NEW: CONTACT FORM SECTION */}
-      <div className="bg-gray-900 py-24 border-t border-gray-800" id="contact">
+      {/* ✅ CONTACT FORM SECTION */}
+      <div id="contact" className="bg-gray-900 py-24 border-t border-gray-800">
          <div className="max-w-3xl mx-auto px-6 text-center">
             <h2 className="text-3xl font-bold mb-4">Get in Touch</h2>
             <p className="text-gray-400 mb-10">Have questions about Enterprise plans or custom integrations?</p>
