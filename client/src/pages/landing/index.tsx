@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot, ChevronDown, Mail, MessageSquare } from "lucide-react";
+import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot, ChevronDown, Mail } from "lucide-react";
 import { useState } from "react";
 
 // ✅ All 7 Vibes for Demo
@@ -106,11 +106,11 @@ export default function Landing() {
             </div>
           </Link>
 
-          {/* ✅ NEW CENTER NAVIGATION (Hidden on mobile) */}
+          {/* ✅ UPDATED ORDER: Features -> FAQ -> Pricing -> Contact */}
           <div className="hidden md:flex items-center gap-8">
              <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Features</button>
-             <button onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</button>
              <button onClick={() => scrollToSection('faq')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">FAQ</button>
+             <button onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</button>
              <button onClick={() => scrollToSection('contact')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Contact Us</button>
           </div>
 
@@ -468,7 +468,7 @@ export default function Landing() {
 
       </div>
 
-      {/* ✅ FAQ SECTION */}
+      {/* ✅ FAQ SECTION (MOVED UP) */}
       <div id="faq" className="max-w-4xl mx-auto px-6 py-20 border-b border-gray-900">
         <h2 className="text-3xl font-bold mb-10 text-center">Frequently Asked Questions</h2>
         <div className="space-y-4">
@@ -536,7 +536,7 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Pricing Section */}
+      {/* Pricing Section (MOVED DOWN) */}
       <div id="pricing" className="max-w-5xl mx-auto px-6 py-32 w-full">
         <h2 className="text-4xl font-bold text-center mb-16">Simple Pricing</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
