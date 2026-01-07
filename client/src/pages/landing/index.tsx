@@ -356,8 +356,9 @@ export default function Landing() {
                   <div className="flex flex-col gap-6">
                      <div className="bg-black/50 p-4 rounded-xl border border-gray-800 opacity-50">
                         <div className="flex justify-between mb-2">
+                           {/* ✅ UPDATED: Changed GPT-3.5 to Basic AI */}
                            <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1"><Bot size={10}/> Standard Model</span>
-                           <span className="text-[10px] text-gray-600">GPT-3.5</span>
+                           <span className="text-[10px] text-gray-600">Basic AI</span>
                         </div>
                         <p className="text-gray-400 text-sm italic">"The cat is out of the bag."</p>
                         <p className="text-gray-500 text-sm mt-1">↓ "El gato está fuera de la bolsa."</p>
@@ -366,8 +367,9 @@ export default function Landing() {
 
                      <div className="bg-gradient-to-r from-yellow-400/10 to-orange-400/10 p-4 rounded-xl border border-yellow-400/30">
                         <div className="flex justify-between mb-2">
+                           {/* ✅ UPDATED: Changed GPT-4o to Smart AI */}
                            <span className="text-[10px] font-bold text-yellow-400 uppercase flex items-center gap-1"><BrainCircuit size={10}/> Pro Model</span>
-                           <span className="text-[10px] text-yellow-400">GPT-4o</span>
+                           <span className="text-[10px] text-yellow-400">Smart AI</span>
                         </div>
                         <p className="text-white text-sm italic">"The cat is out of the bag."</p>
                         <p className="text-white text-sm mt-1">↓ "Se descubrió el pastel."</p>
@@ -385,7 +387,8 @@ export default function Landing() {
                 Smarter AI understands <br/><span className="text-gray-500">idioms & irony.</span>
               </h2>
               <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                Unlock the power of <strong>GPT-4o</strong> with Buzztate Pro. It doesn't just translate words; it understands deep cultural context.
+                {/* ✅ UPDATED: Changed GPT-4o to Smart AI */}
+                Unlock the power of <strong>Smart AI</strong> with Buzztate Pro. It doesn't just translate words; it understands deep cultural context.
               </p>
 
               <ul className="space-y-6">
