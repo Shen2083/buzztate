@@ -13,6 +13,7 @@ const DEMO_VIBES = [
   "Angry New Yorker"
 ];
 
+// ✅ UPDATED: Languages List
 const DEMO_LANGS = ["Spanish", "French", "German", "Japanese", "Italian", "Chinese", "Arabic"];
 
 export default function Landing() {
@@ -106,7 +107,7 @@ export default function Landing() {
             </div>
           </Link>
 
-          {/* ✅ UPDATED ORDER: Features -> FAQ -> Pricing -> Contact */}
+          {/* ✅ NAVIGATION LINKS */}
           <div className="hidden md:flex items-center gap-8">
              <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Features</button>
              <button onClick={() => scrollToSection('faq')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">FAQ</button>
@@ -144,7 +145,7 @@ export default function Landing() {
 
           {/* Widget Controls Header */}
           <div className="bg-gray-800/50 px-6 py-4 border-b border-gray-800 flex flex-col md:flex-row gap-4 justify-between items-center z-10 relative">
-             <div className="flex items-center gap-3">
+             <div className="flex items-center gap-3 shrink-0">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                   <Wand2 size={12} className="text-yellow-400"/> Vibe:
                 </span>
@@ -156,21 +157,36 @@ export default function Landing() {
                   {DEMO_VIBES.map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
              </div>
-             <div className="flex items-center gap-2 flex-wrap justify-center">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-2">Target:</span>
-                {DEMO_LANGS.map(lang => (
-                  <button
-                    key={lang}
-                    onClick={() => toggleDemoLang(lang)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
-                      demoSelectedLangs.includes(lang) 
-                      ? "bg-yellow-400 text-black border-yellow-400 font-bold" 
-                      : "bg-black/50 text-gray-400 border-gray-700 hover:border-gray-500"
-                    }`}
-                  >
-                    {lang}
-                  </button>
-                ))}
+
+             {/* ✅ UPDATED: Scrollable Language List with Custom Arabic Button */}
+             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto mask-linear-gradient pb-2 md:pb-0">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 sticky left-0 bg-gray-800/50 md:bg-transparent pl-2 md:pl-0 z-10">Target:</span>
+                <div className="flex items-center gap-2 pr-4">
+                  {DEMO_LANGS.map(lang => (
+                    <button
+                      key={lang}
+                      onClick={() => toggleDemoLang(lang)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                        demoSelectedLangs.includes(lang) 
+                        ? "bg-yellow-400 text-black border-yellow-400 font-bold" 
+                        : "bg-black/50 text-gray-400 border-gray-700 hover:border-gray-500"
+                      }`}
+                    >
+                      {lang === "Arabic" ? (
+                        <>
+                          <span>Arabic</span>
+                          <span className="opacity-70 font-normal">(العربية)</span>
+                          {/* NEW Badge for Arabic */}
+                          {!demoSelectedLangs.includes(lang) && (
+                             <span className="bg-yellow-500 text-black text-[8px] font-extrabold px-1 rounded ml-1 animate-pulse">NEW</span>
+                          )}
+                        </>
+                      ) : (
+                        lang
+                      )}
+                    </button>
+                  ))}
+                </div>
              </div>
           </div>
 
@@ -207,7 +223,10 @@ export default function Landing() {
                            </span>
                            <span className="text-[10px] text-gray-600 uppercase border border-gray-800 px-1.5 rounded">{demoVibe}</span>
                         </div>
-                        <p className="text-white text-lg font-medium leading-relaxed mb-3">"{res.translation}"</p>
+                        {/* ✅ Better RTL Support for Arabic */}
+                        <p className={`text-white text-lg font-medium leading-relaxed mb-3 ${res.language === "Arabic" ? "text-right font-serif" : "text-left"}`}>
+                          "{res.translation}"
+                        </p>
                         <p className="text-xs text-gray-500 italic border-t border-gray-800 pt-2">Meaning: "{res.reality_check}"</p>
                      </div>
                    ))}
@@ -466,9 +485,7 @@ export default function Landing() {
           </div>
         </div>
 
-      </div>
-
-      {/* ✅ FAQ SECTION (MOVED UP) */}
+      {/* ✅ FAQ SECTION */}
       <div id="faq" className="max-w-4xl mx-auto px-6 py-20 border-b border-gray-900">
         <h2 className="text-3xl font-bold mb-10 text-center">Frequently Asked Questions</h2>
         <div className="space-y-4">
@@ -536,7 +553,7 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Pricing Section (MOVED DOWN) */}
+      {/* Pricing Section */}
       <div id="pricing" className="max-w-5xl mx-auto px-6 py-32 w-full">
         <h2 className="text-4xl font-bold text-center mb-16">Simple Pricing</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
