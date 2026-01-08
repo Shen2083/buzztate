@@ -493,37 +493,37 @@ export default function Landing() {
         <h2 className="text-3xl font-bold mb-10 text-center">Frequently Asked Questions</h2>
         <div className="space-y-4">
            {/* Q1 */}
-           <div className="bg-gray-900/50 rounded-xl overflow-hidden border border-gray-800">
-             <details className="group">
-                <summary className="flex justify-between items-center p-6 cursor-pointer list-none">
+           <div className="bg-gray-900/50 rounded-xl border border-gray-800 transition-all duration-300 hover:border-gray-700">
+             <details className="group [&_summary::-webkit-details-marker]:hidden">
+                <summary className="flex justify-between items-center p-6 cursor-pointer select-none">
                    <span className="font-bold text-lg">How is this different from Google Translate?</span>
-                   <span className="transition group-open:rotate-180"><ChevronDown /></span>
+                   <span className="transition-transform duration-300 group-open:rotate-180 text-yellow-400"><ChevronDown /></span>
                 </summary>
-                <div className="px-6 pb-6 text-gray-400 leading-relaxed">
+                <div className="px-6 pb-6 text-gray-400 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-300">
                    Google Translate focuses on literal word-for-word translation, which often sounds robotic or loses meaning. Buzztate's <strong>Vibe Engine</strong> understands context, slang, and tone, ensuring your message lands correctly in any culture.
                 </div>
              </details>
            </div>
            {/* Q2 */}
-           <div className="bg-gray-900/50 rounded-xl overflow-hidden border border-gray-800">
-             <details className="group">
-                <summary className="flex justify-between items-center p-6 cursor-pointer list-none">
+           <div className="bg-gray-900/50 rounded-xl border border-gray-800 transition-all duration-300 hover:border-gray-700">
+             <details className="group [&_summary::-webkit-details-marker]:hidden">
+                <summary className="flex justify-between items-center p-6 cursor-pointer select-none">
                    <span className="font-bold text-lg">Is it free to use?</span>
-                   <span className="transition group-open:rotate-180"><ChevronDown /></span>
+                   <span className="transition-transform duration-300 group-open:rotate-180 text-yellow-400"><ChevronDown /></span>
                 </summary>
-                <div className="px-6 pb-6 text-gray-400 leading-relaxed">
+                <div className="px-6 pb-6 text-gray-400 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-300">
                    Yes! You can use the Starter plan for free to translate shorter texts. For unlimited languages, bulk processing, and CSV exports, you can upgrade to the Pro plan for just $10/mo.
                 </div>
              </details>
            </div>
            {/* Q3 */}
-           <div className="bg-gray-900/50 rounded-xl overflow-hidden border border-gray-800">
-             <details className="group">
-                <summary className="flex justify-between items-center p-6 cursor-pointer list-none">
+           <div className="bg-gray-900/50 rounded-xl border border-gray-800 transition-all duration-300 hover:border-gray-700">
+             <details className="group [&_summary::-webkit-details-marker]:hidden">
+                <summary className="flex justify-between items-center p-6 cursor-pointer select-none">
                    <span className="font-bold text-lg">Is my data secure?</span>
-                   <span className="transition group-open:rotate-180"><ChevronDown /></span>
+                   <span className="transition-transform duration-300 group-open:rotate-180 text-yellow-400"><ChevronDown /></span>
                 </summary>
-                <div className="px-6 pb-6 text-gray-400 leading-relaxed">
+                <div className="px-6 pb-6 text-gray-400 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-300">
                    Absolutely. We use enterprise-grade encryption for all data transmission. We do not store your translated content permanently, and we never use your data to train our public models without permission.
                 </div>
              </details>
