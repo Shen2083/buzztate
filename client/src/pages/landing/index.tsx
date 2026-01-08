@@ -15,6 +15,22 @@ const DEMO_VIBES = [
 
 const DEMO_LANGS = ["Spanish", "French", "German", "Japanese", "Italian", "Chinese", "Arabic"];
 
+// ✅ FAQ Data Structure
+const FAQS = [
+  {
+    question: "How is this different from Google Translate?",
+    answer: "Google Translate focuses on literal word-for-word translation, which often sounds robotic or loses meaning. Buzztate's Vibe Engine understands context, slang, and tone, ensuring your message lands correctly in any culture."
+  },
+  {
+    question: "Is it free to use?",
+    answer: "Yes! You can use the Starter plan for free to translate shorter texts. For unlimited languages, bulk processing, and CSV exports, you can upgrade to the Pro plan for just $10/mo."
+  },
+  {
+    question: "Is my data secure?",
+    answer: "Absolutely. We use enterprise-grade encryption for all data transmission. We do not store your translated content permanently, and we never use your data to train our public models without permission."
+  }
+];
+
 export default function Landing() {
   // --- ADVANCED DEMO STATE ---
   const [demoText, setDemoText] = useState("");
@@ -26,6 +42,13 @@ export default function Landing() {
   // --- CONTACT FORM STATE ---
   const [contactName, setContactName] = useState("");
   const [contactMsg, setContactMsg] = useState("");
+
+  // --- FAQ STATE ---
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
+  const toggleFaq = (index: number) => {
+    setOpenFaqIndex(openFaqIndex === index ? null : index);
+  };
 
   const toggleDemoLang = (lang: string) => {
     if (demoSelectedLangs.includes(lang)) {
@@ -488,46 +511,36 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ✅ FAQ SECTION */}
+      {/* ✅ REFACTORED FAQ SECTION: Smooth React State Animation */}
       <div id="faq" className="max-w-4xl mx-auto px-6 py-20 border-b border-gray-900">
         <h2 className="text-3xl font-bold mb-10 text-center">Frequently Asked Questions</h2>
         <div className="space-y-4">
-           {/* Q1 */}
-           <div className="bg-gray-900/50 rounded-xl border border-gray-800 transition-all duration-300 hover:border-gray-700">
-             <details className="group [&_summary::-webkit-details-marker]:hidden">
-                <summary className="flex justify-between items-center p-6 cursor-pointer select-none">
-                   <span className="font-bold text-lg">How is this different from Google Translate?</span>
-                   <span className="transition-transform duration-300 group-open:rotate-180 text-yellow-400"><ChevronDown /></span>
-                </summary>
-                <div className="px-6 pb-6 text-gray-400 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-300">
-                   Google Translate focuses on literal word-for-word translation, which often sounds robotic or loses meaning. Buzztate's <strong>Vibe Engine</strong> understands context, slang, and tone, ensuring your message lands correctly in any culture.
-                </div>
-             </details>
-           </div>
-           {/* Q2 */}
-           <div className="bg-gray-900/50 rounded-xl border border-gray-800 transition-all duration-300 hover:border-gray-700">
-             <details className="group [&_summary::-webkit-details-marker]:hidden">
-                <summary className="flex justify-between items-center p-6 cursor-pointer select-none">
-                   <span className="font-bold text-lg">Is it free to use?</span>
-                   <span className="transition-transform duration-300 group-open:rotate-180 text-yellow-400"><ChevronDown /></span>
-                </summary>
-                <div className="px-6 pb-6 text-gray-400 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-300">
-                   Yes! You can use the Starter plan for free to translate shorter texts. For unlimited languages, bulk processing, and CSV exports, you can upgrade to the Pro plan for just $10/mo.
-                </div>
-             </details>
-           </div>
-           {/* Q3 */}
-           <div className="bg-gray-900/50 rounded-xl border border-gray-800 transition-all duration-300 hover:border-gray-700">
-             <details className="group [&_summary::-webkit-details-marker]:hidden">
-                <summary className="flex justify-between items-center p-6 cursor-pointer select-none">
-                   <span className="font-bold text-lg">Is my data secure?</span>
-                   <span className="transition-transform duration-300 group-open:rotate-180 text-yellow-400"><ChevronDown /></span>
-                </summary>
-                <div className="px-6 pb-6 text-gray-400 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-300">
-                   Absolutely. We use enterprise-grade encryption for all data transmission. We do not store your translated content permanently, and we never use your data to train our public models without permission.
-                </div>
-             </details>
-           </div>
+           {FAQS.map((faq, index) => {
+             const isOpen = openFaqIndex === index;
+             return (
+               <div key={index} className="bg-gray-900/50 rounded-xl border border-gray-800 transition-all duration-300 hover:border-gray-700">
+                 <button 
+                   onClick={() => toggleFaq(index)}
+                   className="w-full flex justify-between items-center p-6 text-left cursor-pointer focus:outline-none"
+                 >
+                    <span className="font-bold text-lg">{faq.question}</span>
+                    <span className={`transition-transform duration-300 text-yellow-400 ${isOpen ? 'rotate-180' : ''}`}>
+                      <ChevronDown />
+                    </span>
+                 </button>
+
+                 {/* The "Grid Trick" for smooth auto-height animation */}
+                 <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                    <div className="overflow-hidden">
+                       <div className="px-6 pb-6 text-gray-400 leading-relaxed">
+                          {/* Render HTML content safely if needed, or just text */}
+                          <span dangerouslySetInnerHTML={{ __html: faq.answer }} />
+                       </div>
+                    </div>
+                 </div>
+               </div>
+             );
+           })}
         </div>
       </div>
 
