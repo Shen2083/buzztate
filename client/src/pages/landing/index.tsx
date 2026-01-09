@@ -13,7 +13,6 @@ const DEMO_VIBES = [
   "Angry New Yorker"
 ];
 
-// ✅ Languages
 const DEMO_LANGS = ["English", "Spanish", "French", "German", "Japanese", "Italian", "Chinese", "Arabic"];
 
 // ✅ FAQ Data Structure
@@ -118,6 +117,16 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-yellow-400 selection:text-black flex flex-col">
+      {/* ✅ CSS Hack to hide scrollbars cross-browser */}
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
 
       {/* Navigation */}
       <nav className="w-full border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
@@ -181,12 +190,12 @@ export default function Landing() {
                 </select>
              </div>
 
-             {/* ✅ FIXED: Decoupled Label & Scroll Container */}
-             <div className="flex items-center gap-3 w-full md:w-auto min-w-0 overflow-hidden">
+             {/* ✅ FIXED: Clean layout with no scrollbar overlap */}
+             <div className="flex items-center gap-4 w-full md:w-auto min-w-0 overflow-hidden">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 whitespace-nowrap">
                   Output:
                 </span>
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full">
+                <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar w-full py-1">
                   {DEMO_LANGS.map(lang => (
                     <button
                       key={lang}
