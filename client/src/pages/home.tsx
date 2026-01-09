@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Search, ChevronDown, Check, Zap, Lock, Globe, History, Layout, Clock, Copy, LogOut } from "lucide-react"; 
 import { supabase } from "@/lib/supabase";
 
+// ✅ UPDATED: Added "English" to the top of the list
 const ALL_LANGUAGES = [
-  "Spanish", "French", "German", "Japanese", "Italian", "Portuguese", 
+  "English", "Spanish", "French", "German", "Japanese", "Italian", "Portuguese", 
   "Chinese (Simplified)", "Chinese (Traditional)", "Korean", "Russian",
   "Arabic", "Hindi", "Dutch", "Turkish", "Polish", "Swedish", "Danish",
   "Norwegian", "Finnish", "Greek", "Hebrew", "Thai", "Vietnamese",
@@ -24,6 +25,7 @@ export default function Home({ session }: { session: any }) {
   const [activeTab, setActiveTab] = useState("create"); // 'create' | 'history'
   const [inputText, setInputText] = useState("");
   const [style, setStyle] = useState("Modern Slang");
+  // Defaulting to Spanish, but user can now uncheck it and pick English
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Spanish"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
@@ -91,7 +93,7 @@ export default function Home({ session }: { session: any }) {
     setCheckoutLoading(false);
   };
 
-  // 4. HANDLE LOGOUT (New!)
+  // 4. HANDLE LOGOUT
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/"; // Redirect to landing page
@@ -204,7 +206,7 @@ export default function Home({ session }: { session: any }) {
                 {checkoutLoading ? "..." : (isPro ? "Manage Subscription" : "Upgrade to Pro ($10)")}
               </button>
 
-              {/* 🚪 LOGOUT BUTTON (Added Here) */}
+              {/* 🚪 LOGOUT BUTTON */}
               <button 
                 onClick={handleLogout}
                 className="text-gray-500 hover:text-white transition-colors"
@@ -254,7 +256,8 @@ export default function Home({ session }: { session: any }) {
                 </div>
                 <textarea
                   className="w-full h-full bg-transparent p-6 text-xl text-gray-200 placeholder-gray-600 outline-none resize-none flex-grow leading-relaxed font-light"
-                  placeholder={isPro ? "Paste your text here..." : "Paste your text here (Free Plan: 1 language at a time)..."}
+                  // ✅ UPDATED PLACEHOLDER to reflect multilingual capability
+                  placeholder={isPro ? "Paste text in any language here..." : "Paste text in any language here (Free Plan: 1 language at a time)..."}
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                 />
@@ -303,7 +306,7 @@ export default function Home({ session }: { session: any }) {
                       <div className="sticky top-0 bg-black/90 backdrop-blur z-10 p-2 border-b border-gray-800 flex justify-between">
                         <button onClick={selectAllFiltered} className="text-[10px] uppercase font-bold tracking-wide text-gray-400 hover:text-white">Select All</button>
                         <button onClick={() => setSelectedLanguages([])} className="text-[10px] text-gray-500 hover:text-red-400 uppercase font-bold tracking-wide">Clear</button>
-                     </div>
+                      </div>
                     {filteredLanguages.map((lang) => (
                       <button
                         key={lang}
