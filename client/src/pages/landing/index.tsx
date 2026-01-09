@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot, ChevronDown, Mail } from "lucide-react";
+import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot, ChevronDown, Mail, Languages } from "lucide-react";
 import { useState } from "react";
 
 // ✅ All 7 Vibes for Demo
@@ -13,10 +13,15 @@ const DEMO_VIBES = [
   "Angry New Yorker"
 ];
 
-const DEMO_LANGS = ["Spanish", "French", "German", "Japanese", "Italian", "Chinese", "Arabic"];
+// ✅ Languages
+const DEMO_LANGS = ["English", "Spanish", "French", "German", "Japanese", "Italian", "Chinese", "Arabic"];
 
 // ✅ FAQ Data Structure
 const FAQS = [
+  {
+    question: "Can I translate from other languages into English?",
+    answer: "Yes! This is one of our most popular features. You can paste text in Spanish, Arabic, or Chinese, and Buzztate will rewrite it into perfect 'Native English' with the specific vibe you choose (e.g., Corporate or Slang)."
+  },
   {
     question: "How is this different from Google Translate?",
     answer: "Google Translate focuses on literal word-for-word translation, which often sounds robotic or loses meaning. Buzztate's Vibe Engine understands context, slang, and tone, ensuring your message lands correctly in any culture."
@@ -24,10 +29,6 @@ const FAQS = [
   {
     question: "Is it free to use?",
     answer: "Yes! You can use the Starter plan for free to translate shorter texts. For unlimited languages, bulk processing, and CSV exports, you can upgrade to the Pro plan for just $10/mo."
-  },
-  {
-    question: "Is my data secure?",
-    answer: "Absolutely. We use enterprise-grade encryption for all data transmission. We do not store your translated content permanently, and we never use your data to train our public models without permission."
   }
 ];
 
@@ -37,7 +38,7 @@ export default function Landing() {
   const [demoLoading, setDemoLoading] = useState(false);
   const [demoResults, setDemoResults] = useState<any[]>([]); 
   const [demoVibe, setDemoVibe] = useState("Modern Slang");
-  const [demoSelectedLangs, setDemoSelectedLangs] = useState<string[]>(["Spanish", "French"]); 
+  const [demoSelectedLangs, setDemoSelectedLangs] = useState<string[]>(["English"]); 
 
   // --- CONTACT FORM STATE ---
   const [contactName, setContactName] = useState("");
@@ -158,7 +159,7 @@ export default function Landing() {
           <span className="text-yellow-400">Localize the Vibe.</span>
         </h1>
         <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-          The AI engine that adapts your content into Gen Z Slang, Corporate Speak, or Marketing Copy instantly.
+          The AI engine that rewrites your content into Gen Z Slang, Corporate Speak, or perfect Native English instantly.
         </p>
 
         {/* 🚀 LIVE DEMO WIDGET */}
@@ -167,28 +168,30 @@ export default function Landing() {
 
           {/* Widget Controls Header */}
           <div className="bg-gray-800/50 px-6 py-4 border-b border-gray-800 flex flex-col md:flex-row gap-4 justify-between items-center z-10 relative">
-             <div className="flex items-center gap-3 shrink-0">
+             <div className="flex items-center gap-3 shrink-0 w-full md:w-auto">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                   <Wand2 size={12} className="text-yellow-400"/> Vibe:
                 </span>
                 <select 
                   value={demoVibe}
                   onChange={(e) => setDemoVibe(e.target.value)}
-                  className="bg-black border border-gray-700 text-white text-sm rounded-lg px-3 py-1.5 focus:border-yellow-400 outline-none cursor-pointer"
+                  className="bg-black border border-gray-700 text-white text-sm rounded-lg px-3 py-1.5 focus:border-yellow-400 outline-none cursor-pointer w-full md:w-auto"
                 >
                   {DEMO_VIBES.map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
              </div>
 
-             {/* ✅ UPDATED: Scrollable Language List with Custom Arabic Button */}
-             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto pb-2 md:pb-0">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 sticky left-0 bg-gray-800/90 md:bg-transparent pl-2 md:pl-0 z-10">Target:</span>
-                <div className="flex items-center gap-2 pr-4">
+             {/* ✅ FIXED: Decoupled Label & Scroll Container */}
+             <div className="flex items-center gap-3 w-full md:w-auto min-w-0 overflow-hidden">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 whitespace-nowrap">
+                  Output:
+                </span>
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full">
                   {DEMO_LANGS.map(lang => (
                     <button
                       key={lang}
                       onClick={() => toggleDemoLang(lang)}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                         demoSelectedLangs.includes(lang) 
                         ? "bg-yellow-400 text-black border-yellow-400 font-bold" 
                         : "bg-black/50 text-gray-400 border-gray-700 hover:border-gray-500"
@@ -198,10 +201,6 @@ export default function Landing() {
                         <>
                           <span>Arabic</span>
                           <span className="opacity-70 font-normal">(العربية)</span>
-                          {/* NEW Badge for Arabic */}
-                          {!demoSelectedLangs.includes(lang) && (
-                             <span className="bg-yellow-500 text-black text-[8px] font-extrabold px-1 rounded ml-1 animate-pulse">NEW</span>
-                          )}
                         </>
                       ) : (
                         lang
@@ -217,7 +216,8 @@ export default function Landing() {
             <div className="p-6 flex flex-col border-b md:border-b-0 md:border-r border-gray-800 bg-black/40 relative">
                <textarea 
                  className="w-full flex-grow bg-transparent outline-none text-lg resize-none placeholder-gray-600 font-light leading-relaxed"
-                 placeholder="Paste your text here... (e.g. 'Hey team, just checking in on the status of the project.')"
+                 // ✅ UPDATED PLACEHOLDER
+                 placeholder="Paste text in any language here (e.g. Spanish, Arabic, Chinese)..."
                  value={demoText}
                  onChange={(e) => setDemoText(e.target.value)}
                  maxLength={280}
@@ -262,7 +262,7 @@ export default function Landing() {
                ) : (
                  <div className="h-full flex flex-col items-center justify-center text-gray-600 opacity-40">
                    <Sparkles size={48} className="mb-4" />
-                   <p className="text-sm font-medium">Select languages & click translate</p>
+                   <p className="text-sm font-medium">Select output language & click translate</p>
                  </div>
                )}
             </div>
@@ -289,8 +289,8 @@ export default function Landing() {
             <div className="w-12 h-12 bg-yellow-400/10 rounded-full flex items-center justify-center mb-6 text-yellow-400 group-hover:scale-110 transition-transform">
               <Globe size={24} />
             </div>
-            <h3 className="text-xl font-bold mb-3">Mass Localization</h3>
-            <p className="text-gray-400 leading-relaxed">One input. 30+ global outputs. Scale your content instantly without copy-pasting 50 times.</p>
+            <h3 className="text-xl font-bold mb-3">Global to Local</h3>
+            <p className="text-gray-400 leading-relaxed">Translate from English to 30+ languages, OR from any language into perfect English.</p>
           </div>
           <div className="p-8 rounded-2xl bg-black border border-gray-800 hover:border-gray-700 transition-colors group">
             <div className="w-12 h-12 bg-yellow-400/10 rounded-full flex items-center justify-center mb-6 text-yellow-400 group-hover:scale-110 transition-transform">
@@ -369,7 +369,7 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* 🚀 NEW SPOTLIGHT: Smart AI (Pro Model) */}
+        {/* 🚀 NEW SPOTLIGHT: Perfect English (Reverse Translation) */}
         <div className="max-w-7xl mx-auto px-6 mb-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Visual for Smart AI */}
@@ -379,24 +379,19 @@ export default function Landing() {
                   <div className="flex flex-col gap-6">
                      <div className="bg-black/50 p-4 rounded-xl border border-gray-800 opacity-50">
                         <div className="flex justify-between mb-2">
-                           {/* ✅ UPDATED: Changed GPT-3.5 to Basic AI */}
-                           <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1"><Bot size={10}/> Standard Model</span>
-                           <span className="text-[10px] text-gray-600">Basic AI</span>
+                           <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1"><Languages size={10}/> Input (Spanish)</span>
                         </div>
-                        <p className="text-gray-400 text-sm italic">"The cat is out of the bag."</p>
-                        <p className="text-gray-500 text-sm mt-1">↓ "El gato está fuera de la bolsa."</p>
-                        <p className="text-[10px] text-red-400 mt-2 font-bold uppercase tracking-wider">❌ Literal translation (Lost meaning)</p>
+                        <p className="text-gray-400 text-sm italic">"Me gustaría agendar una reunión."</p>
+                        <p className="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-wider">Target: Corporate English</p>
                      </div>
 
                      <div className="bg-gradient-to-r from-yellow-400/10 to-orange-400/10 p-4 rounded-xl border border-yellow-400/30">
                         <div className="flex justify-between mb-2">
-                           {/* ✅ UPDATED: Changed GPT-4o to Smart AI */}
-                           <span className="text-[10px] font-bold text-yellow-400 uppercase flex items-center gap-1"><BrainCircuit size={10}/> Pro Model</span>
+                           <span className="text-[10px] font-bold text-yellow-400 uppercase flex items-center gap-1"><BrainCircuit size={10}/> Output</span>
                            <span className="text-[10px] text-yellow-400">Smart AI</span>
                         </div>
-                        <p className="text-white text-sm italic">"The cat is out of the bag."</p>
-                        <p className="text-white text-sm mt-1">↓ "Se descubrió el pastel."</p>
-                        <p className="text-[10px] text-green-400 mt-2 font-bold uppercase tracking-wider">✅ Correct cultural idiom</p>
+                        <p className="text-white text-sm italic">"I'd like to schedule a brief touchbase."</p>
+                        <p className="text-[10px] text-green-400 mt-2 font-bold uppercase tracking-wider">✅ Perfect Native Tone</p>
                      </div>
                   </div>
                </div>
@@ -404,29 +399,28 @@ export default function Landing() {
 
             <div className="order-1 lg:order-2">
               <div className="inline-block px-3 py-1 rounded bg-pink-500/10 text-pink-400 text-xs font-bold uppercase tracking-wider mb-4">
-                Intelligence Upgrade
+                Perfect English
               </div>
               <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-                Smarter AI understands <br/><span className="text-gray-500">idioms & irony.</span>
+                Not a native speaker? <br/><span className="text-gray-500">No problem.</span>
               </h2>
               <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                {/* ✅ UPDATED: Changed GPT-4o to Smart AI */}
-                Unlock the power of <strong>Smart AI</strong> with Buzztate Pro. It doesn't just translate words; it understands deep cultural context.
+                Unlock the power of <strong>Smart AI</strong> to polish your English. Write in your native language, and let Buzztate translate it into perfect, idiomatic English.
               </p>
 
               <ul className="space-y-6">
                 <li className="flex gap-4">
                    <div className="mt-1 bg-pink-500 rounded-full p-1 h-fit"><BrainCircuit size={12} className="text-black stroke-[3]" /></div>
                    <div>
-                     <h4 className="font-bold text-white text-lg">Idiom Detection</h4>
-                     <p className="text-sm text-gray-500">Automatically converts metaphors like "break a leg" into the correct local equivalent.</p>
+                     <h4 className="font-bold text-white text-lg">Fix Broken Grammar</h4>
+                     <p className="text-sm text-gray-500">Automatically corrects sentence structure to sound natural, not translated.</p>
                    </div>
                 </li>
                 <li className="flex gap-4">
                    <div className="mt-1 bg-pink-500 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
                    <div>
-                     <h4 className="font-bold text-white text-lg">Complex Grammar</h4>
-                     <p className="text-sm text-gray-500">Perfect handling of formal vs. informal pronouns (e.g., 'Tu' vs 'Usted').</p>
+                     <h4 className="font-bold text-white text-lg">Choose Your Persona</h4>
+                     <p className="text-sm text-gray-500">Sound like a C-Suite executive in emails, or a cool creator on social media.</p>
                    </div>
                 </li>
               </ul>
