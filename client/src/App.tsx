@@ -10,30 +10,39 @@ import Home from "@/pages/home";
 import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth";
-import LanguageLanding from "@/pages/landing/LanguageLanding"; // 👈 New Import
+import LanguageLanding from "@/pages/landing/LanguageLanding"; // ✅ Make sure this file exists!
 
 function Router() {
   const [session, setSession] = useState<any>(null);
   const [location, setLocation] = useLocation();
+  const [loading, setLoading] = useState(true); // Added loading state to prevent flash
 
+  // 1. Handle Auth Session & Subscriptions
   useEffect(() => {
-    // 1. Get initial session
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      setLoading(false);
     });
 
-    // 2. Listen for changes (Login/Logout)
+    // Listen for changes (Login/Logout)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      // Redirect to app if logged in, or landing if logged out
-      // (Optional: You can remove the location check if you want purely protected routes)
-      if (session && location === "/auth") setLocation("/app");
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // 2. Handle Redirects (Separated for stability)
+  useEffect(() => {
+    if (!loading && session && location === "/auth") {
+      setLocation("/app"); // Kick logged-in users out of Auth page
+    }
+  }, [session, location, loading, setLocation]);
+
+  if (loading) return null; // Or a loading spinner
 
   return (
     <Switch>

@@ -1,4 +1,4 @@
-import type { Express, Request } from "express";
+import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
@@ -50,8 +50,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
         ],
         mode: "subscription",
-        metadata: { userId: userId }, // ✅ Critical for webhook matching
-        success_url: `${req.headers.origin}/home?payment=success`,
+        metadata: { userId: userId },
+        // ✅ NEW: We pass the session_id to the URL so the frontend can grab it
+        success_url: `${req.headers.origin}/home?payment=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/home`,
       });
 
@@ -63,16 +64,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ---------------------------------------------------------
-  // 2. STRIPE PORTAL
+  // 2. MANUAL VERIFICATION ENDPOINT (The Webhook Alternative)
+  // ---------------------------------------------------------
+  app.post("/api/verify-payment", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      const stripe = getStripe();
+      const supabase = getSupabaseAdmin();
+
+      if (!stripe || !supabase) return res.status(500).json({ error: "Server Config Error" });
+      if (!sessionId) return res.status(400).json({ error: "Missing Session ID" });
+
+      // 1. Retrieve the session from Stripe to verify it's real
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+      // 2. Check if it's paid
+      if (session.payment_status === "paid") {
+        const userId = session.metadata?.userId;
+        const customerId = session.customer as string;
+
+        if (userId) {
+          // 3. Update Database
+          await supabase.from("profiles").update({ 
+            is_pro: true,
+            stripe_customer_id: customerId,
+            updated_at: new Date().toISOString()
+          }).eq("id", userId);
+
+          return res.json({ success: true, message: "Upgraded to Pro" });
+        }
+      }
+
+      res.json({ success: false, message: "Payment not complete" });
+
+    } catch (error: any) {
+      console.error("Verification Error:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ---------------------------------------------------------
+  // 3. STRIPE PORTAL
   // ---------------------------------------------------------
   app.post("/api/portal", async (req, res) => {
     try {
       const stripe = getStripe();
       const supabase = getSupabaseAdmin();
-      if (!stripe || !supabase) throw new Error("Server Misconfigured");
-
       const userId = req.headers["x-user-id"];
+
       if (!userId || typeof userId !== "string") return res.status(401).json({ error: "Unauthorized" });
+      if (!stripe || !supabase) throw new Error("Server Misconfigured");
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -92,100 +133,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ url: session.url });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ---------------------------------------------------------
-  // 3. WEBHOOK HANDLER (No-Crash Version)
-  // ---------------------------------------------------------
-  app.post("/api/webhook", async (req: Request, res) => {
-    console.log("🔔 Webhook Hit: Starting Process...");
-
-    // SAFETY WRAPPER: Prevents 500 crashes from stopping the response
-    try {
-        const signature = req.headers["stripe-signature"];
-        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-        const stripe = getStripe();
-        const supabase = getSupabaseAdmin();
-
-        // 1. Config Check
-        if (!stripe || !supabase || !webhookSecret) {
-            console.error("❌ Critical Config Missing in Webhook");
-            // Return 200 to Stripe so it stops retrying (since it's a code error)
-            return res.json({ received: true, status: "config_missing" });
-        }
-
-        let event: Stripe.Event;
-
-        // 2. Body Parser Conflict Fix
-        // Vercel/Express often parses JSON automatically. Stripe needs Raw.
-        // We try to reconstruct it or use it as is.
-        try {
-            const payload = req.body;
-
-            if (Buffer.isBuffer(payload)) {
-                // Perfect scenario: It's a buffer
-                event = stripe.webhooks.constructEvent(payload, signature!, webhookSecret);
-            } else if (typeof payload === 'object') {
-                // Fallback: It's already JSON. 
-                // We SKIP strict signature verification here to prevent the crash.
-                // In production, you'd want 'raw-body' middleware, but this fixes the immediate blocker.
-                console.log("⚠️ Body already parsed. Trusting payload structure.");
-                event = payload as Stripe.Event;
-            } else {
-                throw new Error("Unknown body format");
-            }
-        } catch (err: any) {
-            console.error(`⚠️ Signature/Body Error: ${err.message}`);
-            return res.status(400).send(`Webhook Error: ${err.message}`);
-        }
-
-        console.log(`✅ Event Type: ${event.type}`);
-
-        // 3. Handle Events
-        if (event.type === "checkout.session.completed") {
-            const session = event.data.object as Stripe.Checkout.Session;
-            const userId = session.metadata?.userId;
-            const customerId = session.customer as string;
-
-            if (userId) {
-                console.log(`💰 Processing Upgrade for User: ${userId}`);
-
-                const { error } = await supabase
-                    .from("profiles")
-                    .update({ 
-                        is_pro: true,
-                        stripe_customer_id: customerId,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq("id", userId);
-
-                if (error) {
-                    console.error("❌ Supabase Update Error:", error);
-                } else {
-                    console.log("✅ Supabase Profile Updated to PRO");
-                }
-            } else {
-                console.warn("⚠️ User ID missing in session metadata");
-            }
-        }
-
-        if (event.type === "customer.subscription.deleted") {
-            const subscription = event.data.object as Stripe.Subscription;
-            await supabase
-                .from("profiles")
-                .update({ is_pro: false })
-                .eq("stripe_customer_id", subscription.customer);
-            console.log("📉 User Downgraded");
-        }
-
-        // Always return 200 OK to Stripe so they mark it as "Delivered"
-        res.json({ received: true });
-
-    } catch (err: any) {
-        console.error("🔥 UNHANDLED CRASH:", err.message);
-        // Return 200 to stop retries, but log the error
-        res.status(200).json({ error: "Internal Logic Error", details: err.message });
     }
   });
 
