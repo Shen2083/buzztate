@@ -4,16 +4,26 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import express from 'express';
 
-// Initialize Stripe (Safe Init)
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-01-27.acacia", 
-});
+// Helper to get Stripe instance safely
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("Missing STRIPE_SECRET_KEY");
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-01-27.acacia", 
+  });
+};
 
-// Initialize Supabase Admin (Safe Init)
-// We use the Service Role Key to bypass RLS and update the user profile
-const supabaseUrl = process.env.SUPABASE_URL || "";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+// Helper to get Supabase Admin instance safely (Lazy Init)
+const getSupabaseAdmin = () => {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    throw new Error(`Missing Supabase Credentials. URL: ${!!url}, Key: ${!!key}`);
+  }
+  return createClient(url, key);
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -22,9 +32,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ---------------------------------------------------------
   app.post("/api/checkout", async (req, res) => {
     try {
-      if (!process.env.STRIPE_SECRET_KEY) throw new Error("Missing STRIPE_SECRET_KEY");
-
+      const stripe = getStripe();
       const userId = req.headers["x-user-id"];
+
       if (!userId || typeof userId !== "string") {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -49,7 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
         mode: "subscription",
         metadata: {
-          userId: userId, // ✅ Critical for webhook matching
+          userId: userId, 
         },
         success_url: `${req.headers.origin}/home?payment=success`,
         cancel_url: `${req.headers.origin}/home`,
@@ -57,7 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ url: session.url });
     } catch (error: any) {
-      console.error("Stripe Checkout Error:", error);
+      console.error("Stripe Checkout Error:", error.message);
       res.status(500).json({ error: error.message });
     }
   });
@@ -67,9 +77,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ---------------------------------------------------------
   app.post("/api/portal", async (req, res) => {
     try {
-      if (!process.env.STRIPE_SECRET_KEY) throw new Error("Missing STRIPE_SECRET_KEY");
-
+      const stripe = getStripe();
+      const supabaseAdmin = getSupabaseAdmin();
       const userId = req.headers["x-user-id"];
+
       if (!userId || typeof userId !== "string") return res.status(401).json({ error: "Unauthorized" });
 
       const { data: profile } = await supabaseAdmin
@@ -94,52 +105,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ---------------------------------------------------------
-  // 3. WEBHOOK HANDLER (Robust Version)
+  // 3. WEBHOOK HANDLER
   // ---------------------------------------------------------
-  // We use express.raw to try and catch the buffer, but we add extra safety checks
   app.post(
     "/api/webhook",
+    // We try to get raw body. If it fails (already parsed), we handle it below.
     express.raw({ type: "application/json" }), 
     async (req, res) => {
-      const signature = req.headers["stripe-signature"];
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-      // 1. Validate Config
-      if (!webhookSecret) {
-        console.error("❌ STRIPE_WEBHOOK_SECRET is missing in env vars");
-        return res.status(500).send("Server Configuration Error");
-      }
-      if (!signature) {
-        console.error("❌ No stripe-signature header found");
-        return res.status(400).send("Webhook Error: Missing signature");
-      }
-
-      let event: Stripe.Event;
-
-      // 2. Construct Event (Handle Buffer vs JSON conflict)
-      try {
-        // If req.body is already a JSON object (parsed by global middleware), 
-        // we can't verify the signature easily. 
-        // Ideally, this route should be defined BEFORE any `app.use(express.json())`.
-        const body = Buffer.isBuffer(req.body) ? req.body : JSON.stringify(req.body);
-
-        // Note: JSON.stringify(req.body) is a fallback and might fail signature verification 
-        // if whitespace differs. Ideally, ensure `express.raw` works.
-
-        event = stripe.webhooks.constructEvent(
-          req.body, // Pass the raw body directly if possible
-          signature,
-          webhookSecret
-        );
-      } catch (err: any) {
-        console.error(`⚠️ Webhook signature verification failed: ${err.message}`);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-      }
-
-      console.log(`🔔 Webhook received: ${event.type}`);
+      console.log("🔔 Webhook hit!");
 
       try {
-        // ✅ HANDLE SUCCESSFUL PAYMENT
+        const signature = req.headers["stripe-signature"];
+        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+        const stripe = getStripe();
+        const supabaseAdmin = getSupabaseAdmin();
+
+        if (!signature || !webhookSecret) {
+          console.error("❌ Configuration Error: Missing signature or secret");
+          return res.status(400).send("Webhook Configuration Error");
+        }
+
+        let event: Stripe.Event;
+
+        // Vercel/Express Body Parsing Fix
+        // If req.body is a Buffer, use it. If it's already JSON, stringify it (fallback).
+        const payload = Buffer.isBuffer(req.body) ? req.body : JSON.stringify(req.body);
+
+        try {
+          event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+        } catch (err: any) {
+          console.error(`⚠️ Signature Verification Failed: ${err.message}`);
+          return res.status(400).send(`Webhook Error: ${err.message}`);
+        }
+
+        console.log(`✅ Event Received: ${event.type}`);
+
         if (event.type === "checkout.session.completed") {
           const session = event.data.object as Stripe.Checkout.Session;
           const userId = session.metadata?.userId;
@@ -147,7 +147,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           if (userId) {
             console.log(`💰 Upgrading User: ${userId}`);
-
             const { error } = await supabaseAdmin
               .from("profiles")
               .update({ 
@@ -158,33 +157,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .eq("id", userId);
 
             if (error) {
-              console.error("❌ Supabase Update Failed:", error);
-              // Do NOT return 500 here, or Stripe will retry indefinitely. 
-              // Log it and alert yourself.
-            } else {
-              console.log("✅ User upgraded to PRO successfully.");
-            }
+              console.error("❌ DB Update Failed:", error);
+              return res.status(500).send("Database Error");
+            } 
+            console.log("✅ User upgraded successfully.");
           } else {
-            console.warn("⚠️ No userId found in session metadata");
+            console.warn("⚠️ No User ID in metadata");
           }
-        }
-
-        // ✅ HANDLE CANCELLATION
-        if (event.type === "customer.subscription.deleted") {
-          const subscription = event.data.object as Stripe.Subscription;
-          const { error } = await supabaseAdmin
-              .from("profiles")
-              .update({ is_pro: false })
-              .eq("stripe_customer_id", subscription.customer);
-
-          if (!error) console.log("📉 Subscription deleted. User downgraded.");
         }
 
         res.json({ received: true });
 
       } catch (err: any) {
-        console.error("❌ Webhook Handler Logic Error:", err);
-        res.status(500).send("Server Error inside Webhook");
+        console.error("🔥 Critical Webhook Error:", err.message);
+        // Return 200 to Stripe so it stops retrying if it's a code error (prevent infinite loops)
+        // But log it loudly for you.
+        res.status(500).send(`Server Error: ${err.message}`);
       }
     }
   );
