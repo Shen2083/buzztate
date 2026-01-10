@@ -290,7 +290,7 @@ export default function Home({ session }: { session: any }) {
 
                 <div className="flex-grow flex flex-col">
                   <div className="flex justify-between items-center mb-3">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Markets</label>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Output Language</label>
                   </div>
                   <div className="relative mb-3">
                     <Search className="absolute left-3 top-2.5 text-gray-500" size={14} />
