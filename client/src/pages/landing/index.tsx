@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot, ChevronDown, Mail, Languages, RefreshCw } from "lucide-react";
+import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot, ChevronDown, Mail, Languages } from "lucide-react";
 import { useState } from "react";
 
 // ✅ All 7 Vibes for Demo
@@ -172,8 +172,8 @@ export default function Landing() {
           The AI engine that rewrites your content—even <strong>English to English</strong>—into Gen Z Slang, Corporate Speak, or Marketing Copy instantly.
         </p>
 
-        {/* 🚀 LIVE DEMO WIDGET */}
-        <div className="w-full max-w-4xl bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl overflow-hidden mb-20 relative group">
+        {/* 🚀 LIVE DEMO WIDGET (Added ID "demo" here) */}
+        <div id="demo" className="w-full max-w-4xl bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl overflow-hidden mb-20 relative group">
           <div className="absolute inset-0 bg-gradient-to-b from-yellow-400/5 to-transparent pointer-events-none" />
 
           {/* Widget Controls Header */}
@@ -650,12 +650,13 @@ export default function Landing() {
             <div>
                <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Go Global (Translate From English)</span>
                <ul className="space-y-3">
-                  <li><Link href="/translate/english-to-spanish" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Spanish</Link></li>
-                  <li><Link href="/translate/english-to-french" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to French</Link></li>
-                  <li><Link href="/translate/english-to-german" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to German</Link></li>
-                  <li><Link href="/translate/english-to-japanese" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Japanese</Link></li>
-                  <li><Link href="/translate/english-to-arabic" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Arabic</Link></li>
-                  <li><Link href="/translate/english-to-chinese" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Chinese</Link></li>
+                  {/* ✅ FIXED: Use standard anchor tags to scroll to Demo instead of 404 links */}
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Spanish</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to French</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to German</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Japanese</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Arabic</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Chinese</a></li>
                </ul>
             </div>
 
@@ -663,12 +664,12 @@ export default function Landing() {
             <div>
                <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Perfect English (Translate To English)</span>
                <ul className="space-y-3">
-                  <li><Link href="/translate/spanish-to-english" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Spanish to English</Link></li>
-                  <li><Link href="/translate/french-to-english" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">French to English</Link></li>
-                  <li><Link href="/translate/chinese-to-english" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Chinese to English</Link></li>
-                  <li><Link href="/translate/arabic-to-english" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Arabic to English</Link></li>
-                  <li><Link href="/tools/fix-grammar" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Fix English Grammar</Link></li>
-                  <li><Link href="/tools/native-rewriter" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Native Speaker Rewriter</Link></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Spanish to English</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">French to English</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Chinese to English</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Arabic to English</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Fix English Grammar</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Native Speaker Rewriter</a></li>
                </ul>
             </div>
 
@@ -676,12 +677,12 @@ export default function Landing() {
             <div>
                <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Vibe Converters (Any Language)</span>
                <ul className="space-y-3">
-                  <li><Link href="/vibe/formal-to-casual" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Formal to Casual Converter</Link></li>
-                  <li><Link href="/vibe/professional-email" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Professional Email Rewriter</Link></li>
-                  <li><Link href="/vibe/slang-translator" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Slang to Corporate Translator</Link></li>
-                  <li><Link href="/vibe/marketing-copy" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Marketing Copy Generator</Link></li>
-                  <li><Link href="/vibe/instagram-captions" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Viral Caption Creator</Link></li>
-                  <li><Link href="/vibe/rewrite-text" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Rewrite Text (Same Language)</Link></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Formal to Casual Converter</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Professional Email Rewriter</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Slang to Corporate Translator</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Marketing Copy Generator</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Viral Caption Creator</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Rewrite Text (Same Language)</a></li>
                </ul>
             </div>
         </div>
