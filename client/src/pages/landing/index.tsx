@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot, ChevronDown, Mail, Languages } from "lucide-react";
+import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot, ChevronDown, Mail, Languages, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 // ✅ All 7 Vibes for Demo
@@ -18,12 +18,12 @@ const DEMO_LANGS = ["English", "Spanish", "French", "German", "Japanese", "Itali
 // ✅ FAQ Data Structure
 const FAQS = [
   {
-    question: "Can I translate from other languages into English?",
-    answer: "Yes! This is one of our most popular features. You can paste text in Spanish, Arabic, or Chinese, and Buzztate will rewrite it into perfect 'Native English' with the specific vibe you choose (e.g., Corporate or Slang)."
+    question: "Can I rewrite English text into a different tone?",
+    answer: "Yes! You don't have to translate to a different language. You can select 'English' as both the input and output to simply change the vibe—for example, turning a messy rough draft into a polished 'Corporate' email."
   },
   {
-    question: "How is this different from Google Translate?",
-    answer: "Google Translate focuses on literal word-for-word translation, which often sounds robotic or loses meaning. Buzztate's Vibe Engine understands context, slang, and tone, ensuring your message lands correctly in any culture."
+    question: "Can I translate from other languages into English?",
+    answer: "Yes! You can paste text in Spanish, Arabic, or Chinese, and Buzztate will rewrite it into perfect 'Native English' with the specific vibe you choose."
   },
   {
     question: "Is it free to use?",
@@ -167,8 +167,9 @@ export default function Landing() {
           Don't just translate. <br />
           <span className="text-yellow-400">Localize the Vibe.</span>
         </h1>
+        {/* ✅ UPDATED HERO SUBTEXT */}
         <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-          The AI engine that rewrites your content into Gen Z Slang, Corporate Speak, or perfect Native English instantly.
+          The AI engine that rewrites your content—even <strong>English to English</strong>—into Gen Z Slang, Corporate Speak, or Marketing Copy instantly.
         </p>
 
         {/* 🚀 LIVE DEMO WIDGET */}
@@ -321,33 +322,33 @@ export default function Landing() {
       {/* 🚀 DETAILED FEATURE SPOTLIGHTS */}
       <div className="w-full bg-black py-24">
 
-        {/* Spotlight 1: Vibe Engine */}
+        {/* Spotlight 1: Vibe Engine (Intra-language focus) */}
         <div className="max-w-7xl mx-auto px-6 mb-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
               <div className="inline-block px-3 py-1 rounded bg-yellow-400/10 text-yellow-400 text-xs font-bold uppercase tracking-wider mb-4">
-                Beyond Literal Translation
+                Vibe Shifter
               </div>
               <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-                Stop sounding like a <br/><span className="text-gray-500">textbook robot.</span>
+                Change the tone, <br/><span className="text-gray-500">keep the language.</span>
               </h2>
               <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                Standard translators ignore context. Buzztate preserves your "Brand Voice" even when switching languages.
+                Need to turn a sloppy text into a corporate email? Or make a boring post go viral? Use Buzztate to rewrite text without translating.
               </p>
 
               <ul className="space-y-6">
                 <li className="flex gap-4">
                    <div className="mt-1 bg-yellow-400 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
                    <div>
-                     <h4 className="font-bold text-white text-lg">7 Distinct Vibes</h4>
-                     <p className="text-sm text-gray-500">From "Gen Z Influencer" to "Angry New Yorker" to "C-Suite Executive".</p>
+                     <h4 className="font-bold text-white text-lg">Formal ↔ Informal</h4>
+                     <p className="text-sm text-gray-500">Perfect for non-native speakers or anyone who needs to code-switch instantly.</p>
                    </div>
                 </li>
                 <li className="flex gap-4">
                    <div className="mt-1 bg-yellow-400 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
                    <div>
-                     <h4 className="font-bold text-white text-lg">Cultural Nuance Check</h4>
-                     <p className="text-sm text-gray-500">Our AI explains the <em>literal</em> meaning of the slang so you don't accidentally offend anyone.</p>
+                     <h4 className="font-bold text-white text-lg">7 Distinct Vibes</h4>
+                     <p className="text-sm text-gray-500">From "Gen Z Influencer" to "Angry New Yorker" to "C-Suite Executive".</p>
                    </div>
                 </li>
               </ul>
@@ -361,15 +362,15 @@ export default function Landing() {
                   <div className="flex gap-4 mb-6 opacity-50">
                     <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center"><Globe size={20} /></div>
                     <div className="bg-gray-800 p-4 rounded-xl rounded-tl-none max-w-sm">
-                       <p className="text-xs text-gray-500 uppercase font-bold mb-1">Standard Translator</p>
-                       <p className="text-gray-400">"Hello, how are you doing today?"</p>
+                       <p className="text-xs text-gray-500 uppercase font-bold mb-1">Input (English)</p>
+                       <p className="text-gray-400">"Hey boss, I ain't coming in today."</p>
                     </div>
                   </div>
                   {/* Message 2 */}
                   <div className="flex gap-4 justify-end">
                     <div className="bg-yellow-400 p-4 rounded-xl rounded-tr-none max-w-sm">
-                       <p className="text-xs text-black/50 uppercase font-bold mb-1">Buzztate (Gen Z Vibe)</p>
-                       <p className="text-black font-bold">"Yo bestie, what's the tea today? ✨"</p>
+                       <p className="text-xs text-black/50 uppercase font-bold mb-1">Output (Corporate)</p>
+                       <p className="text-black font-bold">"I am writing to inform you that I will be taking a personal day."</p>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center"><Sparkles size={20} className="text-black"/></div>
                   </div>
@@ -641,33 +642,52 @@ export default function Landing() {
          </div>
       </div>
 
-      {/* 📧 Footer */}
-      <footer className="w-full text-center py-12 border-t border-gray-900 mt-auto bg-black">
+      {/* 📧 REFACTORED FOOTER: 3-COLUMN SEO LAYOUT */}
+      <footer className="w-full py-16 border-t border-gray-900 mt-auto bg-black text-left">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
 
-        {/* Expanded Popular Languages Section (SEO Backlinks) */}
-        <div className="max-w-7xl mx-auto px-6 mb-12">
-            <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Popular Language Translators</span>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 text-center">
-                <Link href="/translate/spanish" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Spanish Translator</Link>
-                <Link href="/translate/french" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">French Translator</Link>
-                <Link href="/translate/german" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">German Translator</Link>
-                <Link href="/translate/japanese" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Japanese Translator</Link>
-                <Link href="/translate/italian" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Italian Translator</Link>
-                <Link href="/translate/chinese" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Chinese Translator</Link>
-                <Link href="/translate/arabic" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Arabic Translator</Link>
-                <Link href="/translate/portuguese" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Portuguese Translator</Link>
-                <Link href="/translate/russian" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Russian Translator</Link>
-                <Link href="/translate/hindi" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Hindi Translator</Link>
-                <Link href="/translate/korean" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Korean Translator</Link>
-                <Link href="/translate/dutch" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Dutch Translator</Link>
-                <Link href="/translate/turkish" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Turkish Translator</Link>
-                <Link href="/translate/polish" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Polish Translator</Link>
-                <Link href="/translate/swedish" className="text-gray-500 hover:text-yellow-400 text-sm py-2 transition-colors">Swedish Translator</Link>
+            {/* COLUMN 1: GO GLOBAL (OUTBOUND) */}
+            <div>
+               <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Go Global (Translate From English)</span>
+               <ul className="space-y-3">
+                  <li><Link href="/translate/english-to-spanish" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Spanish</Link></li>
+                  <li><Link href="/translate/english-to-french" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to French</Link></li>
+                  <li><Link href="/translate/english-to-german" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to German</Link></li>
+                  <li><Link href="/translate/english-to-japanese" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Japanese</Link></li>
+                  <li><Link href="/translate/english-to-arabic" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Arabic</Link></li>
+                  <li><Link href="/translate/english-to-chinese" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Chinese</Link></li>
+               </ul>
+            </div>
+
+            {/* COLUMN 2: PERFECT ENGLISH (INBOUND) */}
+            <div>
+               <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Perfect English (Translate To English)</span>
+               <ul className="space-y-3">
+                  <li><Link href="/translate/spanish-to-english" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Spanish to English</Link></li>
+                  <li><Link href="/translate/french-to-english" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">French to English</Link></li>
+                  <li><Link href="/translate/chinese-to-english" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Chinese to English</Link></li>
+                  <li><Link href="/translate/arabic-to-english" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Arabic to English</Link></li>
+                  <li><Link href="/tools/fix-grammar" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Fix English Grammar</Link></li>
+                  <li><Link href="/tools/native-rewriter" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Native Speaker Rewriter</Link></li>
+               </ul>
+            </div>
+
+            {/* COLUMN 3: VIBE TOOLS (INTRA-LANGUAGE) */}
+            <div>
+               <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Vibe Converters (Any Language)</span>
+               <ul className="space-y-3">
+                  <li><Link href="/vibe/formal-to-casual" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Formal to Casual Converter</Link></li>
+                  <li><Link href="/vibe/professional-email" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Professional Email Rewriter</Link></li>
+                  <li><Link href="/vibe/slang-translator" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Slang to Corporate Translator</Link></li>
+                  <li><Link href="/vibe/marketing-copy" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Marketing Copy Generator</Link></li>
+                  <li><Link href="/vibe/instagram-captions" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Viral Caption Creator</Link></li>
+                  <li><Link href="/vibe/rewrite-text" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Rewrite Text (Same Language)</Link></li>
+               </ul>
             </div>
         </div>
 
         {/* Contact & Copyright */}
-        <div className="border-t border-gray-900 pt-8">
+        <div className="border-t border-gray-900 pt-8 text-center">
             <p className="text-sm text-gray-500 mb-2">
             Need help? <a href="mailto:teamz@buzztate.com" className="text-yellow-400 hover:underline transition-colors">teamz@buzztate.com</a>
             </p>
