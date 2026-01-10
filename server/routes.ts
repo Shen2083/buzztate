@@ -103,7 +103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ---------------------------------------------------------
   // 3. WEBHOOK HANDLER (The Fix)
   // ---------------------------------------------------------
-  // Note: We need raw body for signature verification
+  // Note: We need raw body for signature verification. 
+  // This middleware ensures ONLY this route gets the raw buffer.
   app.post(
     "/api/webhook",
     express.raw({ type: "application/json" }), 
@@ -113,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!signature || !webhookSecret) {
         console.error("❌ Missing signature or webhook secret");
-        return res.status(400).send("Webhook Error");
+        return res.status(400).send("Webhook Error: Missing secret or signature");
       }
 
       let event: Stripe.Event;
@@ -157,7 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // ✅ HANDLE SUBSCRIPTION CANCELLATION (Optional but good practice)
+      // ✅ HANDLE SUBSCRIPTION CANCELLATION (Optional)
       if (event.type === "customer.subscription.deleted") {
         const subscription = event.data.object as Stripe.Subscription;
         // You'd need to lookup the user by customer_id here usually
