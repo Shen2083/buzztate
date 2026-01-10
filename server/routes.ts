@@ -1,205 +1,178 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import OpenAI from "openai";
-import { translateRequestSchema, type TranslationResult } from "@shared/schema";
+import Stripe from "stripe";
+import { createClient } from "@supabase/supabase-js";
+import express from 'express';
 
-// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-const openai = process.env.OPENAI_API_KEY 
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : null;
-
-function generateMockTranslations(
-  text: string, 
-  languages: string[], 
-  style: string
-): TranslationResult[] {
-  const mockTranslations: Record<string, Record<string, { translation: string; reality_check: string }>> = {
-    Spanish: {
-      "Modern Slang": { 
-        translation: "Eso está muy cool, no cap. La vibra es totalmente real, bro.",
-        reality_check: "That's very cool, no lie. The vibe is totally real, bro."
-      },
-      "Professional": {
-        translation: "Le informamos respetuosamente que su solicitud ha sido procesada con éxito.",
-        reality_check: "We respectfully inform you that your request has been processed successfully."
-      },
-      "Romantic": {
-        translation: "Mi corazón late solo por ti, mi amor eterno bajo las estrellas.",
-        reality_check: "My heart beats only for you, my eternal love under the stars."
-      },
-      "Angry New Yorker": {
-        translation: "¡Oye! ¿Qué te pasa? ¡Muévete, tengo prisa aquí!",
-        reality_check: "Hey! What's wrong with you? Move it, I'm in a hurry here!"
-      },
-      "Gen Z": {
-        translation: "Literal no puedo, esto es tan slay. Estoy muerto, sin cap fr fr.",
-        reality_check: "I literally can't, this is so slay. I'm dead, no lie for real for real."
-      }
-    },
-    French: {
-      "Modern Slang": {
-        translation: "C'est trop stylé, grave de ouf. La vibe est réelle, frère.",
-        reality_check: "It's too stylish, really crazy. The vibe is real, brother."
-      },
-      "Professional": {
-        translation: "Nous avons le plaisir de vous informer que votre demande a été traitée.",
-        reality_check: "We are pleased to inform you that your request has been processed."
-      },
-      "Romantic": {
-        translation: "Mon cœur ne bat que pour toi, mon amour éternel sous les étoiles.",
-        reality_check: "My heart beats only for you, my eternal love under the stars."
-      },
-      "Angry New Yorker": {
-        translation: "Hé toi! Tu fais quoi là? Bouge-toi, j'ai pas que ça à faire!",
-        reality_check: "Hey you! What are you doing there? Move it, I don't have all day!"
-      },
-      "Gen Z": {
-        translation: "Genre, c'est trop iconic. Je suis mort, c'est la vraie vie là.",
-        reality_check: "Like, it's too iconic. I'm dead, this is real life right here."
-      }
-    },
-    German: {
-      "Modern Slang": {
-        translation: "Das ist mega krass, kein Fake. Die Vibes sind total echt, Bruder.",
-        reality_check: "That's mega crazy, no fake. The vibes are totally real, brother."
-      },
-      "Professional": {
-        translation: "Wir freuen uns, Ihnen mitteilen zu können, dass Ihre Anfrage bearbeitet wurde.",
-        reality_check: "We are pleased to inform you that your request has been processed."
-      },
-      "Romantic": {
-        translation: "Mein Herz schlägt nur für dich, meine ewige Liebe unter den Sternen.",
-        reality_check: "My heart beats only for you, my eternal love under the stars."
-      },
-      "Angry New Yorker": {
-        translation: "Hey du! Was soll das? Beweg dich, ich hab's eilig hier!",
-        reality_check: "Hey you! What's this about? Move it, I'm in a hurry here!"
-      },
-      "Gen Z": {
-        translation: "Das ist so lit, ich kann nicht mehr. Null Cap, ist so real.",
-        reality_check: "That's so lit, I can't anymore. Zero cap, it's so real."
-      }
-    },
-    Japanese: {
-      "Modern Slang": {
-        translation: "マジでやばい、ガチで。バイブスがリアルすぎる、ブロ。",
-        reality_check: "Seriously crazy, for real. The vibes are too real, bro."
-      },
-      "Professional": {
-        translation: "お客様のご依頼は正常に処理されましたことをお知らせいたします。",
-        reality_check: "We inform you that your request has been processed successfully."
-      },
-      "Romantic": {
-        translation: "星空の下、永遠の愛を込めて、私の心はあなただけのもの。",
-        reality_check: "Under the starry sky, with eternal love, my heart belongs only to you."
-      },
-      "Angry New Yorker": {
-        translation: "おい！何やってんだ？早く動け、急いでんだよ！",
-        reality_check: "Hey! What are you doing? Move quickly, I'm in a hurry!"
-      },
-      "Gen Z": {
-        translation: "これマジで推せる。死んだわ、ガチでリアル。",
-        reality_check: "This is seriously stan-worthy. I'm dead, really real."
-      }
-    },
-    Portuguese: {
-      "Modern Slang": {
-        translation: "Isso tá muito sinistro, sem cap. A vibe é real demais, mano.",
-        reality_check: "That's very sinister (cool), no cap. The vibe is too real, bro."
-      },
-      "Professional": {
-        translation: "Temos o prazer de informar que sua solicitação foi processada com sucesso.",
-        reality_check: "We are pleased to inform you that your request has been processed successfully."
-      },
-      "Romantic": {
-        translation: "Meu coração bate só por você, meu amor eterno sob as estrelas.",
-        reality_check: "My heart beats only for you, my eternal love under the stars."
-      },
-      "Angry New Yorker": {
-        translation: "Ei você! Que que tá fazendo? Sai da frente, tô com pressa!",
-        reality_check: "Hey you! What are you doing? Get out of the way, I'm in a hurry!"
-      },
-      "Gen Z": {
-        translation: "Isso é muito paia... brincadeira, tá slay demais. Morri, sem cap.",
-        reality_check: "This is very lame... just kidding, it's too slay. I died, no cap."
-      }
-    }
-  };
-
-  return languages.map(lang => ({
-    language: lang,
-    translation: mockTranslations[lang]?.[style]?.translation || `[${style}] ${text} (in ${lang})`,
-    reality_check: mockTranslations[lang]?.[style]?.reality_check || `Literal back-translation of the ${lang} version`
-  }));
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("STRIPE_SECRET_KEY is missing");
 }
 
-export async function registerRoutes(
-  httpServer: Server,
-  app: Express
-): Promise<Server> {
-  
-  app.post("/api/translate", async (req, res) => {
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error("SUPABASE credentials are missing");
+}
+
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2025-01-27.acacia", 
+});
+
+// Initialize Supabase Admin (Bypasses RLS)
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+export async function registerRoutes(app: Express): Promise<Server> {
+
+  // ---------------------------------------------------------
+  // 1. CHECKOUT SESSION CREATION
+  // ---------------------------------------------------------
+  app.post("/api/checkout", async (req, res) => {
     try {
-      const parsed = translateRequestSchema.safeParse(req.body);
-      
-      if (!parsed.success) {
-        return res.status(400).json({ 
-          error: "Invalid request", 
-          details: parsed.error.errors 
-        });
+      const userId = req.headers["x-user-id"];
+
+      if (!userId || typeof userId !== "string") {
+        return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const { text, target_languages, style } = parsed.data;
-
-      if (!openai) {
-        const mockResults = generateMockTranslations(text, target_languages, style);
-        return res.json({ results: mockResults });
-      }
-
-      const systemPrompt = `Translate the text into the target languages using the specific style. Return a JSON object containing an array of results. Each result must have 'language', 'translation', and 'reality_check' (a literal English back-translation).
-
-Style to use: ${style}
-Target languages: ${target_languages.join(", ")}
-
-Respond ONLY with valid JSON in this exact format:
-{
-  "results": [
-    {
-      "language": "LanguageName",
-      "translation": "The translated text in that language with the specified style",
-      "reality_check": "A literal English back-translation of the translation"
-    }
-  ]
-}`;
-
-      // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-      // User specifically requested gpt-4o-mini in their requirements
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: text }
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: "Buzztate Pro Suite",
+                description: "Unlimited translations, CSV exports, and all 7 vibes.",
+              },
+              unit_amount: 1000, // $10.00
+              recurring: {
+                interval: "month",
+              },
+            },
+            quantity: 1,
+          },
         ],
-        response_format: { type: "json_object" },
+        mode: "subscription",
+        // ✅ CRITICAL: Sending userId in metadata so webhook can find the user later
+        metadata: {
+          userId: userId,
+        },
+        success_url: `${req.headers.origin}/home?payment=success`,
+        cancel_url: `${req.headers.origin}/home`,
       });
 
-      const content = response.choices[0]?.message?.content;
-      
-      if (!content) {
-        throw new Error("No response from OpenAI");
-      }
-
-      const result = JSON.parse(content);
-      return res.json(result);
-
-    } catch (error) {
-      console.error("Translation error:", error);
-      return res.status(500).json({ 
-        error: "Translation failed", 
-        message: error instanceof Error ? error.message : "Unknown error" 
-      });
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("Stripe Checkout Error:", error);
+      res.status(500).json({ error: error.message });
     }
   });
 
+  // ---------------------------------------------------------
+  // 2. STRIPE PORTAL (Manage Subscription)
+  // ---------------------------------------------------------
+  app.post("/api/portal", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"];
+      if (!userId || typeof userId !== "string") return res.status(401).json({ error: "Unauthorized" });
+
+      // Find the user's stripe_customer_id from Supabase
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('stripe_customer_id')
+        .eq('id', userId)
+        .single();
+
+      if (!profile?.stripe_customer_id) {
+        return res.status(400).json({ error: "No active subscription found." });
+      }
+
+      const session = await stripe.billingPortal.sessions.create({
+        customer: profile.stripe_customer_id,
+        return_url: `${req.headers.origin}/home`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ---------------------------------------------------------
+  // 3. WEBHOOK HANDLER (The Fix)
+  // ---------------------------------------------------------
+  // Note: We need raw body for signature verification
+  app.post(
+    "/api/webhook",
+    express.raw({ type: "application/json" }), 
+    async (req, res) => {
+      const signature = req.headers["stripe-signature"];
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+      if (!signature || !webhookSecret) {
+        console.error("❌ Missing signature or webhook secret");
+        return res.status(400).send("Webhook Error");
+      }
+
+      let event: Stripe.Event;
+
+      try {
+        event = stripe.webhooks.constructEvent(
+          req.body,
+          signature,
+          webhookSecret
+        );
+      } catch (err: any) {
+        console.error(`⚠️  Webhook signature verification failed.`, err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+
+      // ✅ HANDLE SUCCESSFUL PAYMENT
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.userId;
+        const customerId = session.customer as string;
+
+        console.log(`💰 Payment success for User ID: ${userId}`);
+
+        if (userId) {
+          // 1. Update Supabase Profile to PRO
+          const { error } = await supabaseAdmin
+            .from("profiles")
+            .update({ 
+              is_pro: true,
+              stripe_customer_id: customerId,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", userId);
+
+          if (error) {
+            console.error("❌ Failed to update Supabase profile:", error);
+            return res.status(500).send("Database Update Failed");
+          }
+
+          console.log("✅ Supabase profile updated to PRO.");
+        }
+      }
+
+      // ✅ HANDLE SUBSCRIPTION CANCELLATION (Optional but good practice)
+      if (event.type === "customer.subscription.deleted") {
+        const subscription = event.data.object as Stripe.Subscription;
+        // You'd need to lookup the user by customer_id here usually
+        const { error } = await supabaseAdmin
+            .from("profiles")
+            .update({ is_pro: false })
+            .eq("stripe_customer_id", subscription.customer);
+
+        if (!error) console.log("⚠️ Subscription deleted/expired. User downgraded.");
+      }
+
+      res.json({ received: true });
+    }
+  );
+
+  const httpServer = createServer(app);
   return httpServer;
 }
