@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Mail, Lock, ArrowRight, CheckCircle } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowRight, CheckCircle, ArrowLeft } from "lucide-react"; // ✅ Added ArrowLeft
 
 export default function AuthPage() {
   const [email, setEmail] = useState("");
@@ -12,6 +12,15 @@ export default function AuthPage() {
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>("login");
   const [resetSent, setResetSent] = useState(false);
   const [, setLocation] = useLocation();
+
+  // ✅ NEW: Read URL parameters to set initial mode (e.g. ?mode=signup)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlMode = params.get("mode");
+    if (urlMode === "signup" || urlMode === "login") {
+      setMode(urlMode);
+    }
+  }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +56,6 @@ export default function AuthPage() {
     setLoading(true);
     try {
       // ✅ Sends a password reset email
-      // Note: The user will be redirected to your site logged in, where they can change their password.
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + "/app",
       });
