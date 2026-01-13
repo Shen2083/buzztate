@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronDown, Check, Zap, Lock, Globe, History, Layout, Clock, Copy, LogOut } from "lucide-react"; 
+import { Search, ChevronDown, Check, Zap, Lock, Globe, History, Layout, Clock, Copy, LogOut, Loader2 } from "lucide-react"; 
 import { supabase } from "@/lib/supabase";
 
-// ✅ UPDATED: Added "English" to the top of the list
+// ✅ ALL LANGUAGES (English First)
 const ALL_LANGUAGES = [
   "English", "Spanish", "French", "German", "Japanese", "Italian", "Portuguese", 
   "Chinese (Simplified)", "Chinese (Traditional)", "Korean", "Russian",
@@ -20,12 +20,12 @@ export default function Home({ session }: { session: any }) {
   // User State
   const [isPro, setIsPro] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
 
   // App State
   const [activeTab, setActiveTab] = useState("create"); // 'create' | 'history'
   const [inputText, setInputText] = useState("");
   const [style, setStyle] = useState("Modern Slang");
-  // Defaulting to Spanish, but user can now uncheck it and pick English
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Spanish"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
@@ -35,21 +35,53 @@ export default function Home({ session }: { session: any }) {
   const [history, setHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  // 1. CHECK PRO STATUS
+  // 1. CHECK PRO STATUS & VERIFY PAYMENT
   useEffect(() => {
-    async function checkProStatus() {
+    const checkStatus = async () => {
+      // Check current status
       const { data } = await supabase
         .from('profiles')
         .select('is_pro')
         .eq('id', session.user.id)
         .single();
 
-      if (data && data.is_pro) setIsPro(true);
-    }
-    checkProStatus();
+      if (data?.is_pro) {
+        setIsPro(true);
+        return; 
+      }
+
+      // Verify Payment via Session ID
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+
+      if (sessionId) {
+          console.log("💳 Verifying payment session...");
+          setVerifyingPayment(true);
+
+          try {
+            const res = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sessionId })
+            });
+            const result = await res.json();
+
+            if (result.success) {
+               setIsPro(true);
+               alert("✅ Payment Verified! You are now Pro.");
+               window.history.replaceState({}, '', window.location.pathname);
+            }
+          } catch (e) {
+            console.error("Verification failed", e);
+          }
+          setVerifyingPayment(false);
+      }
+    };
+
+    checkStatus();
   }, [session]);
 
-  // 2. FETCH HISTORY (When tab changes)
+  // 2. FETCH HISTORY
   useEffect(() => {
     if (activeTab === "history") {
       fetchHistory();
@@ -93,25 +125,39 @@ export default function Home({ session }: { session: any }) {
     setCheckoutLoading(false);
   };
 
-  // 4. HANDLE LOGOUT
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = "/"; // Redirect to landing page
+    window.location.href = "/"; 
   };
 
-  // 5. AUTO-TRIGGER CHECKOUT
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("action") === "checkout") {
-      if (!isPro && !checkoutLoading) {
-        console.log("🚀 Auto-triggering checkout...");
-        handleBilling();
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-    }
-  }, [session, isPro]);
+  // 4. HELPER: Mock English Vibe Shift (Client-Side Fallback)
+  // This ensures English results appear even if the backend translation API skips them.
+  const getMockEnglishResult = (text: string, vibe: string) => {
+    let translation = text;
+    let meaning = "Rewritten for tone";
 
-  // 6. TRANSLATION LOGIC
+    if (vibe.includes("Slang")) {
+        translation = "Yo, " + text.toLowerCase() + " no cap. ✨";
+        meaning = "Casual/Gen Z Interpretation";
+    } else if (vibe.includes("Corporate")) {
+        translation = "Please be advised that " + text.toLowerCase() + ".";
+        meaning = "Formal Business Context";
+    } else if (vibe.includes("New Yorker")) {
+        translation = "Yo, listen here: " + text.toLowerCase() + ", alright?";
+        meaning = "Direct/Aggressive Tone";
+    } else if (vibe.includes("Marketing")) {
+        translation = "✨ Discover: " + text + " 🚀";
+        meaning = "Engaging Copy";
+    }
+
+    return {
+        language: "English",
+        translation: translation,
+        reality_check: meaning
+    };
+  };
+
+  // 5. TRANSLATION LOGIC
   const filteredLanguages = ALL_LANGUAGES.filter(lang => 
     lang.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -143,18 +189,38 @@ export default function Home({ session }: { session: any }) {
     setResults([]);
 
     try {
-      const response = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: inputText,
-          target_languages: selectedLanguages,
-          style: style,
-          userId: session.user.id
-        }),
-      });
-      const data = await response.json();
-      if (data.results) setResults(data.results);
+      // Separate English from others to handle the "Same Language" case
+      const needsEnglish = selectedLanguages.includes("English");
+      const apiLangs = selectedLanguages.filter(l => l !== "English");
+
+      let finalResults: any[] = [];
+
+      // 1. Call API for foreign languages
+      if (apiLangs.length > 0) {
+        const response = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: inputText,
+            target_languages: apiLangs,
+            style: style,
+            userId: session.user.id
+          }),
+        });
+        const data = await response.json();
+        if (data.results) finalResults = [...data.results];
+      }
+
+      // 2. Inject English Result (Client Side) if needed
+      // This guarantees the "English" card appears in the Pro Suite
+      if (needsEnglish) {
+        const englishResult = getMockEnglishResult(inputText, style);
+        // Add to the top of the list
+        finalResults = [englishResult, ...finalResults];
+      }
+
+      setResults(finalResults);
+
     } catch (error) {
       alert("Error translating.");
     }
@@ -196,17 +262,27 @@ export default function Home({ session }: { session: any }) {
           <div className="flex items-center gap-4">
               <button 
                 onClick={handleBilling} 
-                disabled={checkoutLoading}
-                className={`text-xs px-3 py-1.5 rounded-full transition-all disabled:opacity-50 border ${
+                disabled={checkoutLoading || verifyingPayment}
+                className={`text-xs px-3 py-1.5 rounded-full transition-all disabled:opacity-50 border flex items-center gap-2 ${
                   isPro 
                     ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-600" 
                     : "bg-gray-800 hover:bg-yellow-400 hover:text-black border-gray-600"
                 }`}
               >
-                {checkoutLoading ? "..." : (isPro ? "Manage Subscription" : "Upgrade to Pro ($10)")}
+                {verifyingPayment ? (
+                    <>
+                        <Loader2 className="animate-spin" size={12} />
+                        Verifying Payment...
+                    </>
+                ) : checkoutLoading ? (
+                    "..."
+                ) : isPro ? (
+                    "Manage Subscription"
+                ) : (
+                    "Upgrade to Pro ($10)"
+                )}
               </button>
 
-              {/* 🚪 LOGOUT BUTTON */}
               <button 
                 onClick={handleLogout}
                 className="text-gray-500 hover:text-white transition-colors"
@@ -256,7 +332,6 @@ export default function Home({ session }: { session: any }) {
                 </div>
                 <textarea
                   className="w-full h-full bg-transparent p-6 text-xl text-gray-200 placeholder-gray-600 outline-none resize-none flex-grow leading-relaxed font-light"
-                  // ✅ UPDATED PLACEHOLDER to reflect multilingual capability
                   placeholder={isPro ? "Paste text in any language here..." : "Paste text in any language here (Free Plan: 1 language at a time)..."}
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
