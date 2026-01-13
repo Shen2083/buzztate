@@ -32,7 +32,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId || typeof userId !== "string") {
         return res.status(401).json({ error: "Unauthorized" });
       }
-
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [
@@ -50,10 +49,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
         ],
         mode: "subscription",
-        metadata: { userId: userId },
-        // ✅ We pass session_id to let the frontend trigger verification
-        success_url: `${req.headers.origin}/home?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/home`,
+          metadata: { userId: userId },
+
+          // 🚨 CHANGE THIS LINE: Change '/home' to '/app'
+          success_url: `${req.headers.origin}/app?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+
+          // 🚨 CHANGE THIS LINE: Change '/home' to '/app'
+          cancel_url: `${req.headers.origin}/app`,
       });
 
       res.json({ url: session.url });
