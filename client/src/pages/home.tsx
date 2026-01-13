@@ -17,13 +17,11 @@ const PRO_STYLES = [
 ];
 
 export default function Home({ session }: { session: any }) {
-  // User State
   const [isPro, setIsPro] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
 
-  // App State
-  const [activeTab, setActiveTab] = useState("create"); // 'create' | 'history'
+  const [activeTab, setActiveTab] = useState("create");
   const [inputText, setInputText] = useState("");
   const [style, setStyle] = useState("Modern Slang");
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Spanish"]);
@@ -31,14 +29,13 @@ export default function Home({ session }: { session: any }) {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // History State
   const [history, setHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
   // 1. CHECK PRO STATUS & VERIFY PAYMENT
   useEffect(() => {
     const checkStatus = async () => {
-      // Check current status
+      // Force refresh data from DB to ensure we aren't reading stale cache
       const { data } = await supabase
         .from('profiles')
         .select('is_pro')
@@ -47,14 +44,13 @@ export default function Home({ session }: { session: any }) {
 
       if (data?.is_pro) {
         setIsPro(true);
-        return; 
       }
 
       // Verify Payment via Session ID
       const params = new URLSearchParams(window.location.search);
       const sessionId = params.get('session_id');
 
-      if (sessionId) {
+      if (sessionId && !isPro) {
           console.log("💳 Verifying payment session...");
           setVerifyingPayment(true);
 
@@ -70,9 +66,11 @@ export default function Home({ session }: { session: any }) {
                setIsPro(true);
                alert("✅ Payment Verified! You are now Pro.");
                window.history.replaceState({}, '', window.location.pathname);
+            } else {
+               console.error("Verification failed:", result);
             }
           } catch (e) {
-            console.error("Verification failed", e);
+            console.error("Verification network error", e);
           }
           setVerifyingPayment(false);
       }
@@ -90,14 +88,13 @@ export default function Home({ session }: { session: any }) {
 
   const fetchHistory = async () => {
     setHistoryLoading(true);
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('translations')
       .select('*')
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false });
 
     if (data) setHistory(data);
-    if (error) console.error("History fetch error:", error);
     setHistoryLoading(false);
   };
 
@@ -130,8 +127,6 @@ export default function Home({ session }: { session: any }) {
     window.location.href = "/"; 
   };
 
-  // 4. HELPER: Mock English Vibe Shift (Client-Side Fallback)
-  // This ensures English results appear even if the backend translation API skips them.
   const getMockEnglishResult = (text: string, vibe: string) => {
     let translation = text;
     let meaning = "Rewritten for tone";
@@ -181,6 +176,7 @@ export default function Home({ session }: { session: any }) {
     setSelectedLanguages(newSelection.slice(0, 15));
   };
 
+  // ✅ UPDATED: Robust English Injection Logic
   const handleBuzztate = async () => {
     if (!inputText) return;
     if (selectedLanguages.length === 0) return alert("Please select a language!");
@@ -189,11 +185,12 @@ export default function Home({ session }: { session: any }) {
     setResults([]);
 
     try {
-      // Separate English from others to handle the "Same Language" case
       const needsEnglish = selectedLanguages.includes("English");
       const apiLangs = selectedLanguages.filter(l => l !== "English");
 
-      let finalResults: any[] = [];
+      console.log("Translation Request:", { needsEnglish, apiLangs });
+
+      let apiResults: any[] = [];
 
       // 1. Call API for foreign languages
       if (apiLangs.length > 0) {
@@ -208,21 +205,24 @@ export default function Home({ session }: { session: any }) {
           }),
         });
         const data = await response.json();
-        if (data.results) finalResults = [...data.results];
+        if (data.results) apiResults = data.results;
       }
 
-      // 2. Inject English Result (Client Side) if needed
-      // This guarantees the "English" card appears in the Pro Suite
+      // 2. Inject English Result if needed
+      let finalResults = [...apiResults];
+
       if (needsEnglish) {
+        console.log("Injecting English Result...");
         const englishResult = getMockEnglishResult(inputText, style);
-        // Add to the top of the list
-        finalResults = [englishResult, ...finalResults];
+        // Prepend English to the start of the list
+        finalResults.unshift(englishResult);
       }
 
       setResults(finalResults);
 
     } catch (error) {
       alert("Error translating.");
+      console.error(error);
     }
     setLoading(false);
   };

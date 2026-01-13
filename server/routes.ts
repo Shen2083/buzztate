@@ -51,7 +51,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
         mode: "subscription",
         metadata: { userId: userId },
-        // ✅ NEW: We pass the session_id to the URL so the frontend can grab it
+        // ✅ We pass session_id to let the frontend trigger verification
         success_url: `${req.headers.origin}/home?payment=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/home`,
       });
@@ -64,32 +64,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ---------------------------------------------------------
-  // 2. MANUAL VERIFICATION ENDPOINT (The Webhook Alternative)
+  // 2. MANUAL VERIFICATION (The "Self-Healing" Fix)
   // ---------------------------------------------------------
   app.post("/api/verify-payment", async (req, res) => {
+    console.log("🔍 Verifying Payment...");
     try {
       const { sessionId } = req.body;
       const stripe = getStripe();
       const supabase = getSupabaseAdmin();
 
-      if (!stripe || !supabase) return res.status(500).json({ error: "Server Config Error" });
+      if (!stripe || !supabase) {
+        console.error("❌ Server Config Error: Missing Stripe or Supabase keys");
+        return res.status(500).json({ error: "Server Configuration Error" });
+      }
       if (!sessionId) return res.status(400).json({ error: "Missing Session ID" });
 
-      // 1. Retrieve the session from Stripe to verify it's real
+      // 1. Retrieve the session from Stripe
       const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-      // 2. Check if it's paid
       if (session.payment_status === "paid") {
         const userId = session.metadata?.userId;
         const customerId = session.customer as string;
 
         if (userId) {
-          // 3. Update Database
-          await supabase.from("profiles").update({ 
-            is_pro: true,
-            stripe_customer_id: customerId,
-            updated_at: new Date().toISOString()
-          }).eq("id", userId);
+          console.log(`💰 Paid! Updating User: ${userId}`);
+
+          // 2. Try to UPDATE the profile
+          const { data, error } = await supabase
+            .from("profiles")
+            .update({ 
+              is_pro: true,
+              stripe_customer_id: customerId,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", userId)
+            .select();
+
+          if (error) {
+            console.error("❌ Update Failed:", error.message);
+            return res.status(500).json({ error: `DB Update Error: ${error.message}` });
+          }
+
+          // 3. SELF-HEALING: If no row was updated, the profile is missing. Create it.
+          if (!data || data.length === 0) {
+            console.warn("⚠️ Profile not found. Attempting to create one...");
+
+            const { error: insertError } = await supabase
+              .from("profiles")
+              .insert({
+                id: userId,
+                is_pro: true,
+                stripe_customer_id: customerId,
+                updated_at: new Date().toISOString()
+              });
+
+            if (insertError) {
+               console.error("❌ Creation Failed:", insertError.message);
+               return res.status(500).json({ error: `Profile Creation Failed: ${insertError.message}` });
+            }
+            console.log("✅ Profile created and upgraded.");
+          } else {
+            console.log("✅ Profile upgraded successfully.");
+          }
 
           return res.json({ success: true, message: "Upgraded to Pro" });
         }
@@ -98,7 +134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: false, message: "Payment not complete" });
 
     } catch (error: any) {
-      console.error("Verification Error:", error.message);
+      console.error("Verification Critical Error:", error.message);
       res.status(500).json({ error: error.message });
     }
   });
