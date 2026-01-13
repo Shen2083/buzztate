@@ -1,60 +1,37 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
-import { Zap, Loader2 } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowRight, CheckCircle } from "lucide-react";
 
 export default function AuthPage() {
-  // 1. Capture URL parameters
-  const params = new URLSearchParams(window.location.search);
-  const intent = params.get("intent"); // Check if user wants 'pro'
-
-  const [isLogin, setIsLogin] = useState(() => {
-    return params.get("mode") !== "signup"; // Returns false (Sign Up) if mode is signup
-  });
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Helper to determine where to send the user
-  const getRedirectUrl = () => {
-    // If they came from "Get Pro", send them to dashboard with a checkout trigger
-    if (intent === "pro") return "/app?action=checkout";
-    // Otherwise, just go to the dashboard
-    return "/app";
-  };
+  // Modes: 'login' | 'signup' | 'forgot'
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>("login");
+  const [resetSent, setResetSent] = useState(false);
+  const [, setLocation] = useLocation();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (isLogin) {
-        // --- LOG IN LOGIC ---
+      if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
-
-        // ✅ Redirect with intent preserved
-        window.location.href = getRedirectUrl(); 
+        setLocation("/app"); // Redirect to app on success
       } else {
-        // --- SIGN UP LOGIC ---
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
         });
-
         if (error) throw error;
-
-        // CHECK: Did we get a session immediately?
-        if (data.session) {
-          // ✅ Redirect with intent preserved
-          window.location.href = getRedirectUrl();
-        } else {
-          alert("Success! Please check your email for the confirmation link.");
-          setIsLogin(true);
-        }
+        alert("Check your email for the confirmation link!");
       }
     } catch (error: any) {
       alert(error.message);
@@ -63,81 +40,178 @@ export default function AuthPage() {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return alert("Please enter your email address.");
+
+    setLoading(true);
+    try {
+      // ✅ Sends a password reset email
+      // Note: The user will be redirected to your site logged in, where they can change their password.
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/app",
+      });
+
+      if (error) throw error;
+      setResetSent(true);
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
 
-      {/* Brand Logo */}
-      <div className="mb-8 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="bg-yellow-400 p-3 rounded-full mb-4 shadow-[0_0_30px_rgba(250,204,21,0.3)]">
-          <Zap size={32} className="text-black" fill="black" />
-        </div>
-        <h1 className="text-4xl font-black text-white tracking-tighter">Buzztate</h1>
-        <p className="text-gray-500 mt-2">Localize the Vibe.</p>
-      </div>
+      {/* Background Gradients */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-yellow-400/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Auth Card */}
-      <div className="w-full max-w-md bg-gray-900 border border-gray-800 p-8 rounded-2xl shadow-2xl">
-        <div className="flex gap-4 mb-8 border-b border-gray-800 pb-1">
-          <button
-            onClick={() => setIsLogin(true)}
-            className={`flex-1 pb-3 text-sm font-bold transition-all ${
-              isLogin ? "text-yellow-400 border-b-2 border-yellow-400" : "text-gray-500 hover:text-white"
-            }`}
-          >
-            LOG IN
-          </button>
-          <button
-            onClick={() => setIsLogin(false)}
-            className={`flex-1 pb-3 text-sm font-bold transition-all ${
-              !isLogin ? "text-yellow-400 border-b-2 border-yellow-400" : "text-gray-500 hover:text-white"
-            }`}
-          >
-            SIGN UP
-          </button>
+      <div className="w-full max-w-md bg-gray-900/60 backdrop-blur-xl border border-gray-800 rounded-3xl p-8 shadow-2xl relative z-10">
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="text-4xl mb-4">⚡</div>
+          <h1 className="text-3xl font-extrabold mb-2">
+            {mode === 'login' && "Welcome Back"}
+            {mode === 'signup' && "Create Account"}
+            {mode === 'forgot' && "Reset Password"}
+          </h1>
+          <p className="text-gray-400 text-sm">
+            {mode === 'login' && "Enter your credentials to access your workspace."}
+            {mode === 'signup' && "Get started with Buzztate today."}
+            {mode === 'forgot' && "We'll send you a link to reset your password."}
+          </p>
         </div>
 
-        <form onSubmit={handleAuth} className="flex flex-col gap-4">
-          <div>
-            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Email</label>
-            <input
-              type="email"
-              required
-              className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none transition-colors"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+        {/* ---------------- FORGOT PASSWORD VIEW ---------------- */}
+        {mode === 'forgot' ? (
+          resetSent ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle size={32} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Check your email</h3>
+              <p className="text-gray-400 text-sm mb-6">
+                We've sent a password reset link to <strong>{email}</strong>.
+              </p>
+              <button 
+                onClick={() => { setMode('login'); setResetSent(false); }}
+                className="text-yellow-400 font-bold hover:underline"
+              >
+                Back to Log In
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Email Address</label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-3.5 text-gray-500 group-focus-within:text-yellow-400 transition-colors" size={18} />
+                  <input
+                    type="email"
+                    placeholder="name@example.com"
+                    className="w-full bg-black/50 border border-gray-700 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-600 focus:border-yellow-400 outline-none transition-all"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
 
-          <div>
-            <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Password</label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none transition-colors"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 mt-4"
+              >
+                {loading ? <Loader2 className="animate-spin" size={20} /> : "Send Reset Link"}
+              </button>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-4 bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 rounded-lg transition-all flex justify-center items-center gap-2"
-          >
-            {loading ? (
-              <Loader2 className="animate-spin" size={20} />
-            ) : (
-              isLogin ? "ENTER DASHBOARD" : "CREATE ACCOUNT"
-            )}
-          </button>
-        </form>
+              <div className="text-center mt-6">
+                <button 
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className="text-sm text-gray-500 hover:text-white transition-colors font-medium"
+                >
+                  <ArrowLeft className="inline mr-1" size={14} /> Back to Log In
+                </button>
+              </div>
+            </form>
+          )
+        ) : (
+          /* ---------------- LOGIN / SIGNUP VIEW ---------------- */
+          <form onSubmit={handleAuth} className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Email</label>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-3.5 text-gray-500 group-focus-within:text-yellow-400 transition-colors" size={18} />
+                <input
+                  type="email"
+                  placeholder="name@example.com"
+                  className="w-full bg-black/50 border border-gray-700 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-600 focus:border-yellow-400 outline-none transition-all"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
 
-        <p className="text-center text-xs text-gray-600 mt-6">
-          By continuing, you agree to our Terms of Service.
-        </p>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</label>
+                {/* ✅ FORGOT PASSWORD LINK */}
+                {mode === 'login' && (
+                  <button 
+                    type="button"
+                    onClick={() => setMode('forgot')}
+                    className="text-xs text-yellow-400 hover:text-yellow-300 font-bold transition-colors"
+                  >
+                    Forgot Password?
+                  </button>
+                )}
+              </div>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-3.5 text-gray-500 group-focus-within:text-yellow-400 transition-colors" size={18} />
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  className="w-full bg-black/50 border border-gray-700 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-600 focus:border-yellow-400 outline-none transition-all"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-yellow-400 text-black font-extrabold py-3.5 rounded-xl hover:bg-yellow-300 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.2)] mt-2"
+            >
+              {loading ? (
+                <Loader2 className="animate-spin" size={20} />
+              ) : (
+                <>
+                  {mode === "login" ? "Log In" : "Sign Up"} <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+
+            <div className="pt-4 text-center border-t border-gray-800 mt-6">
+              <p className="text-sm text-gray-500">
+                {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                  className="text-white font-bold hover:underline transition-all"
+                >
+                  {mode === "login" ? "Sign Up" : "Log In"}
+                </button>
+              </p>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
