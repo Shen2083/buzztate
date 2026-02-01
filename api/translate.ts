@@ -1,15 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from "openai";
+import { translateRequestSchema } from '../shared/schema';
+import { verifyAuth } from './_lib/auth';
 
 // Init Supabase
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string 
+  process.env.SUPABASE_SERVICE_ROLE_KEY as string
 );
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// 🔒 Security Limits
+// Security Limits
 const LIMITS = {
   FREE: {
     CHARS: 280,       // Tweet size
@@ -23,14 +25,25 @@ const LIMITS = {
   }
 };
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+export default async function handler(req: any, res: any) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  const { text, target_languages, style, userId } = req.body;
-
-  if (!text || !target_languages || target_languages.length === 0) {
-    return res.status(400).json({ error: "Missing text or languages" });
+  // Validate request body with Zod
+  const parseResult = translateRequestSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({
+      error: "Validation failed",
+      details: parseResult.error.flatten().fieldErrors
+    });
   }
+
+  const { text, target_languages, style } = parseResult.data;
+
+  // Try to get authenticated user (optional for demo/free users)
+  const { userId: authUserId } = await verifyAuth(req);
+
+  // Use authenticated userId if available, fallback to body userId for backwards compatibility
+  const userId = authUserId || parseResult.data.userId;
 
   try {
     // 1. Determine User Status
@@ -46,50 +59,42 @@ export default async function handler(req, res) {
 
       if (profile?.is_pro) {
         isPro = true;
-        model = "gpt-4o"; // 🚀 Upgrade for Pro
-        console.log(`💎 User is PRO. Using ${model}.`);
+        model = "gpt-4o"; // Upgrade for Pro
+        console.log(`User is PRO. Using ${model}.`);
       } else {
-        console.log(`👤 User is FREE. Using ${model}.`);
+        console.log(`User is FREE. Using ${model}.`);
       }
     }
 
-    // 2. 🛡️ THE GATEKEEPER: Enforce Limits based on Status
+    // 2. THE GATEKEEPER: Enforce Limits based on Status
     const currentLimit = isPro ? LIMITS.PRO : LIMITS.FREE;
 
     // A. Character Limit
     if (text.length > currentLimit.CHARS) {
-      return res.status(403).json({ 
-        error: `Text too long! Free limit is ${currentLimit.CHARS} characters. Upgrade to Pro for more.` 
+      return res.status(403).json({
+        error: `Text too long! ${isPro ? 'Pro' : 'Free'} limit is ${currentLimit.CHARS} characters.${!isPro ? ' Upgrade to Pro for more.' : ''}`
       });
     }
 
     // B. Language Count Limit
     if (target_languages.length > currentLimit.LANGUAGES) {
-      return res.status(403).json({ 
-        error: `Free plan is limited to 1 language at a time. Upgrade to Pro for mass translation.` 
+      return res.status(403).json({
+        error: `${isPro ? 'Pro' : 'Free'} plan is limited to ${currentLimit.LANGUAGES} language(s) at a time.${!isPro ? ' Upgrade to Pro for mass translation.' : ''}`
       });
     }
 
-    // C. Style/Vibe Limit
-    // If they aren't Pro, and they try to use a style that isn't "Modern Slang", block them.
+    // C. Style/Vibe Limit - Force to Modern Slang if not Pro
+    let effectiveStyle = style;
     if (!isPro && !LIMITS.FREE.ALLOWED_STYLES.includes(style)) {
-       // Option 1: Strict Block
-       // return res.status(403).json({ error: "That Vibe is locked for Pro users." });
-
-       // Option 2: Silent Fallback (Better UX - just force it to Modern Slang)
-       console.log(`⚠️ Free user tried '${style}'. Forcing 'Modern Slang'.`);
-       // We don't overwrite the variable 'style' here to avoid confusion, 
-       // but we could overwrite it in the prompt if we wanted.
-       // For now, let's just let the Frontend handle the locking visually, 
-       // but strictly speaking, you should probably force it here:
-       // style = "Modern Slang"; 
+      console.log(`Free user tried '${style}'. Forcing 'Modern Slang'.`);
+      effectiveStyle = "Modern Slang";
     }
 
     // 3. The Prompt
     const prompt = `
       Translate the following text: "${text}"
       Target Languages: ${target_languages.join(", ")}
-      Style/Vibe: ${style} (Crucial: Adapt the tone strictly to this vibe!)
+      Style/Vibe: ${effectiveStyle} (Crucial: Adapt the tone strictly to this vibe!)
 
       Return JSON format: { "results": [ { "language": "Spanish", "translation": "...", "reality_check": "Literal meaning..." } ] }
     `;
@@ -97,32 +102,32 @@ export default async function handler(req, res) {
     // 4. Call OpenAI
     const completion = await openai.chat.completions.create({
       messages: [
-        { role: "system", content: "You are an expert localization engine. Do not just translate words; translate the cultural feeling." }, 
+        { role: "system", content: "You are an expert localization engine. Do not just translate words; translate the cultural feeling." },
         { role: "user", content: prompt }
       ],
       model: model,
       response_format: { type: "json_object" },
     });
 
-    const data = JSON.parse(completion.choices[0].message.content);
+    const data = JSON.parse(completion.choices[0].message.content || '{"results":[]}');
 
     // 5. Save to History
     if (userId) {
-        const historyRecords = data.results.map(item => ({
-            user_id: userId,
-            original_text: text,
-            translated_text: item.translation,
-            language: item.language,
-            style: style
-        }));
+      const historyRecords = data.results.map((item: any) => ({
+        user_id: userId,
+        original_text: text,
+        translated_text: item.translation,
+        language: item.language,
+        style: effectiveStyle
+      }));
 
-        await supabase.from('translations').insert(historyRecords);
+      await supabase.from('translations').insert(historyRecords);
     }
 
     res.status(200).json(data);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Translation error:", error);
-    res.status(500).json({ error: "Translation failed" });
+    res.status(500).json({ error: "Translation failed. Please try again." });
   }
 }

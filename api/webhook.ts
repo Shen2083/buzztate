@@ -18,7 +18,7 @@ export const config = {
 };
 
 // Helper to read raw body
-async function buffer(readable) {
+async function buffer(readable: any) {
   const chunks = [];
   for await (const chunk of readable) {
     chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
@@ -26,7 +26,7 @@ async function buffer(readable) {
   return Buffer.concat(chunks);
 }
 
-export default async function handler(req, res) {
+export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).send('Method Not Allowed');
   }
@@ -39,30 +39,68 @@ export default async function handler(req, res) {
 
   try {
     // Verify the event is genuinely from Stripe
-    event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
-  } catch (err) {
+    event = stripe.webhooks.constructEvent(buf, sig, webhookSecret as string);
+  } catch (err: any) {
     console.error(`Webhook Error: ${err.message}`);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   // Handle the event
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const userId = session.client_reference_id; 
+    const session = event.data.object as Stripe.Checkout.Session;
 
-    console.log(`💰 Payment success for User: ${userId}`);
+    // Handle both metadata keys for backwards compatibility:
+    // - client_reference_id (original key)
+    // - metadata.userId (new consistent key)
+    // - metadata.user_id (legacy Vercel function key)
+    const userId = session.client_reference_id ||
+                   session.metadata?.userId ||
+                   session.metadata?.user_id;
+
+    const customerId = session.customer as string;
+
+    console.log(`Payment success for User: ${userId}`);
 
     if (userId) {
       // Unlock Pro features in Supabase
       const { error } = await supabase
         .from('profiles')
-        .update({ is_pro: true })
+        .update({
+          is_pro: true,
+          stripe_customer_id: customerId,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', userId);
 
       if (error) {
         console.error('Supabase update failed:', error);
         return res.status(500).send('Database Error');
       }
+
+      console.log(`User ${userId} upgraded to Pro successfully`);
+    } else {
+      console.warn('No user ID found in session metadata or client_reference_id');
+    }
+  }
+
+  // Handle subscription cancellation
+  if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object as Stripe.Subscription;
+    const customerId = subscription.customer as string;
+
+    console.log(`Subscription cancelled for customer: ${customerId}`);
+
+    // Downgrade user by customer ID
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        is_pro: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('stripe_customer_id', customerId);
+
+    if (error) {
+      console.error('Supabase downgrade failed:', error);
     }
   }
 

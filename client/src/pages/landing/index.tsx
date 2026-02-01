@@ -575,8 +575,7 @@ export default function Landing() {
                  <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
                     <div className="overflow-hidden">
                        <div className="px-6 pb-6 text-gray-400 leading-relaxed">
-                          {/* Render HTML content safely if needed, or just text */}
-                          <span dangerouslySetInnerHTML={{ __html: faq.answer }} />
+                          <span>{faq.answer}</span>
                        </div>
                     </div>
                  </div>

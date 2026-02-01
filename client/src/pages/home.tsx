@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronDown, Check, Zap, Lock, Globe, History, Layout, Clock, Copy, LogOut, Loader2 } from "lucide-react"; 
+import { Search, ChevronDown, Check, Zap, Lock, Globe, History, Layout, Clock, Copy, LogOut, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
 
-// ✅ ALL LANGUAGES (English First)
+// ALL LANGUAGES (English First)
 const ALL_LANGUAGES = [
-  "English", "Spanish", "French", "German", "Japanese", "Italian", "Portuguese", 
+  "English", "Spanish", "French", "German", "Japanese", "Italian", "Portuguese",
   "Chinese (Simplified)", "Chinese (Traditional)", "Korean", "Russian",
   "Arabic", "Hindi", "Dutch", "Turkish", "Polish", "Swedish", "Danish",
   "Norwegian", "Finnish", "Greek", "Hebrew", "Thai", "Vietnamese",
@@ -12,9 +13,24 @@ const ALL_LANGUAGES = [
 ];
 
 const PRO_STYLES = [
-  "Professional / Corporate", "Gen Z Influencer", "App Store Description", 
+  "Professional / Corporate", "Gen Z Influencer", "App Store Description",
   "Marketing Copy", "Romantic Poet", "Angry New Yorker"
 ];
+
+/**
+ * Helper to get the current access token for API requests.
+ * Uses JWT instead of trusting X-User-ID header.
+ */
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    return {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${session.access_token}`
+    };
+  }
+  return { "Content-Type": "application/json" };
+}
 
 export default function Home({ session }: { session: any }) {
   const [isPro, setIsPro] = useState(false);
@@ -51,28 +67,41 @@ export default function Home({ session }: { session: any }) {
       const sessionId = params.get('session_id');
 
       if (sessionId && !isPro) {
-          console.log("💳 Verifying payment session...");
-          setVerifyingPayment(true);
+        console.log("Verifying payment session...");
+        setVerifyingPayment(true);
 
-          try {
-            const res = await fetch("/api/verify-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ sessionId })
+        try {
+          const res = await fetch("/api/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionId })
+          });
+          const result = await res.json();
+
+          if (result.success) {
+            setIsPro(true);
+            toast({
+              title: "Payment Verified!",
+              description: "You are now a Pro user. Enjoy unlimited features!",
             });
-            const result = await res.json();
-
-            if (result.success) {
-               setIsPro(true);
-               alert("✅ Payment Verified! You are now Pro.");
-               window.history.replaceState({}, '', window.location.pathname);
-            } else {
-               console.error("Verification failed:", result);
-            }
-          } catch (e) {
-            console.error("Verification network error", e);
+            window.history.replaceState({}, '', window.location.pathname);
+          } else {
+            console.error("Verification failed:", result);
+            toast({
+              title: "Verification Issue",
+              description: "Payment verification pending. Please refresh if needed.",
+              variant: "destructive"
+            });
           }
-          setVerifyingPayment(false);
+        } catch (e) {
+          console.error("Verification network error", e);
+          toast({
+            title: "Connection Error",
+            description: "Could not verify payment. Please try refreshing.",
+            variant: "destructive"
+          });
+        }
+        setVerifyingPayment(false);
       }
     };
 
@@ -98,33 +127,47 @@ export default function Home({ session }: { session: any }) {
     setHistoryLoading(false);
   };
 
-  // 3. HANDLE CHECKOUT
+  // 3. HANDLE CHECKOUT - Now uses JWT auth
   const handleBilling = async () => {
     setCheckoutLoading(true);
     try {
       const endpoint = isPro ? "/api/portal" : "/api/checkout";
+      const headers = await getAuthHeaders();
+
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: { 
-           "Content-Type": "application/json",
-           "X-User-ID": session.user.id 
-        },
+        headers
       });
       const data = await response.json();
+
       if (data.url) {
         window.location.href = data.url;
+      } else if (data.error) {
+        toast({
+          title: "Billing Error",
+          description: data.error,
+          variant: "destructive"
+        });
       } else {
-        alert("Could not connect to billing server.");
+        toast({
+          title: "Connection Error",
+          description: "Could not connect to billing server.",
+          variant: "destructive"
+        });
       }
     } catch (error) {
-      alert("Something went wrong.");
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
     }
     setCheckoutLoading(false);
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = "/"; 
+    window.location.href = "/";
   };
 
   const getMockEnglishResult = (text: string, vibe: string) => {
@@ -132,34 +175,34 @@ export default function Home({ session }: { session: any }) {
     let meaning = "Rewritten for tone";
 
     if (vibe.includes("Slang")) {
-        translation = "Yo, " + text.toLowerCase() + " no cap. ✨";
-        meaning = "Casual/Gen Z Interpretation";
+      translation = "Yo, " + text.toLowerCase() + " no cap.";
+      meaning = "Casual/Gen Z Interpretation";
     } else if (vibe.includes("Corporate")) {
-        translation = "Please be advised that " + text.toLowerCase() + ".";
-        meaning = "Formal Business Context";
+      translation = "Please be advised that " + text.toLowerCase() + ".";
+      meaning = "Formal Business Context";
     } else if (vibe.includes("New Yorker")) {
-        translation = "Yo, listen here: " + text.toLowerCase() + ", alright?";
-        meaning = "Direct/Aggressive Tone";
+      translation = "Yo, listen here: " + text.toLowerCase() + ", alright?";
+      meaning = "Direct/Aggressive Tone";
     } else if (vibe.includes("Marketing")) {
-        translation = "✨ Discover: " + text + " 🚀";
-        meaning = "Engaging Copy";
+      translation = "Discover: " + text;
+      meaning = "Engaging Copy";
     }
 
     return {
-        language: "English",
-        translation: translation,
-        reality_check: meaning
+      language: "English",
+      translation: translation,
+      reality_check: meaning
     };
   };
 
   // 5. TRANSLATION LOGIC
-  const filteredLanguages = ALL_LANGUAGES.filter(lang => 
+  const filteredLanguages = ALL_LANGUAGES.filter(lang =>
     lang.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const toggleLanguage = (lang: string) => {
     if (!isPro) {
-      if (selectedLanguages.includes(lang)) setSelectedLanguages([]); 
+      if (selectedLanguages.includes(lang)) setSelectedLanguages([]);
       else setSelectedLanguages([lang]);
       return;
     }
@@ -171,15 +214,27 @@ export default function Home({ session }: { session: any }) {
   };
 
   const selectAllFiltered = () => {
-    if (!isPro) return alert("Upgrade to Pro to select multiple languages!");
+    if (!isPro) {
+      toast({
+        title: "Pro Feature",
+        description: "Upgrade to Pro to select multiple languages!",
+      });
+      return;
+    }
     const newSelection = Array.from(new Set([...selectedLanguages, ...filteredLanguages]));
     setSelectedLanguages(newSelection.slice(0, 15));
   };
 
-  // ✅ UPDATED: Robust English Injection Logic
+  // UPDATED: Robust English Injection Logic with JWT auth
   const handleBuzztate = async () => {
     if (!inputText) return;
-    if (selectedLanguages.length === 0) return alert("Please select a language!");
+    if (selectedLanguages.length === 0) {
+      toast({
+        title: "Select a Language",
+        description: "Please select at least one language to translate to.",
+      });
+      return;
+    }
 
     setLoading(true);
     setResults([]);
@@ -192,11 +247,13 @@ export default function Home({ session }: { session: any }) {
 
       let apiResults: any[] = [];
 
-      // 1. Call API for foreign languages
+      // 1. Call API for foreign languages - Now uses JWT auth
       if (apiLangs.length > 0) {
+        const headers = await getAuthHeaders();
+
         const response = await fetch("/api/translate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             text: inputText,
             target_languages: apiLangs,
@@ -204,8 +261,20 @@ export default function Home({ session }: { session: any }) {
             userId: session.user.id
           }),
         });
+
         const data = await response.json();
-        if (data.results) apiResults = data.results;
+
+        if (response.ok && data.results) {
+          apiResults = data.results;
+        } else if (data.error) {
+          toast({
+            title: "Translation Error",
+            description: data.error,
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
       }
 
       // 2. Inject English Result if needed
@@ -220,20 +289,37 @@ export default function Home({ session }: { session: any }) {
 
       setResults(finalResults);
 
+      if (finalResults.length > 0) {
+        toast({
+          title: "Translation Complete",
+          description: `Successfully translated to ${finalResults.length} language(s).`,
+        });
+      }
+
     } catch (error) {
-      alert("Error translating.");
+      toast({
+        title: "Translation Failed",
+        description: "An error occurred while translating. Please try again.",
+        variant: "destructive"
+      });
       console.error(error);
     }
     setLoading(false);
   };
 
   const downloadCSV = () => {
-    if (!isPro) return alert("Upgrade to unlock CSV export!");
+    if (!isPro) {
+      toast({
+        title: "Pro Feature",
+        description: "Upgrade to Pro to unlock CSV export!",
+      });
+      return;
+    }
     if (results.length === 0) return;
 
     const headers = ["Language", "Style", "Original", "Translation", "Meaning"];
     const rows = results.map(item => [
-      item.language, style, `"${inputText.replace(/"/g, '""')}"`, 
+      item.language, style, `"${inputText.replace(/"/g, '""')}"`,
       `"${item.translation.replace(/"/g, '""')}"`, `"${item.reality_check.replace(/"/g, '""')}"`
     ]);
     const csvContent = [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
@@ -241,12 +327,25 @@ export default function Home({ session }: { session: any }) {
     link.href = URL.createObjectURL(new Blob([csvContent], { type: "text/csv;charset=utf-8;" }));
     link.download = `buzztate_export.csv`;
     link.click();
+
+    toast({
+      title: "Download Started",
+      description: "Your CSV file is being downloaded.",
+    });
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: "Text copied to clipboard.",
+    });
   };
 
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col items-center">
 
-      {/* ⚡ App Header */}
+      {/* App Header */}
       <nav className="w-full border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -260,44 +359,44 @@ export default function Home({ session }: { session: any }) {
           </div>
 
           <div className="flex items-center gap-4">
-              <button 
-                onClick={handleBilling} 
-                disabled={checkoutLoading || verifyingPayment}
-                className={`text-xs px-3 py-1.5 rounded-full transition-all disabled:opacity-50 border flex items-center gap-2 ${
-                  isPro 
-                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-600" 
-                    : "bg-gray-800 hover:bg-yellow-400 hover:text-black border-gray-600"
-                }`}
-              >
-                {verifyingPayment ? (
-                    <>
-                        <Loader2 className="animate-spin" size={12} />
-                        Verifying Payment...
-                    </>
-                ) : checkoutLoading ? (
-                    "..."
-                ) : isPro ? (
-                    "Manage Subscription"
-                ) : (
-                    "Upgrade to Pro ($10)"
-                )}
-              </button>
+            <button
+              onClick={handleBilling}
+              disabled={checkoutLoading || verifyingPayment}
+              className={`text-xs px-3 py-1.5 rounded-full transition-all disabled:opacity-50 border flex items-center gap-2 ${
+                isPro
+                  ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-600"
+                  : "bg-gray-800 hover:bg-yellow-400 hover:text-black border-gray-600"
+              }`}
+            >
+              {verifyingPayment ? (
+                <>
+                  <Loader2 className="animate-spin" size={12} />
+                  Verifying Payment...
+                </>
+              ) : checkoutLoading ? (
+                "..."
+              ) : isPro ? (
+                "Manage Subscription"
+              ) : (
+                "Upgrade to Pro ($10)"
+              )}
+            </button>
 
-              <button 
-                onClick={handleLogout}
-                className="text-gray-500 hover:text-white transition-colors"
-                title="Log Out"
-              >
-                <LogOut size={20} />
-              </button>
+            <button
+              onClick={handleLogout}
+              className="text-gray-500 hover:text-white transition-colors"
+              title="Log Out"
+            >
+              <LogOut size={20} />
+            </button>
           </div>
         </div>
       </nav>
 
-      {/* 📂 Tab Navigation */}
+      {/* Tab Navigation */}
       <div className="w-full max-w-7xl px-6 mt-8">
         <div className="flex gap-6 border-b border-gray-800">
-          <button 
+          <button
             onClick={() => setActiveTab("create")}
             className={`pb-4 flex items-center gap-2 text-sm font-bold transition-all ${
               activeTab === "create" ? "text-yellow-400 border-b-2 border-yellow-400" : "text-gray-500 hover:text-white"
@@ -305,7 +404,7 @@ export default function Home({ session }: { session: any }) {
           >
             <Layout size={16} /> Create
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab("history")}
             className={`pb-4 flex items-center gap-2 text-sm font-bold transition-all ${
               activeTab === "history" ? "text-yellow-400 border-b-2 border-yellow-400" : "text-gray-500 hover:text-white"
@@ -324,11 +423,11 @@ export default function Home({ session }: { session: any }) {
             <div className="lg:col-span-8 flex flex-col gap-4">
               <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-1 flex-grow min-h-[500px] flex flex-col relative group focus-within:border-gray-700 transition-colors">
                 <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/30 rounded-t-xl">
-                    <div className="flex items-center gap-2">
-                      <Globe size={14} className="text-gray-500" />
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Source Content</span>
-                    </div>
-                    {inputText.length > 0 && <span className="text-xs text-gray-600">{inputText.length} chars</span>}
+                  <div className="flex items-center gap-2">
+                    <Globe size={14} className="text-gray-500" />
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Source Content</span>
+                  </div>
+                  {inputText.length > 0 && <span className="text-xs text-gray-600">{inputText.length} chars</span>}
                 </div>
                 <textarea
                   className="w-full h-full bg-transparent p-6 text-xl text-gray-200 placeholder-gray-600 outline-none resize-none flex-grow leading-relaxed font-light"
@@ -348,11 +447,17 @@ export default function Home({ session }: { session: any }) {
                     {!isPro && <span className="text-yellow-400 text-[10px] flex items-center gap-1"><Lock size={10}/> Locked</span>}
                   </label>
                   <div className="relative">
-                    <select 
+                    <select
                       className={`w-full p-4 rounded-xl bg-black border border-gray-700 text-white focus:border-yellow-400 outline-none appearance-none font-medium transition-colors cursor-pointer ${!isPro && "text-gray-400"}`}
                       value={style}
                       onChange={(e) => {
-                        if (!isPro && PRO_STYLES.includes(e.target.value)) return alert("Upgrade to unlock!");
+                        if (!isPro && PRO_STYLES.includes(e.target.value)) {
+                          toast({
+                            title: "Pro Feature",
+                            description: "Upgrade to unlock this vibe!",
+                          });
+                          return;
+                        }
                         setStyle(e.target.value);
                       }}
                     >
@@ -369,19 +474,19 @@ export default function Home({ session }: { session: any }) {
                   </div>
                   <div className="relative mb-3">
                     <Search className="absolute left-3 top-2.5 text-gray-500" size={14} />
-                    <input 
-                      type="text" 
-                      placeholder="Search..." 
+                    <input
+                      type="text"
+                      placeholder="Search..."
                       className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2 pl-9 text-sm focus:border-yellow-400 outline-none"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
                   <div className="h-[250px] overflow-y-auto border border-gray-800 rounded-lg bg-black/30 p-1 space-y-0.5">
-                      <div className="sticky top-0 bg-black/90 backdrop-blur z-10 p-2 border-b border-gray-800 flex justify-between">
-                        <button onClick={selectAllFiltered} className="text-[10px] uppercase font-bold tracking-wide text-gray-400 hover:text-white">Select All</button>
-                        <button onClick={() => setSelectedLanguages([])} className="text-[10px] text-gray-500 hover:text-red-400 uppercase font-bold tracking-wide">Clear</button>
-                      </div>
+                    <div className="sticky top-0 bg-black/90 backdrop-blur z-10 p-2 border-b border-gray-800 flex justify-between">
+                      <button onClick={selectAllFiltered} className="text-[10px] uppercase font-bold tracking-wide text-gray-400 hover:text-white">Select All</button>
+                      <button onClick={() => setSelectedLanguages([])} className="text-[10px] text-gray-500 hover:text-red-400 uppercase font-bold tracking-wide">Clear</button>
+                    </div>
                     {filteredLanguages.map((lang) => (
                       <button
                         key={lang}
@@ -420,8 +525,8 @@ export default function Home({ session }: { session: any }) {
                 {results.map((item, index) => (
                   <div key={index} className="bg-gray-900 p-6 rounded-xl border border-gray-800 relative">
                     <div className="flex justify-between items-start mb-4">
-                        <span className="text-sm font-bold text-gray-400 uppercase flex items-center gap-2"><Globe size={12} /> {item.language}</span>
-                        <button onClick={() => navigator.clipboard.writeText(item.translation)} className="text-[10px] text-gray-500 bg-black px-2 py-1 rounded border border-gray-800 hover:text-white">COPY</button>
+                      <span className="text-sm font-bold text-gray-400 uppercase flex items-center gap-2"><Globe size={12} /> {item.language}</span>
+                      <button onClick={() => handleCopy(item.translation)} className="text-[10px] text-gray-500 bg-black px-2 py-1 rounded border border-gray-800 hover:text-white">COPY</button>
                     </div>
                     <p className="text-lg text-white mb-6 font-medium">{item.translation}</p>
                     <div className="bg-black/40 p-3 rounded-lg border border-white/5">
@@ -453,16 +558,16 @@ export default function Home({ session }: { session: any }) {
                 <div key={record.id} className="bg-gray-900/40 border border-gray-800 p-6 rounded-xl flex flex-col md:flex-row gap-6 hover:border-gray-700 transition-colors">
                   <div className="flex-1">
                     <div className="flex gap-2 items-center mb-2">
-                        <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded uppercase">{record.language}</span>
-                        <span className="text-xs text-gray-500">{new Date(record.created_at).toLocaleDateString()}</span>
-                        <span className="text-xs text-gray-500 border border-gray-800 px-2 rounded-full">{record.style}</span>
+                      <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded uppercase">{record.language}</span>
+                      <span className="text-xs text-gray-500">{new Date(record.created_at).toLocaleDateString()}</span>
+                      <span className="text-xs text-gray-500 border border-gray-800 px-2 rounded-full">{record.style}</span>
                     </div>
                     <p className="text-gray-300 font-medium text-lg">{record.translated_text}</p>
                     <p className="text-gray-500 text-sm mt-2 italic">Original: "{record.original_text}"</p>
                   </div>
                   <div className="flex items-center">
-                    <button 
-                      onClick={() => {navigator.clipboard.writeText(record.translated_text); alert("Copied!")}} 
+                    <button
+                      onClick={() => handleCopy(record.translated_text)}
                       className="p-2 hover:bg-gray-800 rounded-lg text-gray-500 hover:text-white transition-colors"
                     >
                       <Copy size={20} />

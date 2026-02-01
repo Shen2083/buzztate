@@ -4,13 +4,14 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { supabase } from "@/lib/supabase";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Pages
 import Home from "@/pages/home";
 import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth";
-import LanguageLanding from "@/pages/landing/LanguageLanding"; // ✅ Make sure this file exists!
+import LanguageLanding from "@/pages/landing/LanguageLanding";
 
 function Router() {
   const [session, setSession] = useState<any>(null);
@@ -70,9 +71,11 @@ function Router() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <Router />
+        <Toaster />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
