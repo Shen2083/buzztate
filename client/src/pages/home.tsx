@@ -1,7 +1,14 @@
-import { useState, useEffect } from "react";
-import { Search, ChevronDown, Check, Zap, Lock, Globe, History, Layout, Clock, Copy, LogOut, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Search, ChevronDown, Check, Zap, Lock, Globe, History, Layout, Clock, Copy, LogOut, Loader2, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
+import type { ColumnMapping, ParsedListing, LocalizationResultItem } from "@shared/schema";
+import type { MarketplaceId } from "../../../lib/marketplace-profiles";
+import { parseUploadedFile, applyColumnMappings, type ParsedFileResult } from "@/lib/file-parser-client";
+import FileUpload from "@/components/FileUpload";
+import ColumnMapper from "@/components/ColumnMapper";
+import MarketplaceSelector from "@/components/MarketplaceSelector";
+import ExportPanel from "@/components/ExportPanel";
 
 // ALL LANGUAGES (English First)
 const ALL_LANGUAGES = [
@@ -47,6 +54,16 @@ export default function Home({ session }: { session: any }) {
 
   const [history, setHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+
+  // --- Listing Localization state ---
+  const [parsedFile, setParsedFile] = useState<ParsedFileResult | null>(null);
+  const [confirmedMappings, setConfirmedMappings] = useState<ColumnMapping[] | null>(null);
+  const [parsedListings, setParsedListings] = useState<ParsedListing[]>([]);
+  const [selectedMarketplace, setSelectedMarketplace] = useState<MarketplaceId | null>(null);
+  const [selectedLocalizeLang, setSelectedLocalizeLang] = useState("");
+  const [localizeResults, setLocalizeResults] = useState<LocalizationResultItem[]>([]);
+  const [localizeLoading, setLocalizeLoading] = useState(false);
+  const [fileParseLoading, setFileParseLoading] = useState(false);
 
   // 1. CHECK PRO STATUS & VERIFY PAYMENT
   useEffect(() => {
@@ -342,6 +359,102 @@ export default function Home({ session }: { session: any }) {
     });
   };
 
+  // --- Listing Localization handlers ---
+  const handleFileSelected = useCallback(async (file: File) => {
+    setFileParseLoading(true);
+    setConfirmedMappings(null);
+    setParsedListings([]);
+    setLocalizeResults([]);
+    try {
+      const result = await parseUploadedFile(file);
+      setParsedFile(result);
+      toast({
+        title: "File Parsed",
+        description: `Found ${result.rows.length} rows and ${result.headers.length} columns.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Parse Error",
+        description: "Could not parse this file. Please check the format.",
+        variant: "destructive",
+      });
+      setParsedFile(null);
+    }
+    setFileParseLoading(false);
+  }, []);
+
+  const handleMappingsConfirmed = useCallback((mappings: ColumnMapping[]) => {
+    if (!parsedFile) return;
+    setConfirmedMappings(mappings);
+    const listings = applyColumnMappings(parsedFile.rows, mappings);
+    setParsedListings(listings);
+    toast({
+      title: "Columns Mapped",
+      description: `${listings.length} listings ready for localization.`,
+    });
+  }, [parsedFile]);
+
+  const handleLocalize = async () => {
+    if (parsedListings.length === 0 || !selectedMarketplace || !selectedLocalizeLang) {
+      toast({
+        title: "Missing Selection",
+        description: "Please upload a file, map columns, and select a marketplace + language.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLocalizeLoading(true);
+    setLocalizeResults([]);
+
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/api/localize", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          listings: parsedListings,
+          marketplace: selectedMarketplace,
+          targetLanguage: selectedLocalizeLang,
+          userId: session.user.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.results) {
+        setLocalizeResults(data.results);
+        const flagCount = data.results.reduce((s: number, r: any) => s + r.qualityFlags.length, 0);
+        toast({
+          title: "Localization Complete",
+          description: `${data.results.length} listings localized.${flagCount > 0 ? ` ${flagCount} quality flag(s).` : ""}`,
+        });
+      } else {
+        toast({
+          title: "Localization Error",
+          description: data.error || "Something went wrong.",
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Localization Failed",
+        description: "Network error. Please try again.",
+        variant: "destructive",
+      });
+    }
+    setLocalizeLoading(false);
+  };
+
+  const resetLocalizeFlow = () => {
+    setParsedFile(null);
+    setConfirmedMappings(null);
+    setParsedListings([]);
+    setLocalizeResults([]);
+    setSelectedMarketplace(null);
+    setSelectedLocalizeLang("");
+  };
+
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col items-center">
 
@@ -403,6 +516,14 @@ export default function Home({ session }: { session: any }) {
             }`}
           >
             <Layout size={16} /> Create
+          </button>
+          <button
+            onClick={() => setActiveTab("localize")}
+            className={`pb-4 flex items-center gap-2 text-sm font-bold transition-all ${
+              activeTab === "localize" ? "text-yellow-400 border-b-2 border-yellow-400" : "text-gray-500 hover:text-white"
+            }`}
+          >
+            <FileSpreadsheet size={16} /> Localize Listings
           </button>
           <button
             onClick={() => setActiveTab("history")}
@@ -539,6 +660,121 @@ export default function Home({ session }: { session: any }) {
             </div>
           )}
         </>
+      )}
+
+      {/* ---------------- LOCALIZE LISTINGS MODE ---------------- */}
+      {activeTab === "localize" && (
+        <div className="max-w-7xl w-full p-6 mt-2 space-y-6 animate-in fade-in">
+          {/* Step indicator */}
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            <span className={parsedFile ? "text-green-400" : "text-yellow-400 font-bold"}>
+              1. Upload File
+            </span>
+            <span className="text-gray-700">&rarr;</span>
+            <span className={confirmedMappings ? "text-green-400" : parsedFile ? "text-yellow-400 font-bold" : ""}>
+              2. Map Columns
+            </span>
+            <span className="text-gray-700">&rarr;</span>
+            <span className={selectedMarketplace && selectedLocalizeLang ? "text-green-400" : confirmedMappings ? "text-yellow-400 font-bold" : ""}>
+              3. Pick Marketplace
+            </span>
+            <span className="text-gray-700">&rarr;</span>
+            <span className={localizeResults.length > 0 ? "text-green-400" : ""}>
+              4. Localize & Export
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left: File upload + column mapping + results */}
+            <div className="lg:col-span-8 space-y-6">
+              {/* File Upload */}
+              <FileUpload onFileSelected={handleFileSelected} isLoading={fileParseLoading} />
+
+              {/* Column Mapper (after file parsed) */}
+              {parsedFile && !confirmedMappings && (
+                <ColumnMapper
+                  headers={parsedFile.headers}
+                  suggestedMappings={parsedFile.suggestedMappings}
+                  rows={parsedFile.rows}
+                  onMappingsConfirmed={handleMappingsConfirmed}
+                />
+              )}
+
+              {/* Parsed listings preview (after columns confirmed) */}
+              {confirmedMappings && parsedListings.length > 0 && !localizeResults.length && (
+                <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-sm font-bold text-white">
+                      {parsedListings.length} Listing{parsedListings.length !== 1 ? "s" : ""} Ready
+                    </h3>
+                    <button
+                      onClick={resetLocalizeFlow}
+                      className="text-xs text-gray-500 hover:text-red-400 transition-colors"
+                    >
+                      Start Over
+                    </button>
+                  </div>
+                  <div className="max-h-[300px] overflow-y-auto space-y-2">
+                    {parsedListings.slice(0, 10).map((listing, i) => (
+                      <div key={i} className="bg-black/30 rounded-lg p-3 border border-gray-800">
+                        <p className="text-sm text-white font-medium truncate">{listing.title}</p>
+                        <p className="text-xs text-gray-500 truncate mt-1">
+                          {listing.description?.substring(0, 120) || "No description"}
+                          {(listing.description?.length || 0) > 120 ? "..." : ""}
+                        </p>
+                      </div>
+                    ))}
+                    {parsedListings.length > 10 && (
+                      <p className="text-xs text-gray-600 text-center py-2">
+                        + {parsedListings.length - 10} more listings
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Export Panel (after localization complete) */}
+              {localizeResults.length > 0 && selectedMarketplace && (
+                <ExportPanel
+                  results={localizeResults}
+                  marketplace={selectedMarketplace}
+                  targetLanguage={selectedLocalizeLang}
+                  originalRows={parsedFile?.rows}
+                />
+              )}
+            </div>
+
+            {/* Right: Marketplace selector + localize button */}
+            <div className="lg:col-span-4">
+              <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 shadow-xl space-y-6">
+                <MarketplaceSelector
+                  selectedMarketplace={selectedMarketplace}
+                  onSelect={setSelectedMarketplace}
+                  selectedLanguage={selectedLocalizeLang}
+                  onLanguageChange={setSelectedLocalizeLang}
+                />
+
+                <button
+                  onClick={handleLocalize}
+                  disabled={localizeLoading || parsedListings.length === 0 || !selectedMarketplace || !selectedLocalizeLang}
+                  className="w-full bg-yellow-400 text-black font-extrabold py-5 rounded-xl hover:bg-yellow-300 disabled:bg-gray-800 disabled:text-gray-500 transition-all text-lg flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.2)]"
+                >
+                  {localizeLoading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Localizing {parsedListings.length} listing{parsedListings.length !== 1 ? "s" : ""}...
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={18} fill="black" />
+                      Localize {parsedListings.length > 0 ? `${parsedListings.length} Listing${parsedListings.length !== 1 ? "s" : ""}` : "Listings"}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ---------------- HISTORY MODE ---------------- */}
