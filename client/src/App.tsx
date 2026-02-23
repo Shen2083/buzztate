@@ -12,6 +12,9 @@ import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth";
 import LanguageLanding from "@/pages/landing/LanguageLanding";
+import AmazonListingTranslation from "@/pages/landing/AmazonListingTranslation";
+import ShopifyProductTranslation from "@/pages/landing/ShopifyProductTranslation";
+import EtsyListingTranslation from "@/pages/landing/EtsyListingTranslation";
 
 function Router() {
   const [session, setSession] = useState<any>(null);
@@ -53,7 +56,12 @@ function Router() {
       {/* Login/Signup Page */}
       <Route path="/auth" component={AuthPage} />
 
-      {/* 👇 NEW: Dynamic SEO Pages for Languages (e.g. /translate/spanish) */}
+      {/* Marketplace SEO Pages */}
+      <Route path="/amazon-listing-translation" component={AmazonListingTranslation} />
+      <Route path="/shopify-product-translation" component={ShopifyProductTranslation} />
+      <Route path="/etsy-listing-translation" component={EtsyListingTranslation} />
+
+      {/* Dynamic SEO Pages for Languages (e.g. /translate/spanish) */}
       <Route path="/translate/:lang">
         {(params) => <LanguageLanding lang={params.lang} />}
       </Route>
