@@ -25,8 +25,13 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 /** How many listings to send to OpenAI per batch (to avoid timeouts) */
 const BATCH_SIZE = 5;
 
-/** Free tier: 5 listings/month, 2 languages */
-const FREE_LISTING_LIMIT = 5;
+/** Tier limits: listings per month */
+const TIER_LIMITS: Record<string, { listingsPerMonth: number; maxPerRequest: number }> = {
+  free:    { listingsPerMonth: 5,         maxPerRequest: 5 },
+  starter: { listingsPerMonth: 100,       maxPerRequest: 50 },
+  growth:  { listingsPerMonth: 500,       maxPerRequest: 100 },
+  scale:   { listingsPerMonth: Infinity,  maxPerRequest: 100 },
+};
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -55,26 +60,59 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    // Enforce free tier limits
-    if (!userId) {
-      if (listings.length > FREE_LISTING_LIMIT) {
-        return res.status(403).json({
-          error: `Free tier is limited to ${FREE_LISTING_LIMIT} listings. Sign up for more.`,
-        });
-      }
-    } else {
-      // Check pro status for future tier enforcement
+    // Determine tier and enforce limits
+    let planTier = "free";
+    let listingsUsed = 0;
+
+    if (userId) {
       const { data: userProfile } = await supabase
         .from("profiles")
-        .select("is_pro")
+        .select("plan_tier, listings_used_this_month, listings_reset_date")
         .eq("id", userId)
         .single();
 
-      if (!userProfile?.is_pro && listings.length > FREE_LISTING_LIMIT) {
-        return res.status(403).json({
-          error: `Free plan is limited to ${FREE_LISTING_LIMIT} listings per request. Upgrade for more.`,
-        });
+      if (userProfile) {
+        planTier = userProfile.plan_tier || "free";
+
+        // Check if we need to reset the monthly counter
+        const resetDate = new Date(userProfile.listings_reset_date || 0);
+        const now = new Date();
+        const monthsSinceReset =
+          (now.getFullYear() - resetDate.getFullYear()) * 12 +
+          (now.getMonth() - resetDate.getMonth());
+
+        if (monthsSinceReset >= 1) {
+          // Reset counter for new billing period
+          listingsUsed = 0;
+          await supabase
+            .from("profiles")
+            .update({
+              listings_used_this_month: 0,
+              listings_reset_date: now.toISOString(),
+            })
+            .eq("id", userId);
+        } else {
+          listingsUsed = userProfile.listings_used_this_month || 0;
+        }
       }
+    }
+
+    const tierConfig = TIER_LIMITS[planTier] || TIER_LIMITS.free;
+
+    // Check per-request limit
+    if (listings.length > tierConfig.maxPerRequest) {
+      return res.status(403).json({
+        error: `Your ${planTier} plan allows max ${tierConfig.maxPerRequest} listings per request. You sent ${listings.length}.`,
+      });
+    }
+
+    // Check monthly limit
+    const remaining = tierConfig.listingsPerMonth - listingsUsed;
+    if (listings.length > remaining) {
+      return res.status(403).json({
+        error: `Monthly limit reached. Your ${planTier} plan allows ${tierConfig.listingsPerMonth} listings/month. Used: ${listingsUsed}, remaining: ${remaining}.`,
+        upgrade: true,
+      });
     }
 
     // Process listings in batches
@@ -95,8 +133,42 @@ export default async function handler(req: any, res: any) {
       allResults.push(...batchResults);
     }
 
-    // Save localization job to history if authenticated
+    // Update usage counter and save job history if authenticated
     if (userId) {
+      // Increment usage
+      await supabase
+        .from("profiles")
+        .update({
+          listings_used_this_month: listingsUsed + listings.length,
+        })
+        .eq("id", userId);
+
+      // Save localization job
+      const { data: job } = await supabase
+        .from("localization_jobs")
+        .insert({
+          user_id: userId,
+          marketplace,
+          target_language: targetLanguage,
+          listing_count: listings.length,
+          status: "completed",
+        })
+        .select("id")
+        .single();
+
+      // Save individual listing results
+      if (job) {
+        await supabase.from("localized_listings").insert(
+          allResults.map((r) => ({
+            job_id: job.id,
+            original_data: r.original,
+            localized_data: r.localized,
+            quality_flags: r.qualityFlags,
+          }))
+        );
+      }
+
+      // Also save to translations table for legacy history view
       await supabase.from("translations").insert(
         allResults.map((r) => ({
           user_id: userId,
@@ -112,6 +184,11 @@ export default async function handler(req: any, res: any) {
       results: allResults,
       marketplace,
       targetLanguage,
+      usage: {
+        used: listingsUsed + listings.length,
+        limit: tierConfig.listingsPerMonth,
+        plan: planTier,
+      },
     });
   } catch (error: any) {
     console.error("Localization error:", error);

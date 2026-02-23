@@ -1,736 +1,434 @@
 import { Link } from "wouter";
-import { Check, X, Zap, Globe, Lock, ArrowRight, Loader2, Sparkles, Wand2, FileText, Layers, BrainCircuit, Bot, ChevronDown, Mail, Languages } from "lucide-react";
+import { Check, X, ArrowRight, ChevronDown, Globe, ShoppingBag, Store, FileSpreadsheet, Zap, Upload, Download, Shield, Mail } from "lucide-react";
 import { useState } from "react";
 
-// ✅ All 7 Vibes for Demo
-const DEMO_VIBES = [
-  "Modern Slang", 
-  "Professional / Corporate", 
-  "Gen Z Influencer", 
-  "App Store Description", 
-  "Marketing Copy", 
-  "Romantic Poet", 
-  "Angry New Yorker"
-];
-
-// ✅ Languages (English First)
-const DEMO_LANGS = ["English", "Spanish", "French", "German", "Japanese", "Italian", "Chinese", "Arabic"];
-
-// ✅ FAQ Data Structure
 const FAQS = [
   {
-    question: "Can I rewrite English text into a different tone?",
-    answer: "Yes! You don't have to translate to a different language. You can select 'English' as both the input and output to simply change the vibe—for example, turning a messy rough draft into a polished 'Corporate' email."
+    question: "Is this just Google Translate?",
+    answer: "No. Google Translate does word-for-word translation. Buzztate is a marketplace-aware localization engine. It understands Amazon's search algorithm, Shopify SEO, and Etsy's tag system. It adapts your listings culturally — using formal address in German, compound nouns, local measurement units, and search keywords that actual shoppers use in each market."
   },
   {
-    question: "Can I translate from other languages into English?",
-    answer: "Yes! You can paste text in Spanish, Arabic, or Chinese, and Buzztate will rewrite it into perfect 'Native English' with the specific vibe you choose."
+    question: "Can I import the files back to Amazon/Shopify/Etsy?",
+    answer: "Yes. Buzztate exports in the exact format each platform expects. For Amazon, you get a tab-delimited flat file matching Seller Central's import format. For Shopify, a CSV with Handle, Title, Body (HTML), and Tags columns. For Etsy, a CSV matching their bulk edit format. Upload directly — no reformatting needed."
   },
   {
-    question: "Is it free to use?",
-    answer: "Yes! You can use the Starter plan for free to translate shorter texts. For unlimited languages, bulk processing, and CSV exports, you can upgrade to the Pro plan for just $10/mo."
-  }
+    question: "What languages and marketplaces do you support?",
+    answer: "We currently support Amazon Germany (.de), France (.fr), Spain (.es), Italy (.it), and Japan (.co.jp), plus Shopify and Etsy international stores. Languages include German, French, Spanish, Italian, Japanese, Portuguese, Dutch, and many more."
+  },
+  {
+    question: "How is this different from hiring a translator?",
+    answer: "Speed, cost, and marketplace expertise. A human translator charges £50-200 per listing and takes days. Buzztate localizes 100 listings in minutes for £29/month. More importantly, most translators don't understand Amazon SEO or marketplace-specific formatting rules — Buzztate does."
+  },
+  {
+    question: "Will my brand name get translated?",
+    answer: "No. Buzztate has a 'Do Not Translate' option for brand names, SKUs, ASINs, UPCs, and other fields that should stay in their original form. You control exactly which columns get localized during the column mapping step."
+  },
+];
+
+const MARKETPLACES = [
+  { name: "Amazon.de", flag: "🇩🇪" },
+  { name: "Amazon.fr", flag: "🇫🇷" },
+  { name: "Amazon.es", flag: "🇪🇸" },
+  { name: "Amazon.it", flag: "🇮🇹" },
+  { name: "Amazon.co.jp", flag: "🇯🇵" },
+  { name: "Shopify", flag: "🛍️" },
+  { name: "Etsy", flag: "🎨" },
 ];
 
 export default function Landing() {
-  // --- ADVANCED DEMO STATE ---
-  const [demoText, setDemoText] = useState("");
-  const [demoLoading, setDemoLoading] = useState(false);
-  const [demoResults, setDemoResults] = useState<any[]>([]); 
-  const [demoVibe, setDemoVibe] = useState("Modern Slang");
-  // ✅ FIX: Default to English so users see the "Rewriter" capability immediately
-  const [demoSelectedLangs, setDemoSelectedLangs] = useState<string[]>(["English"]); 
-
-  // --- CONTACT FORM STATE ---
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [contactName, setContactName] = useState("");
   const [contactMsg, setContactMsg] = useState("");
-
-  // --- FAQ STATE ---
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
   };
 
-  const toggleDemoLang = (lang: string) => {
-    if (demoSelectedLangs.includes(lang)) {
-      setDemoSelectedLangs(demoSelectedLangs.filter(l => l !== lang));
-    } else {
-      if (demoSelectedLangs.length < 3) {
-        setDemoSelectedLangs([...demoSelectedLangs, lang]);
-      } else {
-        alert("Demo is limited to 3 languages. Sign up for unlimited!");
-      }
-    }
-  };
-
-  // ✅ NEW: Client-Side Mock for English Demo (Ensures reliability)
-  const getMockEnglishResult = (text: string, vibe: string) => {
-    // Simple logic to simulate vibe rewrite for common demo inputs
-    // This ensures the demo NEVER fails for English-to-English
-    let translation = text;
-    let meaning = "Rewritten for tone";
-
-    if (vibe.includes("Slang")) {
-        translation = "Yo bestie, " + text.toLowerCase() + " no cap. ✨";
-        meaning = "Casual/Gen Z Interpretation";
-    } else if (vibe.includes("Corporate")) {
-        translation = "Please be advised that " + text.toLowerCase() + ".";
-        meaning = "Formal Business Context";
-    } else if (vibe.includes("New Yorker")) {
-        translation = "Yo, listen here: " + text.toLowerCase() + ", alright?";
-        meaning = "Direct/Aggressive Tone";
-    }
-
-    return {
-        language: "English",
-        translation: translation,
-        reality_check: meaning
-    };
-  };
-
-  const handleDemoTranslate = async () => {
-    if (!demoText.trim()) return;
-    if (demoSelectedLangs.length === 0) return alert("Select at least one language.");
-
-    setDemoLoading(true);
-    setDemoResults([]);
-
-    try {
-      // 1. Separate English (Local Mock) from Others (API)
-      const needsEnglish = demoSelectedLangs.includes("English");
-      const apiLangs = demoSelectedLangs.filter(l => l !== "English");
-
-      const requests = apiLangs.map(lang => 
-        fetch("/api/translate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: demoText,
-            target_languages: [lang], 
-            style: demoVibe,
-          }),
-        }).then(res => res.json())
-      );
-
-      const responses = await Promise.all(requests);
-      let combinedResults = responses
-        .flatMap(r => r.results || [])
-        .filter(Boolean);
-
-      // ✅ FIX: Manually inject English result if selected
-      // This prevents the "Missing English" bug if the backend filters it out
-      if (needsEnglish) {
-          const englishResult = getMockEnglishResult(demoText, demoVibe);
-          combinedResults = [englishResult, ...combinedResults];
-      }
-
-      setDemoResults(combinedResults);
-
-    } catch (e) {
-      console.error(e);
-      alert("Demo limit reached. Please sign up!");
-    }
-    setDemoLoading(false);
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!contactName || !contactMsg) return alert("Please fill in all fields");
-
-    // Construct Mailto Link
+    if (!contactName || !contactMsg) return;
     const subject = `Buzztate Inquiry from ${contactName}`;
     const body = `${contactMsg}\n\n---\nSent via Buzztate Landing Page`;
     window.location.href = `mailto:teamz@buzztate.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
-  // Helper for smooth scrolling
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-  // -------------------------
-
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-yellow-400 selection:text-black flex flex-col">
-      {/* ✅ CSS Hack to hide scrollbars cross-browser */}
-      <style>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
 
       {/* Navigation */}
       <nav className="w-full border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          {/* ✅ CLICKABLE LOGO */}
-          <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
               <span className="text-3xl">⚡</span>
               <span className="font-bold text-xl tracking-tight">Buzztate</span>
+              <span className="text-[10px] bg-yellow-400/10 text-yellow-400 px-2 py-0.5 rounded font-bold uppercase ml-1">for Sellers</span>
             </div>
           </Link>
 
-          {/* ✅ NAVIGATION LINKS */}
           <div className="hidden md:flex items-center gap-8">
-             <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Features</button>
-             <button onClick={() => scrollToSection('faq')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">FAQ</button>
-             <button onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</button>
-             <button onClick={() => scrollToSection('contact')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Contact Us</button>
+            <button onClick={() => scrollToSection("how-it-works")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">How It Works</button>
+            <button onClick={() => scrollToSection("marketplaces")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Marketplaces</button>
+            <button onClick={() => scrollToSection("pricing")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</button>
+            <button onClick={() => scrollToSection("faq")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">FAQ</button>
           </div>
 
           <div className="flex items-center gap-4">
             <Link href="/auth?mode=login" className="text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors">
               Log In
             </Link>
-            <Link 
-              href="/auth?mode=signup" 
-              className="bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-full font-bold text-sm transition-all"
-            >
-              Get Started
+            <Link href="/auth?mode=signup" className="bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-full font-bold text-sm transition-all">
+              Try Free — 5 Listings
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section + Live Demo */}
-      <div className="flex-grow flex flex-col items-center justify-start text-center px-6 pt-16 pb-12">
+      {/* ============ HERO ============ */}
+      <div className="flex-grow flex flex-col items-center justify-start text-center px-6 pt-20 pb-16">
+        <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full mb-8">
+          <ShoppingBag size={14} /> Built for Amazon, Shopify & Etsy Sellers
+        </div>
+
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight max-w-5xl">
-          Don't just translate. <br />
-          <span className="text-yellow-400">Localize the Vibe.</span>
+          Sell in Every Market. <br />
+          <span className="text-yellow-400">Localize Your Listings in Minutes.</span>
         </h1>
-        {/* ✅ UPDATED HERO SUBTEXT */}
+
         <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-          The AI engine that rewrites your content—even <strong>English to English</strong>—into Gen Z Slang, Corporate Speak, or Marketing Copy instantly.
+          Upload your Amazon, Shopify, or Etsy listings. Get marketplace-optimized translations that actually convert. Not word-for-word — <strong className="text-white">localized to sell</strong>.
         </p>
 
-        {/* 🚀 LIVE DEMO WIDGET (Added ID "demo" here) */}
-        <div id="demo" className="w-full max-w-4xl bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl overflow-hidden mb-20 relative group">
-          <div className="absolute inset-0 bg-gradient-to-b from-yellow-400/5 to-transparent pointer-events-none" />
+        <div className="flex flex-col sm:flex-row gap-4 mb-16">
+          <Link href="/auth?mode=signup" className="bg-yellow-400 hover:bg-yellow-300 text-black px-8 py-4 rounded-xl font-extrabold text-lg transition-all shadow-[0_0_20px_rgba(250,204,21,0.2)] flex items-center gap-2">
+            Try Free — 5 Listings <ArrowRight size={18} />
+          </Link>
+          <button onClick={() => scrollToSection("how-it-works")} className="px-8 py-4 rounded-xl border border-gray-700 hover:bg-gray-900 text-white font-bold transition-all">
+            See How It Works
+          </button>
+        </div>
 
-          {/* Widget Controls Header */}
-          <div className="bg-gray-800/50 px-6 py-4 border-b border-gray-800 flex flex-col md:flex-row gap-4 justify-between items-center z-10 relative">
-             <div className="flex items-center gap-3 shrink-0 w-full md:w-auto">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                  <Wand2 size={12} className="text-yellow-400"/> Vibe:
-                </span>
-                <select 
-                  value={demoVibe}
-                  onChange={(e) => setDemoVibe(e.target.value)}
-                  className="bg-black border border-gray-700 text-white text-sm rounded-lg px-3 py-1.5 focus:border-yellow-400 outline-none cursor-pointer w-full md:w-auto"
-                >
-                  {DEMO_VIBES.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-             </div>
+        {/* Marketplace badges */}
+        <div className="flex flex-wrap justify-center gap-3">
+          {MARKETPLACES.map((m) => (
+            <span key={m.name} className="text-xs bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-full text-gray-400 flex items-center gap-2">
+              <span>{m.flag}</span> {m.name}
+            </span>
+          ))}
+        </div>
+      </div>
 
-             {/* ✅ FIXED: Clean layout with no scrollbar overlap */}
-             <div className="flex items-center gap-4 w-full md:w-auto min-w-0 overflow-hidden">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 whitespace-nowrap">
-                  Output:
-                </span>
-                <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar w-full py-1">
-                  {DEMO_LANGS.map(lang => (
-                    <button
-                      key={lang}
-                      onClick={() => toggleDemoLang(lang)}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                        demoSelectedLangs.includes(lang) 
-                        ? "bg-yellow-400 text-black border-yellow-400 font-bold" 
-                        : "bg-black/50 text-gray-400 border-gray-700 hover:border-gray-500"
-                      }`}
-                    >
-                      {lang === "Arabic" ? (
-                        <>
-                          <span>Arabic</span>
-                          <span className="opacity-70 font-normal">(العربية)</span>
-                        </>
-                      ) : (
-                        lang
-                      )}
-                    </button>
-                  ))}
+      {/* ============ PAIN POINT ============ */}
+      <div className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">
+            Google Translate <span className="text-red-400">Loses</span> You Sales
+          </h2>
+          <p className="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
+            See the difference between a literal translation and a marketplace-optimized localization for Amazon Germany.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Bad: Google Translate */}
+            <div className="bg-black border border-red-500/20 rounded-2xl p-8 relative">
+              <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg rounded-tr-2xl uppercase">
+                Google Translate
+              </div>
+              <p className="text-xs text-gray-500 uppercase font-bold mb-2">English Original</p>
+              <p className="text-gray-400 text-sm mb-6 italic">"Premium Stainless Steel Coffee Maker — Brews 12 Cups, Programmable Timer, Keep Warm Function"</p>
+              <p className="text-xs text-red-400 uppercase font-bold mb-2">German (Literal)</p>
+              <p className="text-white text-sm mb-6">"Premium Edelstahl Kaffee Hersteller — Braut 12 Tassen, Programmierbarer Timer, Warm Halten Funktion"</p>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-start gap-2 text-red-400"><X size={14} className="flex-shrink-0 mt-0.5" /> "Kaffee Hersteller" means "coffee manufacturer" — wrong compound noun</div>
+                <div className="flex items-start gap-2 text-red-400"><X size={14} className="flex-shrink-0 mt-0.5" /> "Braut" means "bride" — not "brews"</div>
+                <div className="flex items-start gap-2 text-red-400"><X size={14} className="flex-shrink-0 mt-0.5" /> Missing German search keywords shoppers actually use</div>
+              </div>
+            </div>
+
+            {/* Good: Buzztate */}
+            <div className="bg-black border border-green-500/20 rounded-2xl p-8 relative">
+              <div className="absolute top-0 right-0 bg-green-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg rounded-tr-2xl uppercase">
+                Buzztate
+              </div>
+              <p className="text-xs text-gray-500 uppercase font-bold mb-2">English Original</p>
+              <p className="text-gray-400 text-sm mb-6 italic">"Premium Stainless Steel Coffee Maker — Brews 12 Cups, Programmable Timer, Keep Warm Function"</p>
+              <p className="text-xs text-green-400 uppercase font-bold mb-2">German (Localized for Amazon.de)</p>
+              <p className="text-white text-sm mb-6">"Premium Edelstahl Kaffeemaschine — 12 Tassen, Programmierbare Zeitschaltuhr, Warmhaltefunktion"</p>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-start gap-2 text-green-400"><Check size={14} className="flex-shrink-0 mt-0.5" /> "Kaffeemaschine" — correct German compound noun shoppers search for</div>
+                <div className="flex items-start gap-2 text-green-400"><Check size={14} className="flex-shrink-0 mt-0.5" /> "Warmhaltefunktion" — natural German compound, not awkward word-by-word</div>
+                <div className="flex items-start gap-2 text-green-400"><Check size={14} className="flex-shrink-0 mt-0.5" /> Under Amazon's 200-character title limit, optimized for A9 search</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ============ HOW IT WORKS ============ */}
+      <div id="how-it-works" className="w-full py-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">How It Works</h2>
+          <p className="text-gray-400 text-center mb-16 max-w-xl mx-auto">Three steps. CSV in, marketplace-ready files out.</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center p-8 rounded-2xl bg-gray-900/30 border border-gray-800">
+              <div className="w-16 h-16 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Upload size={28} className="text-yellow-400" />
+              </div>
+              <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 1</div>
+              <h3 className="text-xl font-bold mb-3">Upload Your Listings</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Export your listings as CSV or Excel from Amazon Seller Central, Shopify, or Etsy. Drop the file into Buzztate.
+              </p>
+            </div>
+
+            <div className="text-center p-8 rounded-2xl bg-gray-900/30 border border-gray-800">
+              <div className="w-16 h-16 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Globe size={28} className="text-yellow-400" />
+              </div>
+              <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 2</div>
+              <h3 className="text-xl font-bold mb-3">Pick Target Marketplaces</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Select Amazon.de, Amazon.fr, Amazon.co.jp, Shopify, Etsy, or any supported marketplace. We know each one's rules.
+              </p>
+            </div>
+
+            <div className="text-center p-8 rounded-2xl bg-gray-900/30 border border-gray-800">
+              <div className="w-16 h-16 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Download size={28} className="text-yellow-400" />
+              </div>
+              <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 3</div>
+              <h3 className="text-xl font-bold mb-3">Download & Upload</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Download marketplace-ready files in the exact import format. Upload directly to Seller Central, Shopify, or Etsy.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ============ MARKETPLACE SUPPORT ============ */}
+      <div id="marketplaces" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
+            We Know Each Marketplace's Rules
+          </h2>
+          <p className="text-gray-400 mb-16 max-w-2xl mx-auto">
+            Character limits, keyword patterns, search behavior, cultural expectations — Buzztate handles it all.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              { name: "Amazon Germany", locale: "de-DE", flag: "🇩🇪", detail: "Compound nouns, formal 'Sie', TÜV/CE certs, metric units" },
+              { name: "Amazon France", locale: "fr-FR", flag: "🇫🇷", detail: "Accented keywords, elegant copy, 'vous' address, EU formatting" },
+              { name: "Amazon Spain", locale: "es-ES", flag: "🇪🇸", detail: "European Spanish, benefit-driven copy, emotional tone" },
+              { name: "Amazon Italy", locale: "it-IT", flag: "🇮🇹", detail: "Lifestyle descriptions, design emphasis, formal 'Lei'" },
+              { name: "Amazon Japan", locale: "ja-JP", flag: "🇯🇵", detail: "Keigo politeness, katakana brands, exhaustive specs, usage scenarios" },
+              { name: "Shopify", locale: "Multi-market", flag: "🛍️", detail: "Google SEO optimized, HTML descriptions, meta titles & descriptions" },
+              { name: "Etsy", locale: "International", flag: "🎨", detail: "13 tags per listing, artisan tone, story-driven descriptions" },
+            ].map((mp) => (
+              <div key={mp.name} className="bg-black border border-gray-800 rounded-xl p-6 text-left hover:border-gray-700 transition-colors">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-2xl">{mp.flag}</span>
+                  <div>
+                    <h3 className="font-bold text-white text-sm">{mp.name}</h3>
+                    <p className="text-xs text-gray-500">{mp.locale}</p>
+                  </div>
                 </div>
-             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 min-h-[350px]">
-            {/* Input Area */}
-            <div className="p-6 flex flex-col border-b md:border-b-0 md:border-r border-gray-800 bg-black/40 relative">
-               <textarea 
-                 className="w-full flex-grow bg-transparent outline-none text-lg resize-none placeholder-gray-600 font-light leading-relaxed"
-                 // ✅ UPDATED PLACEHOLDER
-                 placeholder="Paste text in any language here (e.g. Spanish, Arabic, English)..."
-                 value={demoText}
-                 onChange={(e) => setDemoText(e.target.value)}
-                 maxLength={280}
-               />
-               <div className="mt-4 flex justify-between items-center text-xs text-gray-500">
-                 <span>{demoText.length}/280 chars</span>
-                 <span className="text-yellow-400/50 uppercase font-bold tracking-widest">Input</span>
-               </div>
-            </div>
-
-            {/* Output Area */}
-            <div className="p-6 bg-gray-900/50 relative overflow-y-auto max-h-[400px]">
-               {demoLoading ? (
-                 <div className="h-full flex flex-col items-center justify-center text-yellow-400 gap-4 opacity-80">
-                   <Loader2 className="animate-spin" size={32} /> 
-                   <span className="animate-pulse text-sm font-bold uppercase tracking-widest">Applying "{demoVibe}"...</span>
-                 </div>
-               ) : demoResults.length > 0 ? (
-                 <div className="space-y-4">
-                   {demoResults.map((res, i) => (
-                     <div key={i} className="bg-black/40 border border-white/10 p-4 rounded-xl animate-in fade-in slide-in-from-bottom-2 duration-500" style={{animationDelay: `${i * 100}ms`}}>
-                        <div className="flex justify-between items-center mb-2">
-                           <span className="text-xs font-bold text-yellow-400 uppercase flex items-center gap-2">
-                             <Globe size={10} /> {res.language}
-                           </span>
-                           <span className="text-[10px] text-gray-600 uppercase border border-gray-800 px-1.5 rounded">{demoVibe}</span>
-                        </div>
-                        {/* ✅ Better RTL Support for Arabic */}
-                        <p className={`text-white text-lg font-medium leading-relaxed mb-3 ${res.language === "Arabic" ? "text-right font-serif" : "text-left"}`}>
-                          "{res.translation}"
-                        </p>
-                        <p className="text-xs text-gray-500 italic border-t border-gray-800 pt-2">Meaning: "{res.reality_check}"</p>
-                     </div>
-                   ))}
-
-                   <div className="pt-4 text-center">
-                      <Link href="/auth?mode=signup" className="text-sm text-gray-400 hover:text-white underline decoration-yellow-400 underline-offset-4">
-                        Unlock 30+ Languages & Export CSV →
-                      </Link>
-                   </div>
-                 </div>
-               ) : (
-                 <div className="h-full flex flex-col items-center justify-center text-gray-600 opacity-40">
-                   <Sparkles size={48} className="mb-4" />
-                   <p className="text-sm font-medium">Select output language & click translate</p>
-                 </div>
-               )}
-            </div>
-          </div>
-
-          {/* Action Bar */}
-          <div className="p-4 border-t border-gray-800 bg-gray-900 flex justify-between items-center">
-            <span className="text-xs text-gray-500 hidden sm:inline-block">Free demo mode (Limited to 280 chars)</span>
-            <button 
-              onClick={handleDemoTranslate}
-              disabled={demoLoading || !demoText}
-              className="w-full sm:w-auto bg-yellow-400 hover:bg-yellow-300 text-black px-8 py-3 rounded-xl font-extrabold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(250,204,21,0.2)]"
-            >
-              {demoLoading ? "Processing..." : "TRANSLATE NOW"} <ArrowRight size={16} />
-            </button>
+                <p className="text-xs text-gray-400 leading-relaxed">{mp.detail}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* ✅ FEATURES SECTION 1: The Core Grid */}
-      <div id="features" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-8 rounded-2xl bg-black border border-gray-800 hover:border-gray-700 transition-colors group">
-            <div className="w-12 h-12 bg-yellow-400/10 rounded-full flex items-center justify-center mb-6 text-yellow-400 group-hover:scale-110 transition-transform">
-              <Globe size={24} />
+      {/* ============ FEATURES GRID ============ */}
+      <div className="w-full py-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="p-8 rounded-2xl bg-gray-900/30 border border-gray-800 hover:border-gray-700 transition-colors">
+              <FileSpreadsheet size={24} className="text-yellow-400 mb-4" />
+              <h3 className="text-lg font-bold mb-2">CSV/Excel Import</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">Upload Amazon flat files, Shopify CSVs, or Etsy exports. Smart column detection maps your data automatically.</p>
             </div>
-            <h3 className="text-xl font-bold mb-3">Global to Local</h3>
-            <p className="text-gray-400 leading-relaxed">Translate from English to 30+ languages, OR from any language into perfect English.</p>
-          </div>
-          <div className="p-8 rounded-2xl bg-black border border-gray-800 hover:border-gray-700 transition-colors group">
-            <div className="w-12 h-12 bg-yellow-400/10 rounded-full flex items-center justify-center mb-6 text-yellow-400 group-hover:scale-110 transition-transform">
-              <Zap size={24} />
+            <div className="p-8 rounded-2xl bg-gray-900/30 border border-gray-800 hover:border-gray-700 transition-colors">
+              <Shield size={24} className="text-yellow-400 mb-4" />
+              <h3 className="text-lg font-bold mb-2">Quality Checks</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">Every localized listing is checked against marketplace character limits. Flags fields that are too long, too short, or empty.</p>
             </div>
-            <h3 className="text-xl font-bold mb-3">Vibe Matching</h3>
-            <p className="text-gray-400 leading-relaxed">Don't sound robotic. Sound like a local, an executive, or an influencer with our Vibe Engine.</p>
-          </div>
-          <div className="p-8 rounded-2xl bg-black border border-gray-800 hover:border-gray-700 transition-colors group">
-            <div className="w-12 h-12 bg-yellow-400/10 rounded-full flex items-center justify-center mb-6 text-yellow-400 group-hover:scale-110 transition-transform">
-              <Lock size={24} />
-            </div>
-            <h3 className="text-xl font-bold mb-3">Enterprise Security</h3>
-            <p className="text-gray-400 leading-relaxed">Your data is processed securely via HTTPS and never used for training without permission.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* 🚀 DETAILED FEATURE SPOTLIGHTS */}
-      <div className="w-full bg-black py-24">
-
-        {/* Spotlight 1: Vibe Engine (Intra-language focus) */}
-        <div className="max-w-7xl mx-auto px-6 mb-32">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <div className="inline-block px-3 py-1 rounded bg-yellow-400/10 text-yellow-400 text-xs font-bold uppercase tracking-wider mb-4">
-                Vibe Shifter
-              </div>
-              <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-                Change the tone, <br/><span className="text-gray-500">keep the language.</span>
-              </h2>
-              <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                Need to turn a sloppy text into a corporate email? Or make a boring post go viral? Use Buzztate to rewrite text without translating.
-              </p>
-
-              <ul className="space-y-6">
-                <li className="flex gap-4">
-                   <div className="mt-1 bg-yellow-400 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
-                   <div>
-                     <h4 className="font-bold text-white text-lg">Formal ↔ Informal</h4>
-                     <p className="text-sm text-gray-500">Perfect for non-native speakers or anyone who needs to code-switch instantly.</p>
-                   </div>
-                </li>
-                <li className="flex gap-4">
-                   <div className="mt-1 bg-yellow-400 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
-                   <div>
-                     <h4 className="font-bold text-white text-lg">7 Distinct Vibes</h4>
-                     <p className="text-sm text-gray-500">From "Gen Z Influencer" to "Angry New Yorker" to "C-Suite Executive".</p>
-                   </div>
-                </li>
-              </ul>
-            </div>
-
-            {/* Visual for Vibe */}
-            <div className="relative">
-               <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-2xl blur opacity-20"></div>
-               <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
-                  {/* Message 1 */}
-                  <div className="flex gap-4 mb-6 opacity-50">
-                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center"><Globe size={20} /></div>
-                    <div className="bg-gray-800 p-4 rounded-xl rounded-tl-none max-w-sm">
-                       <p className="text-xs text-gray-500 uppercase font-bold mb-1">Input (English)</p>
-                       <p className="text-gray-400">"Hey boss, I ain't coming in today."</p>
-                    </div>
-                  </div>
-                  {/* Message 2 */}
-                  <div className="flex gap-4 justify-end">
-                    <div className="bg-yellow-400 p-4 rounded-xl rounded-tr-none max-w-sm">
-                       <p className="text-xs text-black/50 uppercase font-bold mb-1">Output (Corporate)</p>
-                       <p className="text-black font-bold">"I am writing to inform you that I will be taking a personal day."</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center"><Sparkles size={20} className="text-black"/></div>
-                  </div>
-               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 🚀 NEW SPOTLIGHT: Perfect English (Reverse Translation) */}
-        <div className="max-w-7xl mx-auto px-6 mb-32">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Visual for Smart AI */}
-            <div className="order-2 lg:order-1 relative">
-               <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl blur opacity-20"></div>
-               <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl overflow-hidden">
-                  <div className="flex flex-col gap-6">
-                     <div className="bg-black/50 p-4 rounded-xl border border-gray-800 opacity-50">
-                        <div className="flex justify-between mb-2">
-                           <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1"><Languages size={10}/> Input (Spanish)</span>
-                        </div>
-                        <p className="text-gray-400 text-sm italic">"Me gustaría agendar una reunión."</p>
-                        <p className="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-wider">Target: Corporate English</p>
-                     </div>
-
-                     <div className="bg-gradient-to-r from-yellow-400/10 to-orange-400/10 p-4 rounded-xl border border-yellow-400/30">
-                        <div className="flex justify-between mb-2">
-                           <span className="text-[10px] font-bold text-yellow-400 uppercase flex items-center gap-1"><BrainCircuit size={10}/> Output</span>
-                           <span className="text-[10px] text-yellow-400">Smart AI</span>
-                        </div>
-                        <p className="text-white text-sm italic">"I'd like to schedule a brief touchbase."</p>
-                        <p className="text-[10px] text-green-400 mt-2 font-bold uppercase tracking-wider">✅ Perfect Native Tone</p>
-                     </div>
-                  </div>
-               </div>
-            </div>
-
-            <div className="order-1 lg:order-2">
-              <div className="inline-block px-3 py-1 rounded bg-pink-500/10 text-pink-400 text-xs font-bold uppercase tracking-wider mb-4">
-                Perfect English
-              </div>
-              <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-                Not a native speaker? <br/><span className="text-gray-500">No problem.</span>
-              </h2>
-              <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                Unlock the power of <strong>Smart AI</strong> to polish your English. Write in your native language, and let Buzztate translate it into perfect, idiomatic English.
-              </p>
-
-              <ul className="space-y-6">
-                <li className="flex gap-4">
-                   <div className="mt-1 bg-pink-500 rounded-full p-1 h-fit"><BrainCircuit size={12} className="text-black stroke-[3]" /></div>
-                   <div>
-                     <h4 className="font-bold text-white text-lg">Fix Broken Grammar</h4>
-                     <p className="text-sm text-gray-500">Automatically corrects sentence structure to sound natural, not translated.</p>
-                   </div>
-                </li>
-                <li className="flex gap-4">
-                   <div className="mt-1 bg-pink-500 rounded-full p-1 h-fit"><Check size={12} className="text-black stroke-[3]" /></div>
-                   <div>
-                     <h4 className="font-bold text-white text-lg">Choose Your Persona</h4>
-                     <p className="text-sm text-gray-500">Sound like a C-Suite executive in emails, or a cool creator on social media.</p>
-                   </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Spotlight 3: Workflow */}
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Visual for Workflow */}
-            <div className="order-2 lg:order-2 relative">
-               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20"></div>
-               <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
-                  <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
-                     <div className="flex gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                     </div>
-                     <div className="text-xs text-gray-500 font-mono">export_2026.csv</div>
-                  </div>
-                  <div className="space-y-3 font-mono text-sm">
-                     <div className="grid grid-cols-3 text-gray-500 text-xs uppercase font-bold">
-                        <div>Language</div>
-                        <div>Style</div>
-                        <div>Output</div>
-                     </div>
-                     <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
-                        <div className="flex items-center gap-2"><Globe size={12}/> Spanish</div>
-                        <div className="text-yellow-400">Marketing</div>
-                        <div className="truncate">¡Descubre la magia ahora!</div>
-                     </div>
-                     <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
-                        <div className="flex items-center gap-2"><Globe size={12}/> French</div>
-                        <div className="text-yellow-400">Corporate</div>
-                        <div className="truncate">Nous vous prions d'agréer...</div>
-                     </div>
-                     <div className="grid grid-cols-3 text-gray-300 border-b border-gray-800 pb-2">
-                        <div className="flex items-center gap-2"><Globe size={12}/> Japanese</div>
-                        <div className="text-yellow-400">Slang</div>
-                        <div className="truncate">マジでヤバい！</div>
-                     </div>
-                  </div>
-                  <div className="mt-6 flex justify-center">
-                     <button className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
-                        <FileText size={16}/> Download CSV
-                     </button>
-                  </div>
-               </div>
-            </div>
-
-            <div className="order-1 lg:order-1">
-              <div className="inline-block px-3 py-1 rounded bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider mb-4">
-                Enterprise Workflow
-              </div>
-              <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-                Localization for <br/><span className="text-gray-500">speed demons.</span>
-              </h2>
-              <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                Don't waste hours copying and pasting. Buzztate is built for marketers and agencies who need results yesterday.
-              </p>
-
-              <ul className="space-y-6">
-                <li className="flex gap-4">
-                   <div className="mt-1 bg-blue-500 rounded-full p-1 h-fit"><Layers size={12} className="text-black stroke-[3]" /></div>
-                   <div>
-                     <h4 className="font-bold text-white text-lg">Bulk Processing</h4>
-                     <p className="text-sm text-gray-500">Select 30+ languages and translate them all in a single click.</p>
-                   </div>
-                </li>
-                <li className="flex gap-4">
-                   <div className="mt-1 bg-blue-500 rounded-full p-1 h-fit"><FileText size={12} className="text-black stroke-[3]" /></div>
-                   <div>
-                     <h4 className="font-bold text-white text-lg">One-Click CSV Export</h4>
-                     <p className="text-sm text-gray-500">Get a neat spreadsheet ready for your dev team or marketing dashboard.</p>
-                   </div>
-                </li>
-              </ul>
+            <div className="p-8 rounded-2xl bg-gray-900/30 border border-gray-800 hover:border-gray-700 transition-colors">
+              <Zap size={24} className="text-yellow-400 mb-4" />
+              <h3 className="text-lg font-bold mb-2">Marketplace-Format Export</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">Download in the exact format each platform expects — Amazon TSV, Shopify CSV, Etsy CSV, or XLSX with quality report.</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ✅ REFACTORED FAQ SECTION: Smooth React State Animation */}
-      <div id="faq" className="max-w-4xl mx-auto px-6 py-20 border-b border-gray-900">
+      {/* ============ PRICING ============ */}
+      <div id="pricing" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">Simple, Transparent Pricing</h2>
+          <p className="text-gray-400 text-center mb-16">Start free. Upgrade when you're ready to scale.</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Free */}
+            <div className="p-8 rounded-2xl border border-gray-800 bg-black flex flex-col">
+              <h3 className="text-lg font-bold text-gray-400">Free</h3>
+              <div className="text-4xl font-bold mt-4 mb-2">£0</div>
+              <p className="text-gray-500 text-sm mb-6">Test the waters</p>
+              <ul className="space-y-3 mb-8 flex-grow text-sm">
+                <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> 5 listings/month</li>
+                <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> 2 languages</li>
+                <li className="flex items-center gap-2 text-gray-600"><X size={16} /> No priority processing</li>
+              </ul>
+              <Link href="/auth?mode=signup" className="w-full block text-center py-3 rounded-xl border border-gray-700 hover:bg-gray-800 font-bold transition-all text-sm">
+                Start Free
+              </Link>
+            </div>
+
+            {/* Starter */}
+            <div className="p-8 rounded-2xl border border-gray-800 bg-black flex flex-col">
+              <h3 className="text-lg font-bold text-white">Starter</h3>
+              <div className="text-4xl font-bold mt-4 mb-2">£29<span className="text-lg text-gray-500 font-normal">/mo</span></div>
+              <p className="text-gray-400 text-sm mb-6">Growing sellers</p>
+              <ul className="space-y-3 mb-8 flex-grow text-sm">
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> 100 listings/month</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> 5 languages</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All export formats</li>
+              </ul>
+              <Link href="/auth?mode=signup&intent=starter" className="w-full block text-center py-3 rounded-xl bg-white text-black font-bold transition-all text-sm hover:bg-gray-200">
+                Get Started
+              </Link>
+            </div>
+
+            {/* Growth */}
+            <div className="p-8 rounded-2xl border border-yellow-400 bg-gray-900/30 flex flex-col relative shadow-2xl shadow-yellow-400/5">
+              <div className="absolute top-0 right-0 bg-yellow-400 text-black text-[10px] font-extrabold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wider">MOST POPULAR</div>
+              <h3 className="text-lg font-bold text-white">Growth</h3>
+              <div className="text-4xl font-bold mt-4 mb-2 text-yellow-400">£59<span className="text-lg text-gray-400 font-normal">/mo</span></div>
+              <p className="text-gray-300 text-sm mb-6">Scaling internationally</p>
+              <ul className="space-y-3 mb-8 flex-grow text-sm">
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> 500 listings/month</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All languages</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Priority processing</li>
+              </ul>
+              <Link href="/auth?mode=signup&intent=growth" className="w-full block text-center py-3 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold transition-all text-sm shadow-lg">
+                Upgrade to Growth
+              </Link>
+            </div>
+
+            {/* Scale */}
+            <div className="p-8 rounded-2xl border border-gray-800 bg-black flex flex-col">
+              <h3 className="text-lg font-bold text-white">Scale</h3>
+              <div className="text-4xl font-bold mt-4 mb-2">£99<span className="text-lg text-gray-500 font-normal">/mo</span></div>
+              <p className="text-gray-400 text-sm mb-6">Enterprise sellers</p>
+              <ul className="space-y-3 mb-8 flex-grow text-sm">
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Unlimited listings</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All languages</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> API access</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Bulk processing</li>
+              </ul>
+              <Link href="/auth?mode=signup&intent=scale" className="w-full block text-center py-3 rounded-xl border border-gray-700 hover:bg-gray-800 font-bold transition-all text-sm">
+                Contact Sales
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ============ FAQ ============ */}
+      <div id="faq" className="max-w-4xl mx-auto px-6 py-24">
         <h2 className="text-3xl font-bold mb-10 text-center">Frequently Asked Questions</h2>
         <div className="space-y-4">
-           {FAQS.map((faq, index) => {
-             const isOpen = openFaqIndex === index;
-             return (
-               <div key={index} className="bg-gray-900/50 rounded-xl border border-gray-800 transition-all duration-300 hover:border-gray-700">
-                 <button 
-                   onClick={() => toggleFaq(index)}
-                   className="w-full flex justify-between items-center p-6 text-left cursor-pointer focus:outline-none"
-                 >
-                    <span className="font-bold text-lg">{faq.question}</span>
-                    <span className={`transition-transform duration-300 text-yellow-400 ${isOpen ? 'rotate-180' : ''}`}>
-                      <ChevronDown />
-                    </span>
-                 </button>
-
-                 {/* The "Grid Trick" for smooth auto-height animation */}
-                 <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                    <div className="overflow-hidden">
-                       <div className="px-6 pb-6 text-gray-400 leading-relaxed">
-                          <span>{faq.answer}</span>
-                       </div>
+          {FAQS.map((faq, index) => {
+            const isOpen = openFaqIndex === index;
+            return (
+              <div key={index} className="bg-gray-900/50 rounded-xl border border-gray-800 transition-all duration-300 hover:border-gray-700">
+                <button
+                  onClick={() => toggleFaq(index)}
+                  className="w-full flex justify-between items-center p-6 text-left cursor-pointer focus:outline-none"
+                >
+                  <span className="font-bold text-lg">{faq.question}</span>
+                  <span className={`transition-transform duration-300 text-yellow-400 ${isOpen ? "rotate-180" : ""}`}>
+                    <ChevronDown />
+                  </span>
+                </button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-6 pb-6 text-gray-400 leading-relaxed">
+                      {faq.answer}
                     </div>
-                 </div>
-               </div>
-             );
-           })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* SEO Content Section */}
-      <div className="max-w-4xl mx-auto px-6 py-20 text-center border-b border-gray-900">
-        <h2 className="text-3xl font-bold mb-6">How to Translate into Multiple Languages at Once</h2>
-        <p className="text-gray-400 text-lg leading-relaxed mb-8">
-          Most translators force you to copy-paste text one language at a time.{' '} 
-          <strong>Buzztate</strong> is different. Our AI engine allows you to{' '} 
-          <span className="text-white font-bold">translate into multiple languages at once</span>{' '}
-          with a single click.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md mx-auto mt-10">
-          <Link 
-            href="/auth?mode=signup" 
-            className="flex-1 px-8 py-4 rounded-xl border border-gray-700 hover:bg-gray-900 text-white font-bold cursor-pointer transition-all text-center"
-          >
-            Try for Free
-          </Link>
-          <Link 
-            href="/auth?mode=signup&intent=pro" 
-            className="flex-1 px-8 py-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-bold transition-all shadow-[0_0_20px_rgba(250,204,21,0.3)] text-center"
-          >
-            Get Pro - $10/mo
-          </Link>
-        </div>
-      </div>
-
-      {/* Pricing Section */}
-      <div id="pricing" className="max-w-5xl mx-auto px-6 py-32 w-full">
-        <h2 className="text-4xl font-bold text-center mb-16">Simple Pricing</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Free Tier */}
-          <div className="p-10 rounded-3xl border border-gray-800 bg-black flex flex-col hover:border-gray-600 transition-colors">
-            <h3 className="text-2xl font-bold text-gray-400">Starter</h3>
-            <div className="text-5xl font-bold mt-6 mb-4">$0 <span className="text-lg text-gray-500 font-normal">/ mo</span></div>
-            <p className="text-gray-500 mb-8 h-12">Perfect for testing the waters and quick translations.</p>
-            <ul className="space-y-5 mb-10 flex-grow">
-              <li className="flex items-center gap-3 text-gray-400"><Check size={18} className="text-gray-500" /><span>Standard AI Model</span></li>
-              <li className="flex gap-4 text-gray-300 items-center"><Check size={20} className="text-gray-500" /> <span>Translate 1 language</span></li>
-              <li className="flex gap-4 text-gray-300 items-center"><Check size={20} className="text-gray-500" /> <span>"Modern Slang" Vibe</span></li>
-              <li className="flex gap-4 text-gray-600 items-center"><X size={20} /> <span>No CSV Export</span></li>
-            </ul>
-            <Link href="/auth?mode=signup" className="w-full block text-center py-4 rounded-xl border border-gray-700 hover:bg-gray-800 hover:text-white cursor-pointer font-bold transition-all">Start for Free</Link>
-          </div>
-
-          {/* Pro Tier */}
-          <div className="p-10 rounded-3xl border border-yellow-400 bg-gray-900/30 relative flex flex-col shadow-2xl shadow-yellow-400/5">
-            <div className="absolute top-0 right-0 bg-yellow-400 text-black text-xs font-extrabold px-4 py-1.5 rounded-bl-xl rounded-tr-2xl tracking-wider">MOST POPULAR</div>
-            <h3 className="text-2xl font-bold text-white">Pro Suite</h3>
-            <div className="text-5xl font-bold mt-6 mb-4 text-yellow-400">$10 <span className="text-lg text-gray-400 font-normal text-white">/ mo</span></div>
-            <p className="text-gray-300 mb-8 h-12">For creators & marketers who need to scale.</p>
-            <ul className="space-y-5 mb-10 flex-grow">
-              <li className="flex items-center gap-3 text-white font-bold"><Zap size={18} className="text-yellow-400" /><span>Superior AI Model</span></li>
-              <li className="flex gap-4 text-white items-center"><Check size={20} className="text-yellow-400" /> <span><strong>Unlimited</strong> Languages</span></li>
-              <li className="flex gap-4 text-white items-center"><Check size={20} className="text-yellow-400" /> <span><strong>All 7 Vibes</strong></span></li>
-              <li className="flex gap-4 text-white items-center"><Check size={20} className="text-yellow-400" /> <span><strong>Download CSV Reports</strong></span></li>
-            </ul>
-            <Link href="/auth?mode=signup&intent=pro" className="w-full block text-center py-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold cursor-pointer transition-all shadow-lg hover:shadow-yellow-400/20">Upgrade to Pro</Link>
-          </div>
-        </div>
-      </div>
-
-      {/* ✅ CONTACT FORM SECTION */}
+      {/* ============ CONTACT ============ */}
       <div id="contact" className="bg-gray-900 py-24 border-t border-gray-800">
-         <div className="max-w-3xl mx-auto px-6 text-center">
-            <h2 className="text-3xl font-bold mb-4">Get in Touch</h2>
-            <p className="text-gray-400 mb-10">Have questions about Enterprise plans or custom integrations?</p>
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold mb-4">Get in Touch</h2>
+          <p className="text-gray-400 mb-10">Questions about enterprise plans or custom marketplace support?</p>
 
-            <form onSubmit={handleContactSubmit} className="bg-black p-8 rounded-2xl border border-gray-800 text-left space-y-4 shadow-xl">
-               <div>
-                  <label className="text-xs font-bold uppercase text-gray-500 mb-2 block">Your Name</label>
-                  <input 
-                    type="text" 
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    placeholder="John Doe"
-                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none"
-                  />
-               </div>
-               <div>
-                  <label className="text-xs font-bold uppercase text-gray-500 mb-2 block">Message</label>
-                  <textarea 
-                    value={contactMsg}
-                    onChange={(e) => setContactMsg(e.target.value)}
-                    placeholder="I'm interested in the API access..."
-                    rows={4}
-                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none resize-none"
-                  />
-               </div>
-               <button type="submit" className="w-full bg-white hover:bg-gray-200 text-black font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                  <Mail size={18}/> Send Message
-               </button>
-            </form>
-         </div>
+          <form onSubmit={handleContactSubmit} className="bg-black p-8 rounded-2xl border border-gray-800 text-left space-y-4 shadow-xl">
+            <div>
+              <label className="text-xs font-bold uppercase text-gray-500 mb-2 block">Your Name</label>
+              <input type="text" value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Jane Doe" className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none" />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase text-gray-500 mb-2 block">Message</label>
+              <textarea value={contactMsg} onChange={(e) => setContactMsg(e.target.value)} placeholder="I sell on Amazon EU and want to localize 500 listings..." rows={4} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none resize-none" />
+            </div>
+            <button type="submit" className="w-full bg-white hover:bg-gray-200 text-black font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
+              <Mail size={18} /> Send Message
+            </button>
+          </form>
+        </div>
       </div>
 
-      {/* 📧 REFACTORED FOOTER: 3-COLUMN SEO LAYOUT */}
+      {/* ============ FOOTER ============ */}
       <footer className="w-full py-16 border-t border-gray-900 mt-auto bg-black text-left">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
-
-            {/* COLUMN 1: GO GLOBAL (OUTBOUND) */}
-            <div>
-               <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Go Global (Translate From English)</span>
-               <ul className="space-y-3">
-                  {/* ✅ FIXED: Use standard anchor tags to scroll to Demo instead of 404 links */}
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Spanish</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to French</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to German</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Japanese</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Arabic</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">English to Chinese</a></li>
-               </ul>
-            </div>
-
-            {/* COLUMN 2: PERFECT ENGLISH (INBOUND) */}
-            <div>
-               <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Perfect English (Translate To English)</span>
-               <ul className="space-y-3">
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Spanish to English</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">French to English</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Chinese to English</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Arabic to English</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Fix English Grammar</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Native Speaker Rewriter</a></li>
-               </ul>
-            </div>
-
-            {/* COLUMN 3: VIBE TOOLS (INTRA-LANGUAGE) */}
-            <div>
-               <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Vibe Converters (Any Language)</span>
-               <ul className="space-y-3">
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Formal to Casual Converter</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Professional Email Rewriter</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Slang to Corporate Translator</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Marketing Copy Generator</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Viral Caption Creator</a></li>
-                  <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToSection('demo'); }} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Rewrite Text (Same Language)</a></li>
-               </ul>
-            </div>
+          <div>
+            <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Marketplaces</span>
+            <ul className="space-y-3">
+              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Listing Translation</Link></li>
+              <li><Link href="/shopify-product-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Shopify Product Translation</Link></li>
+              <li><Link href="/etsy-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Etsy Listing Translation</Link></li>
+            </ul>
+          </div>
+          <div>
+            <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Amazon Markets</span>
+            <ul className="space-y-3">
+              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Germany (.de)</Link></li>
+              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon France (.fr)</Link></li>
+              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Japan (.co.jp)</Link></li>
+              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Spain (.es)</Link></li>
+              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Italy (.it)</Link></li>
+            </ul>
+          </div>
+          <div>
+            <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Resources</span>
+            <ul className="space-y-3">
+              <li><button onClick={() => scrollToSection("pricing")} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Pricing</button></li>
+              <li><button onClick={() => scrollToSection("faq")} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">FAQ</button></li>
+              <li><button onClick={() => scrollToSection("contact")} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Contact Us</button></li>
+            </ul>
+          </div>
         </div>
 
-        {/* Contact & Copyright */}
         <div className="border-t border-gray-900 pt-8 text-center">
-            <p className="text-sm text-gray-500 mb-2">
+          <p className="text-sm text-gray-500 mb-2">
             Need help? <a href="mailto:teamz@buzztate.com" className="text-yellow-400 hover:underline transition-colors">teamz@buzztate.com</a>
-            </p>
-            {/* ✅ Updated Year to 2026 */}
-            <p className="text-xs text-gray-600 mt-2">© 2026 Buzztate. All rights reserved.</p>
+          </p>
+          <p className="text-xs text-gray-600 mt-2">© 2026 Buzztate. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -62,12 +62,18 @@ export default async function handler(req: any, res: any) {
     console.log(`Payment success for User: ${userId}`);
 
     if (userId) {
-      // Unlock Pro features in Supabase
+      // Determine plan tier from metadata (default to 'starter' for legacy)
+      const planTier = session.metadata?.plan || 'starter';
+
+      // Unlock paid features in Supabase
       const { error } = await supabase
         .from('profiles')
         .update({
           is_pro: true,
+          plan_tier: planTier,
           stripe_customer_id: customerId,
+          listings_used_this_month: 0,
+          listings_reset_date: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', userId);
@@ -77,7 +83,7 @@ export default async function handler(req: any, res: any) {
         return res.status(500).send('Database Error');
       }
 
-      console.log(`User ${userId} upgraded to Pro successfully`);
+      console.log(`User ${userId} upgraded to ${planTier} successfully`);
     } else {
       console.warn('No user ID found in session metadata or client_reference_id');
     }
@@ -95,6 +101,7 @@ export default async function handler(req: any, res: any) {
       .from('profiles')
       .update({
         is_pro: false,
+        plan_tier: 'free',
         updated_at: new Date().toISOString()
       })
       .eq('stripe_customer_id', customerId);
