@@ -15,6 +15,8 @@ import LanguageLanding from "@/pages/landing/LanguageLanding";
 import AmazonListingTranslation from "@/pages/landing/AmazonListingTranslation";
 import ShopifyProductTranslation from "@/pages/landing/ShopifyProductTranslation";
 import EtsyListingTranslation from "@/pages/landing/EtsyListingTranslation";
+import AmazonDeTranslation from "@/pages/landing/AmazonDeTranslation";
+import AmazonJpTranslation from "@/pages/landing/AmazonJpTranslation";
 
 function Router() {
   const [session, setSession] = useState<any>(null);
@@ -60,6 +62,8 @@ function Router() {
       <Route path="/amazon-listing-translation" component={AmazonListingTranslation} />
       <Route path="/shopify-product-translation" component={ShopifyProductTranslation} />
       <Route path="/etsy-listing-translation" component={EtsyListingTranslation} />
+      <Route path="/amazon-de-translation" component={AmazonDeTranslation} />
+      <Route path="/amazon-jp-translation" component={AmazonJpTranslation} />
 
       {/* Dynamic SEO Pages for Languages (e.g. /translate/spanish) */}
       <Route path="/translate/:lang">
