@@ -164,6 +164,22 @@ export default function Home({ session }: { session: any }) {
     setCheckoutLoading(true);
     setShowPlanPicker(false);
     try {
+      // Refresh session before billing to ensure valid token
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession?.access_token) {
+        // Try refreshing the session
+        const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+        if (!refreshed?.access_token) {
+          toast({
+            title: "Session Expired",
+            description: "Please log in again to continue.",
+            variant: "destructive"
+          });
+          setCheckoutLoading(false);
+          return;
+        }
+      }
+
       const endpoint = isPro ? "/api/portal" : "/api/checkout";
       const headers = await getAuthHeaders();
 
@@ -190,6 +206,7 @@ export default function Home({ session }: { session: any }) {
         });
       }
     } catch (error) {
+      console.error("Billing error:", error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",

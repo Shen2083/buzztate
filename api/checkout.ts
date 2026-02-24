@@ -1,7 +1,11 @@
 import Stripe from 'stripe';
 import { verifyAuth } from './_lib/auth';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error('STRIPE_SECRET_KEY is not configured');
+  return new Stripe(key);
+}
 
 /** Plan definitions matching the new e-commerce tier structure */
 const PLANS: Record<string, { name: string; description: string; amount: number; currency: string }> = {
@@ -46,6 +50,9 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    const stripe = getStripe();
+    const origin = req.headers.origin || req.headers.referer?.replace(/\/[^/]*$/, '') || process.env.APP_URL || 'https://buzztate.com';
+
     const session = await stripe.checkout.sessions.create({
       client_reference_id: userId,
       metadata: { userId, plan: planId },
@@ -64,14 +71,17 @@ export default async function handler(req: any, res: any) {
         },
       ],
       mode: 'subscription',
-      success_url: `${req.headers.origin}/app?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.origin}/app`,
+      success_url: `${origin}/app?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/app`,
     });
 
     return res.status(200).json({ url: session.url });
 
   } catch (error: any) {
-    console.error("Stripe Checkout Error:", error);
-    return res.status(500).json({ error: "Could not initiate checkout. Please try again later." });
+    console.error("Stripe Checkout Error:", error?.message || error);
+    if (error?.message?.includes('STRIPE_SECRET_KEY')) {
+      return res.status(500).json({ error: "Payment system is not configured. Please contact support." });
+    }
+    return res.status(500).json({ error: error?.message || "Could not initiate checkout. Please try again later." });
   }
 }
