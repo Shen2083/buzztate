@@ -3,9 +3,13 @@
   "outputDirectory": "dist/public",
   "framework": null,
   "functions": {
+    "api/localize.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
     "api/**/*.ts": {
       "memory": 1024,
-      "maxDuration": 10
+      "maxDuration": 60
     }
   },
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]

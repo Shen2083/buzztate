@@ -65,6 +65,7 @@ export default function Home({ session }: { session: any }) {
   const [selectedLocalizeLang, setSelectedLocalizeLang] = useState("");
   const [localizeResults, setLocalizeResults] = useState<LocalizationResultItem[]>([]);
   const [localizeLoading, setLocalizeLoading] = useState(false);
+  const [localizeProgress, setLocalizeProgress] = useState({ done: 0, total: 0 });
   const [fileParseLoading, setFileParseLoading] = useState(false);
 
   // 1. CHECK PRO STATUS & VERIFY PAYMENT
@@ -445,6 +446,9 @@ export default function Home({ session }: { session: any }) {
     });
   }, [parsedFile]);
 
+  /** Send listings in small chunks to avoid Vercel function timeouts */
+  const LOCALIZE_CHUNK_SIZE = 3;
+
   const handleLocalize = async () => {
     if (parsedListings.length === 0 || !selectedMarketplace || !selectedLocalizeLang) {
       toast({
@@ -457,34 +461,54 @@ export default function Home({ session }: { session: any }) {
 
     setLocalizeLoading(true);
     setLocalizeResults([]);
+    setLocalizeProgress({ done: 0, total: parsedListings.length });
+
+    const allResults: LocalizationResultItem[] = [];
+    let lastUsage: any = null;
+    let failed = false;
 
     try {
-      const headers = await getAuthHeaders();
-      const response = await fetch("/api/localize", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          listings: parsedListings,
-          marketplace: selectedMarketplace,
-          targetLanguage: selectedLocalizeLang,
-          userId: session.user.id,
-        }),
-      });
+      const authHeaders = await getAuthHeaders();
 
-      const data = await response.json();
+      // Split listings into chunks of LOCALIZE_CHUNK_SIZE
+      for (let i = 0; i < parsedListings.length; i += LOCALIZE_CHUNK_SIZE) {
+        const chunk = parsedListings.slice(i, i + LOCALIZE_CHUNK_SIZE);
 
-      if (response.ok && data.results) {
-        setLocalizeResults(data.results);
-        const flagCount = data.results.reduce((s: number, r: any) => s + r.qualityFlags.length, 0);
+        const response = await fetch("/api/localize", {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify({
+            listings: chunk,
+            marketplace: selectedMarketplace,
+            targetLanguage: selectedLocalizeLang,
+            userId: session.user.id,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.results) {
+          allResults.push(...data.results);
+          lastUsage = data.usage;
+          setLocalizeProgress({ done: allResults.length, total: parsedListings.length });
+          // Stream results to the UI as they arrive
+          setLocalizeResults([...allResults]);
+        } else {
+          toast({
+            title: "Localization Error",
+            description: data.error || "Something went wrong.",
+            variant: "destructive",
+          });
+          failed = true;
+          break;
+        }
+      }
+
+      if (!failed) {
+        const flagCount = allResults.reduce((s: number, r: any) => s + r.qualityFlags.length, 0);
         toast({
           title: "Localization Complete",
-          description: `${data.results.length} listings localized.${flagCount > 0 ? ` ${flagCount} quality flag(s).` : ""}`,
-        });
-      } else {
-        toast({
-          title: "Localization Error",
-          description: data.error || "Something went wrong.",
-          variant: "destructive",
+          description: `${allResults.length} listings localized.${flagCount > 0 ? ` ${flagCount} quality flag(s).` : ""}`,
         });
       }
     } catch (err) {
@@ -858,7 +882,7 @@ export default function Home({ session }: { session: any }) {
                   {localizeLoading ? (
                     <>
                       <Loader2 size={18} className="animate-spin" />
-                      Localizing {parsedListings.length} listing{parsedListings.length !== 1 ? "s" : ""}...
+                      Localizing... {localizeProgress.done}/{localizeProgress.total}
                     </>
                   ) : (
                     <>
