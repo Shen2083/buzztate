@@ -50,6 +50,12 @@ ${marketplace.formattingRules.map((r) => `   - ${r}`).join("\n")}
    - Convert any measurements to local standards
    - Adapt tone to local shopping culture
 
+5. COMPLETE TRANSLATION:
+   - Translate ALL English words to ${targetLanguage}. Do not leave any English words untranslated.
+   - The ONLY exceptions are universally recognized technical terms (e.g., OLED, USB, Wi-Fi, SSD, LED, LCD, Bluetooth) and proper brand names.
+   - Common English words like "grinder", "counter", "display", "design", etc. MUST be translated to their ${targetLanguage} equivalents.
+   - If unsure whether a term should stay in English, translate it.
+
 ORIGINAL LISTING:
 Title: ${productData.title}
 Description: ${productData.description}
@@ -71,5 +77,5 @@ Respond ONLY with a JSON object:
  * Builds the system message for the localization chat completion.
  */
 export function buildSystemMessage(marketplace: MarketplaceProfile): string {
-  return `You are an expert e-commerce product listing localizer specializing in ${marketplace.name}. You understand the marketplace's search algorithm, cultural buying patterns, and listing best practices. You produce localized listings that maximize conversions, not literal translations. Always respect character limits strictly. Respond only with valid JSON.`;
+  return `You are an expert e-commerce product listing localizer specializing in ${marketplace.name}. You understand the marketplace's search algorithm, cultural buying patterns, and listing best practices. You produce localized listings that maximize conversions, not literal translations. Always respect character limits strictly. CRITICAL: Every word must be in the target language — never leave English words untranslated unless they are universally recognized technical abbreviations (USB, OLED, Wi-Fi, LED, etc.) or proper brand names. Respond only with valid JSON.`;
 }

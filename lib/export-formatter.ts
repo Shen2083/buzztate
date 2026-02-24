@@ -8,12 +8,23 @@ export function exportGenericCSV(
   results: LocalizationResultItem[],
   targetLanguage: string
 ): string {
+  // Determine max bullet points across all results
+  const maxBullets = results.reduce((max, r) => {
+    const origCount = r.original.bulletPoints?.length || 0;
+    const locCount = r.localized.bullet_points?.length || 0;
+    return Math.max(max, origCount, locCount);
+  }, 0);
+
   const headers = [
     "Row",
     "Original Title",
     `${targetLanguage} Title`,
     "Original Description",
     `${targetLanguage} Description`,
+    ...Array.from({ length: maxBullets }, (_, i) => [
+      `Original Bullet ${i + 1}`,
+      `${targetLanguage} Bullet ${i + 1}`,
+    ]).flat(),
     "Original Keywords",
     `${targetLanguage} Keywords`,
     "Quality Flags",
@@ -25,6 +36,10 @@ export function exportGenericCSV(
     csvEscape(r.localized.title),
     csvEscape(r.original.description),
     csvEscape(r.localized.description),
+    ...Array.from({ length: maxBullets }, (_, i) => [
+      csvEscape(r.original.bulletPoints?.[i] || ""),
+      csvEscape(r.localized.bullet_points?.[i] || ""),
+    ]).flat(),
     csvEscape(r.original.keywords || ""),
     csvEscape(r.localized.keywords || ""),
     csvEscape(
