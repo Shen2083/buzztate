@@ -15,12 +15,18 @@ import {
 import { checkListingQuality } from "../lib/quality-checker";
 import { verifyAuth } from "./_lib/auth";
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string
-);
+function getSupabaseAdmin() {
+  const url = process.env.VITE_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) throw new Error('Supabase admin credentials are not configured');
+  return createClient(url, serviceKey);
+}
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAI() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY is not configured');
+  return new OpenAI({ apiKey });
+}
 
 /** How many listings to send to OpenAI per batch (to avoid timeouts) */
 const BATCH_SIZE = 5;
@@ -34,32 +40,34 @@ const TIER_LIMITS: Record<string, { listingsPerMonth: number; maxPerRequest: num
 };
 
 export default async function handler(req: any, res: any) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
-  }
-
-  // Validate request body
-  const parseResult = localizeRequestSchema.safeParse(req.body);
-  if (!parseResult.success) {
-    return res.status(400).json({
-      error: "Validation failed",
-      details: parseResult.error.flatten().fieldErrors,
-    });
-  }
-
-  const { listings, marketplace, targetLanguage } = parseResult.data;
-
-  // Auth (optional — free tier allowed without account)
-  const { userId: authUserId } = await verifyAuth(req);
-  const userId = authUserId || parseResult.data.userId;
-
-  // Look up marketplace profile
-  const profile = MARKETPLACE_PROFILES[marketplace];
-  if (!profile) {
-    return res.status(400).json({ error: `Unknown marketplace: ${marketplace}` });
-  }
-
   try {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    // Validate request body
+    const parseResult = localizeRequestSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: parseResult.error.flatten().fieldErrors,
+      });
+    }
+
+    const { listings, marketplace, targetLanguage } = parseResult.data;
+
+    // Auth (optional — free tier allowed without account)
+    const { userId: authUserId } = await verifyAuth(req);
+    const userId = authUserId || parseResult.data.userId;
+
+    // Look up marketplace profile
+    const profile = MARKETPLACE_PROFILES[marketplace];
+    if (!profile) {
+      return res.status(400).json({ error: `Unknown marketplace: ${marketplace}` });
+    }
+
+    const supabase = getSupabaseAdmin();
+    const openai = getOpenAI();
     // Determine tier and enforce limits
     let planTier = "free";
     let listingsUsed = 0;
@@ -126,7 +134,8 @@ export default async function handler(req: any, res: any) {
             listing as ParsedListing,
             profile,
             targetLanguage,
-            i + batchIndex
+            i + batchIndex,
+            openai
           )
         )
       );
@@ -205,7 +214,8 @@ async function localizeSingleListing(
   listing: ParsedListing,
   marketplace: typeof MARKETPLACE_PROFILES[string],
   targetLanguage: string,
-  index: number
+  index: number,
+  openai: OpenAI
 ): Promise<LocalizationResultItem> {
   const userPrompt = buildLocalizationPrompt(marketplace, listing, targetLanguage);
   const systemMsg = buildSystemMessage(marketplace);

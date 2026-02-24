@@ -30,26 +30,26 @@ const PLANS: Record<string, { name: string; description: string; amount: number;
 };
 
 export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  // Verify JWT token
-  const { userId, error: authError } = await verifyAuth(req);
-
-  if (authError || !userId) {
-    return res.status(401).json({ error: authError || "Unauthorized" });
-  }
-
-  // Determine which plan the user wants
-  const planId = req.body?.plan || 'starter';
-  const plan = PLANS[planId];
-
-  if (!plan) {
-    return res.status(400).json({ error: `Invalid plan: ${planId}. Valid plans: ${Object.keys(PLANS).join(', ')}` });
-  }
-
   try {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    // Verify JWT token
+    const { userId, error: authError } = await verifyAuth(req);
+
+    if (authError || !userId) {
+      return res.status(401).json({ error: authError || "Unauthorized" });
+    }
+
+    // Determine which plan the user wants
+    const planId = req.body?.plan || 'starter';
+    const plan = PLANS[planId];
+
+    if (!plan) {
+      return res.status(400).json({ error: `Invalid plan: ${planId}. Valid plans: ${Object.keys(PLANS).join(', ')}` });
+    }
+
     const stripe = getStripe();
     const origin = req.headers.origin || req.headers.referer?.replace(/\/[^/]*$/, '') || process.env.APP_URL || 'https://buzztate.com';
 
@@ -78,9 +78,9 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ url: session.url });
 
   } catch (error: any) {
-    console.error("Stripe Checkout Error:", error?.message || error);
+    console.error("Checkout Error:", error?.message || error);
     if (error?.message?.includes('STRIPE_SECRET_KEY')) {
-      return res.status(500).json({ error: "Payment system is not configured. Please contact support." });
+      return res.status(503).json({ error: "Payment system is not configured. Please contact support." });
     }
     return res.status(500).json({ error: error?.message || "Could not initiate checkout. Please try again later." });
   }
