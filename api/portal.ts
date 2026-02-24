@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-import { verifyAuth } from './_lib/auth';
+import { verifyAuth } from './_lib/auth.js';
 
 let stripeClient: Stripe | null = null;
 
