@@ -3,6 +3,7 @@ import type { Server } from "http";
 import { generalLimiter } from "./middleware/rateLimit";
 
 // Import API handlers (Vercel-style, compatible with Express req/res)
+import healthHandler from "../api/health";
 import checkoutHandler from "../api/checkout";
 import portalHandler from "../api/portal";
 import verifyPaymentHandler from "../api/verify-payment";
@@ -29,20 +30,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Apply general rate limiting to all API routes
   app.use("/api", generalLimiter);
 
-  // Health check endpoint — includes env var diagnostics
-  app.get("/api/health", (req, res) => {
-    res.json({
-      status: "ok",
-      timestamp: new Date().toISOString(),
-      config: {
-        stripe: !!process.env.STRIPE_SECRET_KEY,
-        stripeWebhook: !!process.env.STRIPE_WEBHOOK_SECRET,
-        supabaseUrl: !!process.env.VITE_SUPABASE_URL,
-        supabaseAnon: !!process.env.VITE_SUPABASE_ANON_KEY,
-        supabaseService: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      },
-    });
-  });
+  // Health check endpoint — reuses the Vercel-compatible handler
+  app.get("/api/health", (req, res) => healthHandler(req, res));
 
   // Payment routes
   app.post("/api/checkout", asyncHandler((req, res) => checkoutHandler(req, res)));
