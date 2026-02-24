@@ -2,10 +2,14 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { verifyAuth } from './_lib/auth';
 
-function getStripe() {
+let stripeClient: Stripe | null = null;
+
+function getStripe(): Stripe {
+  if (stripeClient) return stripeClient;
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error('STRIPE_SECRET_KEY is not configured');
-  return new Stripe(key);
+  stripeClient = new Stripe(key, { timeout: 15000 });
+  return stripeClient;
 }
 
 function getSupabaseAdmin() {
@@ -16,13 +20,30 @@ function getSupabaseAdmin() {
 }
 
 export default async function handler(req: any, res: any) {
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      console.error("Portal handler timed out");
+      res.status(504).json({ error: "Request timed out. Please try again." });
+    }
+  }, 25000);
+
   try {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+    if (req.method !== 'POST') {
+      clearTimeout(timeout);
+      return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      clearTimeout(timeout);
+      console.error("Portal Error: STRIPE_SECRET_KEY not set");
+      return res.status(503).json({ error: "Payment system is not configured. Please contact support." });
+    }
 
     // Verify JWT token instead of trusting X-User-ID header
     const { userId, error: authError } = await verifyAuth(req);
 
     if (authError || !userId) {
+      clearTimeout(timeout);
       return res.status(401).json({ error: authError || "Unauthorized" });
     }
 
@@ -57,6 +78,7 @@ export default async function handler(req: any, res: any) {
     }
 
     if (!customerId) {
+      clearTimeout(timeout);
       console.error(`Failed: No Stripe Customer ID found for user ${userId}`);
       return res.status(404).json({ error: "No billing record found. Please subscribe first." });
     }
@@ -70,10 +92,13 @@ export default async function handler(req: any, res: any) {
       return_url: `${origin}/app`,
     });
 
+    clearTimeout(timeout);
     return res.status(200).json({ url: session.url });
 
   } catch (error: any) {
+    clearTimeout(timeout);
     console.error("Portal Error:", error?.message || error);
+    if (res.headersSent) return;
     return res.status(500).json({ error: error?.message || "Could not open billing portal" });
   }
 }

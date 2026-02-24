@@ -188,6 +188,23 @@ export default function Home({ session }: { session: any }) {
         headers,
         body: JSON.stringify(isPro ? {} : { plan: plan || "starter" }),
       });
+
+      // Handle non-JSON responses (e.g. proxy error pages)
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Non-JSON response from", endpoint, response.status, text);
+        toast({
+          title: "Server Error",
+          description: response.ok
+            ? "Unexpected response from server. Please try again."
+            : `Server returned ${response.status}. Please try again later.`,
+          variant: "destructive"
+        });
+        setCheckoutLoading(false);
+        return;
+      }
+
       const data = await response.json();
 
       if (data.url) {
