@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { verifyAuth } from './_lib/auth';
+import { verifyAuth } from './_lib/auth.js';
 
 // Singleton Stripe client — created once on first use
 let stripeClient: Stripe | null = null;

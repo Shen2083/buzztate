@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from "openai";
-import { translateRequestSchema } from '../shared/schema';
-import { verifyAuth } from './_lib/auth';
+import { translateRequestSchema } from '../shared/schema.js';
+import { verifyAuth } from './_lib/auth.js';
 
 function getSupabaseAdmin() {
   const url = process.env.VITE_SUPABASE_URL;

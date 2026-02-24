@@ -1,19 +1,19 @@
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
-import { localizeRequestSchema } from "../shared/schema";
+import { localizeRequestSchema } from "../shared/schema.js";
 import type {
   ParsedListing,
   LocalizedListing,
   LocalizationResultItem,
   QualityFlag,
-} from "../shared/schema";
-import { MARKETPLACE_PROFILES } from "../lib/marketplace-profiles";
+} from "../shared/schema.js";
+import { MARKETPLACE_PROFILES } from "../lib/marketplace-profiles.js";
 import {
   buildLocalizationPrompt,
   buildSystemMessage,
-} from "../lib/localization-prompt";
-import { checkListingQuality } from "../lib/quality-checker";
-import { verifyAuth } from "./_lib/auth";
+} from "../lib/localization-prompt.js";
+import { checkListingQuality } from "../lib/quality-checker.js";
+import { verifyAuth } from "./_lib/auth.js";
 
 function getSupabaseAdmin() {
   const url = process.env.VITE_SUPABASE_URL;
