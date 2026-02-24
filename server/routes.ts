@@ -29,9 +29,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Apply general rate limiting to all API routes
   app.use("/api", generalLimiter);
 
-  // Health check endpoint
+  // Health check endpoint — includes env var diagnostics
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      config: {
+        stripe: !!process.env.STRIPE_SECRET_KEY,
+        stripeWebhook: !!process.env.STRIPE_WEBHOOK_SECRET,
+        supabaseUrl: !!process.env.VITE_SUPABASE_URL,
+        supabaseAnon: !!process.env.VITE_SUPABASE_ANON_KEY,
+        supabaseService: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      },
+    });
   });
 
   // Payment routes
