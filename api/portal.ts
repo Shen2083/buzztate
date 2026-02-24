@@ -2,23 +2,33 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { verifyAuth } from './_lib/auth';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string
-);
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error('STRIPE_SECRET_KEY is not configured');
+  return new Stripe(key);
+}
+
+function getSupabaseAdmin() {
+  const url = process.env.VITE_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) throw new Error('Supabase admin credentials are not configured');
+  return createClient(url, serviceKey);
+}
 
 export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
-
-  // Verify JWT token instead of trusting X-User-ID header
-  const { userId, error: authError } = await verifyAuth(req);
-
-  if (authError || !userId) {
-    return res.status(401).json({ error: authError || "Unauthorized" });
-  }
-
   try {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+    // Verify JWT token instead of trusting X-User-ID header
+    const { userId, error: authError } = await verifyAuth(req);
+
+    if (authError || !userId) {
+      return res.status(401).json({ error: authError || "Unauthorized" });
+    }
+
+    const stripe = getStripe();
+    const supabase = getSupabaseAdmin();
+
     // 1. Get the Stripe Customer ID from Supabase
     const { data: profile, error: dbError } = await supabase
       .from('profiles')
@@ -52,7 +62,7 @@ export default async function handler(req: any, res: any) {
     }
 
     // 2. Define Return URL
-    const origin = req.headers.origin || 'http://localhost:5173';
+    const origin = req.headers.origin || req.headers.referer?.replace(/\/[^/]*$/, '') || process.env.APP_URL || 'https://buzztate.com';
 
     // 3. Create the Portal Session
     const session = await stripe.billingPortal.sessions.create({
@@ -63,7 +73,7 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ url: session.url });
 
   } catch (error: any) {
-    console.error("Portal Error:", error.message);
-    return res.status(500).json({ error: error.message || "Could not open billing portal" });
+    console.error("Portal Error:", error?.message || error);
+    return res.status(500).json({ error: error?.message || "Could not open billing portal" });
   }
 }

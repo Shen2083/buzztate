@@ -29,12 +29,12 @@ export async function verifyAuth(req: { headers: Record<string, string | string[
 
   const token = authHeader.substring(7); // Remove "Bearer " prefix
 
-  const supabase = getSupabaseClient();
-  if (!supabase) {
-    return { userId: null, error: "Server configuration error" };
-  }
-
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      return { userId: null, error: "Server configuration error" };
+    }
+
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {

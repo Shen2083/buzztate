@@ -3,13 +3,18 @@ import OpenAI from "openai";
 import { translateRequestSchema } from '../shared/schema';
 import { verifyAuth } from './_lib/auth';
 
-// Init Supabase
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string
-);
+function getSupabaseAdmin() {
+  const url = process.env.VITE_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) throw new Error('Supabase admin credentials are not configured');
+  return createClient(url, serviceKey);
+}
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAI() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY is not configured');
+  return new OpenAI({ apiKey });
+}
 
 // Security Limits
 const LIMITS = {
@@ -26,26 +31,29 @@ const LIMITS = {
 };
 
 export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
-
-  // Validate request body with Zod
-  const parseResult = translateRequestSchema.safeParse(req.body);
-  if (!parseResult.success) {
-    return res.status(400).json({
-      error: "Validation failed",
-      details: parseResult.error.flatten().fieldErrors
-    });
-  }
-
-  const { text, target_languages, style } = parseResult.data;
-
-  // Try to get authenticated user (optional for demo/free users)
-  const { userId: authUserId } = await verifyAuth(req);
-
-  // Use authenticated userId if available, fallback to body userId for backwards compatibility
-  const userId = authUserId || parseResult.data.userId;
-
   try {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+    // Validate request body with Zod
+    const parseResult = translateRequestSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: parseResult.error.flatten().fieldErrors
+      });
+    }
+
+    const { text, target_languages, style } = parseResult.data;
+
+    // Try to get authenticated user (optional for demo/free users)
+    const { userId: authUserId } = await verifyAuth(req);
+
+    // Use authenticated userId if available, fallback to body userId for backwards compatibility
+    const userId = authUserId || parseResult.data.userId;
+
+    const supabase = getSupabaseAdmin();
+    const openai = getOpenAI();
+
     // 1. Determine User Status
     let isPro = false;
     let model = "gpt-3.5-turbo"; // Default

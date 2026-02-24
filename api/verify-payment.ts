@@ -2,12 +2,18 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error('STRIPE_SECRET_KEY is not configured');
+  return new Stripe(key);
+}
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string
-);
+function getSupabaseAdmin() {
+  const url = process.env.VITE_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) throw new Error('Supabase admin credentials are not configured');
+  return createClient(url, serviceKey);
+}
 
 // Request validation schema
 const verifyPaymentSchema = z.object({
@@ -15,24 +21,25 @@ const verifyPaymentSchema = z.object({
 });
 
 export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  console.log("Verifying Payment...");
-
-  // Validate request body
-  const parseResult = verifyPaymentSchema.safeParse(req.body);
-  if (!parseResult.success) {
-    return res.status(400).json({
-      error: "Validation failed",
-      details: parseResult.error.flatten().fieldErrors
-    });
-  }
-
-  const { sessionId } = parseResult.data;
-
   try {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    console.log("Verifying Payment...");
+
+    // Validate request body
+    const parseResult = verifyPaymentSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: parseResult.error.flatten().fieldErrors
+      });
+    }
+
+    const { sessionId } = parseResult.data;
+    const stripe = getStripe();
+    const supabase = getSupabaseAdmin();
     // IDEMPOTENCY CHECK: Check if we've already processed this session
     const { data: existingEvent } = await supabase
       .from('payment_events')
