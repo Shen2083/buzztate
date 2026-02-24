@@ -245,6 +245,15 @@ async function localizeSingleListing(
   if (!localized.title) localized.title = "";
   if (!localized.description) localized.description = "";
 
+  // Pad bullet_points to exactly the marketplace count (e.g. 5 for Amazon)
+  if (marketplace.bulletPointCount > 0) {
+    const bullets = localized.bullet_points || [];
+    localized.bullet_points = Array.from(
+      { length: marketplace.bulletPointCount },
+      (_, i) => bullets[i] || ""
+    );
+  }
+
   // Run quality checks
   const qualityFlags = checkListingQuality(localized, marketplace, listing);
 
