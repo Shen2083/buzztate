@@ -2,5 +2,11 @@
   "buildCommand": "npx vite build",
   "outputDirectory": "dist/public",
   "framework": null,
+  "functions": {
+    "api/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
