@@ -27,6 +27,11 @@ export default function handler(req: any, res: any) {
       nodeEnv: process.env.NODE_ENV || "unset",
       // Show which of our expected vars exist (names only, not values)
       missing: expected.filter((k) => !process.env[k]),
+      // Show env var names containing our key prefixes (names only, not values)
+      stripeVars: envKeys.filter((k) => k.toUpperCase().includes("STRIPE")),
+      supabaseVars: envKeys.filter((k) => k.toUpperCase().includes("SUPABASE")),
+      openaiVars: envKeys.filter((k) => k.toUpperCase().includes("OPENAI")),
+      viteVars: envKeys.filter((k) => k.startsWith("VITE_")),
     },
   });
 }
