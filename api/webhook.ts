@@ -17,7 +17,7 @@ export const config = {
   },
 };
 
-// Helper to read raw body
+// Helper to read raw body (Vercel serverless)
 async function buffer(readable: any) {
   const chunks = [];
   for await (const chunk of readable) {
@@ -31,7 +31,8 @@ export default async function handler(req: any, res: any) {
     return res.status(405).send('Method Not Allowed');
   }
 
-  const buf = await buffer(req);
+  // Use rawBody from Express (set by express.json verify callback) or read stream for Vercel
+  const buf = req.rawBody ? Buffer.from(req.rawBody) : await buffer(req);
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
