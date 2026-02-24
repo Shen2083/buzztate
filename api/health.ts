@@ -25,6 +25,11 @@ export default function handler(req: any, res: any) {
       totalEnvVars: envKeys.length,
       hasVercelEnv: !!process.env.VERCEL,
       nodeEnv: process.env.NODE_ENV || "unset",
+      vercelEnv: process.env.VERCEL_ENV || "unset",
+      vercelUrl: process.env.VERCEL_URL || "unset",
+      vercelProjectProdUrl: process.env.VERCEL_PROJECT_PRODUCTION_URL || "unset",
+      vercelGitRepo: process.env.VERCEL_GIT_REPO_SLUG || "unset",
+      vercelGitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) || "unset",
       // Show which of our expected vars exist (names only, not values)
       missing: expected.filter((k) => !process.env[k]),
       // Show env var names containing our key prefixes (names only, not values)
@@ -32,6 +37,8 @@ export default function handler(req: any, res: any) {
       supabaseVars: envKeys.filter((k) => k.toUpperCase().includes("SUPABASE")),
       openaiVars: envKeys.filter((k) => k.toUpperCase().includes("OPENAI")),
       viteVars: envKeys.filter((k) => k.startsWith("VITE_")),
+      // List all non-system env var names for debugging
+      allCustomVars: envKeys.filter((k) => !k.startsWith("AWS_") && !k.startsWith("VERCEL") && !k.startsWith("__") && k !== "PATH" && k !== "HOME" && k !== "NODE_ENV" && k !== "LANG" && k !== "TZ"),
     },
   });
 }
