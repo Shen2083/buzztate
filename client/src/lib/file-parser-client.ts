@@ -22,7 +22,12 @@ const DESCRIPTION_PATTERNS = [
 ];
 const BULLET_PATTERNS = [
   "bullet_point", "bullet_point1", "bullet_point2", "bullet_point3",
-  "bullet_point4", "bullet_point5", "key_product_features",
+  "bullet_point4", "bullet_point5",
+  "bulletpoint", "bulletpoint1", "bulletpoint2", "bulletpoint3",
+  "bulletpoint4", "bulletpoint5",
+  "bullet", "bullet1", "bullet2", "bullet3", "bullet4", "bullet5",
+  "key_product_features", "key_product_feature",
+  "feature_bullet", "product_bullet",
 ];
 const KEYWORD_PATTERNS = [
   "search_terms", "keywords", "tags", "generic_keyword", "generic_keywords",
@@ -39,7 +44,12 @@ function normalizeHeader(header: string): string {
 
 function matchesPatterns(normalized: string, patterns: string[]): boolean {
   return patterns.some(
-    (p) => normalized === p || normalized.startsWith(p + "_") || normalized.endsWith("_" + p)
+    (p) =>
+      normalized === p ||
+      normalized.startsWith(p + "_") ||
+      normalized.endsWith("_" + p) ||
+      // Match "bullet_1" against "bullet" pattern (base + _N suffix)
+      (!/\d/.test(p) && new RegExp(`^${p}_?\\d+$`).test(normalized))
   );
 }
 
@@ -199,10 +209,12 @@ export function applyColumnMappings(
       }
     }
 
-    // Compact bullet points array (remove empty gaps)
-    const compacted = bulletPoints.filter((b): b is string => !!b);
-    if (compacted.length > 0) {
-      listing.bulletPoints = compacted;
+    // Preserve bullet points with their positions (empty strings for missing ones)
+    if (bulletPoints.length > 0) {
+      listing.bulletPoints = Array.from(
+        { length: Math.min(bulletPoints.length, 5) },
+        (_, i) => bulletPoints[i] || ""
+      );
     }
 
     return listing;
