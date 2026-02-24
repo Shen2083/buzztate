@@ -3,6 +3,10 @@
   "outputDirectory": "dist/public",
   "framework": null,
   "functions": {
+    "api/localize.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
     "api/**/*.ts": {
       "memory": 1024,
       "maxDuration": 10
