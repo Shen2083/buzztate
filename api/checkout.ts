@@ -35,23 +35,13 @@ const PLANS: Record<string, { name: string; description: string; amount: number;
 };
 
 export default async function handler(req: any, res: any) {
-  // Guard: ensure we always respond within 25s (Replit proxy times out at ~30s)
-  const timeout = setTimeout(() => {
-    if (!res.headersSent) {
-      console.error("Checkout handler timed out");
-      res.status(504).json({ error: "Request timed out. Please try again." });
-    }
-  }, 25000);
-
   try {
     if (req.method !== 'POST') {
-      clearTimeout(timeout);
       return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
     // Quick env-var check before doing any async work
     if (!process.env.STRIPE_SECRET_KEY) {
-      clearTimeout(timeout);
       console.error("Checkout Error: STRIPE_SECRET_KEY not set");
       return res.status(503).json({ error: "Payment system is not configured. Please contact support." });
     }
@@ -60,7 +50,6 @@ export default async function handler(req: any, res: any) {
     const { userId, error: authError } = await verifyAuth(req);
 
     if (authError || !userId) {
-      clearTimeout(timeout);
       return res.status(401).json({ error: authError || "Unauthorized" });
     }
 
@@ -69,7 +58,6 @@ export default async function handler(req: any, res: any) {
     const plan = PLANS[planId];
 
     if (!plan) {
-      clearTimeout(timeout);
       return res.status(400).json({ error: `Invalid plan: ${planId}. Valid plans: ${Object.keys(PLANS).join(', ')}` });
     }
 
@@ -98,11 +86,9 @@ export default async function handler(req: any, res: any) {
       cancel_url: `${origin}/app`,
     });
 
-    clearTimeout(timeout);
     return res.status(200).json({ url: session.url });
 
   } catch (error: any) {
-    clearTimeout(timeout);
     console.error("Checkout Error:", error?.message || error);
     if (res.headersSent) return;
     if (error?.message?.includes('STRIPE_SECRET_KEY')) {
