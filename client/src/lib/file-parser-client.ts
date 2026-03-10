@@ -1,5 +1,4 @@
 import Papa from "papaparse";
-import * as XLSX from "xlsx";
 import type { ColumnMapping, ParsedListing } from "@shared/schema";
 
 /** Raw parsed result before column mapping is applied */
@@ -141,6 +140,7 @@ export async function parseUploadedFile(file: File): Promise<ParsedFileResult> {
  * Parse an Excel file (.xlsx / .xls) into a structured result.
  */
 async function parseExcelFile(file: File): Promise<ParsedFileResult> {
+  const XLSX = await import("xlsx");
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: "array" });
   const sheetName = workbook.SheetNames[0];
