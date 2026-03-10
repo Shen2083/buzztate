@@ -154,7 +154,6 @@ export default function Home({ session }: { session: any }) {
   // 3. HANDLE CHECKOUT - Now uses JWT auth
   const handleBilling = async (plan?: string) => {
     setCheckoutLoading(true);
-    setShowPlanPicker(false);
     try {
       // Refresh session before billing to ensure valid token
       const { data: { session: currentSession } } = await supabase.auth.getSession();
