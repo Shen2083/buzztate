@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Check, X, ArrowRight, ChevronDown, Globe, ShoppingBag, Store, FileSpreadsheet, Zap, Upload, Download, Shield, Mail } from "lucide-react";
+import { Check, X, ArrowRight, ChevronDown, Globe, ShoppingBag, FileSpreadsheet, Zap, Upload, Download, Shield, Mail } from "lucide-react";
 import { useState } from "react";
 
 const FAQS = [
@@ -17,7 +17,7 @@ const FAQS = [
   },
   {
     question: "How is this different from hiring a translator?",
-    answer: "Speed, cost, and marketplace expertise. A human translator charges £50-200 per listing and takes days. Buzztate localizes 100 listings in minutes for £29/month. More importantly, most translators don't understand Amazon SEO or marketplace-specific formatting rules — Buzztate does."
+    answer: "Speed, cost, and marketplace expertise. A human translator charges $50-200 per listing and takes days. Buzztate localizes hundreds of listings in minutes for $49/month. More importantly, most translators don't understand Amazon SEO or marketplace-specific formatting rules — Buzztate does."
   },
   {
     question: "Will my brand name get translated?",
@@ -275,66 +275,36 @@ export default function Landing() {
           <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">Simple, Transparent Pricing</h2>
           <p className="text-gray-400 text-center mb-16">Start free. Upgrade when you're ready to scale.</p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-3xl mx-auto">
             {/* Free */}
             <div className="p-8 rounded-2xl border border-gray-800 bg-black flex flex-col">
               <h3 className="text-lg font-bold text-gray-400">Free</h3>
-              <div className="text-4xl font-bold mt-4 mb-2">£0</div>
-              <p className="text-gray-500 text-sm mb-6">Test the waters</p>
+              <div className="text-4xl font-bold mt-4 mb-2">$0</div>
+              <p className="text-gray-500 text-sm mb-6">Try it out — no card needed</p>
               <ul className="space-y-3 mb-8 flex-grow text-sm">
-                <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> 5 listings/month</li>
+                <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> 5 localizations/month</li>
                 <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> 2 languages</li>
-                <li className="flex items-center gap-2 text-gray-600"><X size={16} /> No priority processing</li>
+                <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> All export formats</li>
               </ul>
               <Link href="/auth?mode=signup" className="w-full block text-center py-3 rounded-xl border border-gray-700 hover:bg-gray-800 font-bold transition-all text-sm">
                 Start Free
               </Link>
             </div>
 
-            {/* Starter */}
-            <div className="p-8 rounded-2xl border border-gray-800 bg-black flex flex-col">
-              <h3 className="text-lg font-bold text-white">Starter</h3>
-              <div className="text-4xl font-bold mt-4 mb-2">£29<span className="text-lg text-gray-500 font-normal">/mo</span></div>
-              <p className="text-gray-400 text-sm mb-6">Growing sellers</p>
-              <ul className="space-y-3 mb-8 flex-grow text-sm">
-                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> 100 listings/month</li>
-                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> 5 languages</li>
-                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All export formats</li>
-              </ul>
-              <Link href="/auth?mode=signup&intent=starter" className="w-full block text-center py-3 rounded-xl bg-white text-black font-bold transition-all text-sm hover:bg-gray-200">
-                Get Started
-              </Link>
-            </div>
-
-            {/* Growth */}
+            {/* Plus */}
             <div className="p-8 rounded-2xl border border-yellow-400 bg-gray-900/30 flex flex-col relative shadow-2xl shadow-yellow-400/5">
               <div className="absolute top-0 right-0 bg-yellow-400 text-black text-[10px] font-extrabold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wider">MOST POPULAR</div>
-              <h3 className="text-lg font-bold text-white">Growth</h3>
-              <div className="text-4xl font-bold mt-4 mb-2 text-yellow-400">£59<span className="text-lg text-gray-400 font-normal">/mo</span></div>
-              <p className="text-gray-300 text-sm mb-6">Scaling internationally</p>
+              <h3 className="text-lg font-bold text-white">Plus</h3>
+              <div className="text-4xl font-bold mt-4 mb-2 text-yellow-400">$49<span className="text-lg text-gray-400 font-normal">/mo</span></div>
+              <p className="text-gray-300 text-sm mb-6">For serious sellers</p>
               <ul className="space-y-3 mb-8 flex-grow text-sm">
-                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> 500 listings/month</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> 200 localizations/month</li>
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All languages</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All export formats</li>
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Priority processing</li>
               </ul>
-              <Link href="/auth?mode=signup&intent=growth" className="w-full block text-center py-3 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold transition-all text-sm shadow-lg">
-                Upgrade to Growth
-              </Link>
-            </div>
-
-            {/* Scale */}
-            <div className="p-8 rounded-2xl border border-gray-800 bg-black flex flex-col">
-              <h3 className="text-lg font-bold text-white">Scale</h3>
-              <div className="text-4xl font-bold mt-4 mb-2">£99<span className="text-lg text-gray-500 font-normal">/mo</span></div>
-              <p className="text-gray-400 text-sm mb-6">Enterprise sellers</p>
-              <ul className="space-y-3 mb-8 flex-grow text-sm">
-                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Unlimited listings</li>
-                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All languages</li>
-                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> API access</li>
-                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Bulk processing</li>
-              </ul>
-              <Link href="/auth?mode=signup&intent=scale" className="w-full block text-center py-3 rounded-xl border border-gray-700 hover:bg-gray-800 font-bold transition-all text-sm">
-                Contact Sales
+              <Link href="/auth?mode=signup&intent=plus" className="w-full block text-center py-3 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold transition-all text-sm shadow-lg">
+                Upgrade to Plus
               </Link>
             </div>
           </div>
@@ -375,7 +345,7 @@ export default function Landing() {
       <div id="contact" className="bg-gray-900 py-24 border-t border-gray-800">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold mb-4">Get in Touch</h2>
-          <p className="text-gray-400 mb-10">Questions about enterprise plans or custom marketplace support?</p>
+          <p className="text-gray-400 mb-10">Questions about Buzztate or custom marketplace support?</p>
 
           <form onSubmit={handleContactSubmit} className="bg-black p-8 rounded-2xl border border-gray-800 text-left space-y-4 shadow-xl">
             <div>

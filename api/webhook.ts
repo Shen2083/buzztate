@@ -67,7 +67,7 @@ export default async function handler(req: any, res: any) {
       console.log(`Payment success for User: ${userId}`);
 
       if (userId) {
-        const planTier = session.metadata?.plan || 'starter';
+        const planTier = session.metadata?.plan || 'plus';
 
         const { error } = await supabase
           .from('profiles')

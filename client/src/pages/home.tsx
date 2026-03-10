@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, ChevronDown, Check, Zap, Lock, Globe, History, Layout, Clock, Copy, LogOut, Loader2, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
@@ -43,8 +43,6 @@ export default function Home({ session }: { session: any }) {
   const [isPro, setIsPro] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
-  const [showPlanPicker, setShowPlanPicker] = useState(false);
-  const planPickerRef = useRef<HTMLDivElement>(null);
 
   const [activeTab, setActiveTab] = useState("create");
   const [inputText, setInputText] = useState("");
@@ -128,19 +126,6 @@ export default function Home({ session }: { session: any }) {
     checkStatus();
   }, [session]);
 
-  // Close plan picker on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (planPickerRef.current && !planPickerRef.current.contains(e.target as Node)) {
-        setShowPlanPicker(false);
-      }
-    };
-    if (showPlanPicker) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showPlanPicker]);
-
   // 2. FETCH HISTORY
   useEffect(() => {
     if (activeTab === "history") {
@@ -187,7 +172,7 @@ export default function Home({ session }: { session: any }) {
       const response = await fetch(endpoint, {
         method: "POST",
         headers,
-        body: JSON.stringify(isPro ? {} : { plan: plan || "starter" }),
+        body: JSON.stringify(isPro ? {} : { plan: plan || "plus" }),
       });
 
       // Handle non-JSON responses (e.g. proxy error pages)
@@ -540,80 +525,38 @@ export default function Home({ session }: { session: any }) {
             <span className="text-2xl">⚡</span>
             <span className="font-bold text-xl hidden sm:block">Buzztate</span>
             {isPro ? (
-              <span className="text-[10px] bg-yellow-400 text-black px-2 py-0.5 rounded ml-2 font-bold uppercase">PRO SUITE</span>
+              <span className="text-[10px] bg-yellow-400 text-black px-2 py-0.5 rounded ml-2 font-bold uppercase">PLUS</span>
             ) : (
-              <span className="text-[10px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded ml-2 font-bold uppercase">FREE STARTER</span>
+              <span className="text-[10px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded ml-2 font-bold uppercase">FREE</span>
             )}
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="relative" ref={planPickerRef}>
-              <button
-                onClick={() => isPro ? handleBilling() : setShowPlanPicker(!showPlanPicker)}
-                disabled={checkoutLoading || verifyingPayment}
-                className={`text-xs px-3 py-1.5 rounded-full transition-all disabled:opacity-50 border flex items-center gap-2 ${
-                  isPro
-                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-600"
-                    : "bg-gray-800 hover:bg-yellow-400 hover:text-black border-gray-600"
-                }`}
-              >
-                {verifyingPayment ? (
-                  <>
-                    <Loader2 className="animate-spin" size={12} />
-                    Verifying Payment...
-                  </>
-                ) : checkoutLoading ? (
-                  "..."
-                ) : isPro ? (
-                  "Manage Subscription"
-                ) : (
-                  <>
-                    <Zap size={12} />
-                    Upgrade
-                  </>
-                )}
-              </button>
-
-              {/* Plan picker dropdown */}
-              {showPlanPicker && !isPro && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
-                  <div className="p-3 border-b border-gray-800">
-                    <p className="text-xs text-gray-400 font-medium">Choose a plan</p>
-                  </div>
-                  <button
-                    onClick={() => handleBilling("starter")}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-800 transition-colors border-b border-gray-800"
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-bold text-white">Starter</span>
-                      <span className="text-sm font-bold text-white">£29<span className="text-xs text-gray-500 font-normal">/mo</span></span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-0.5">100 listings/month, 5 languages</p>
-                  </button>
-                  <button
-                    onClick={() => handleBilling("growth")}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-800 transition-colors border-b border-gray-800 bg-yellow-400/5"
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-bold text-yellow-400">Growth</span>
-                      <span className="text-sm font-bold text-yellow-400">£59<span className="text-xs text-gray-400 font-normal">/mo</span></span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-0.5">500 listings/month, all languages</p>
-                    <span className="text-[10px] bg-yellow-400 text-black px-1.5 py-0.5 rounded font-bold mt-1 inline-block">POPULAR</span>
-                  </button>
-                  <button
-                    onClick={() => handleBilling("scale")}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-800 transition-colors"
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-bold text-white">Scale</span>
-                      <span className="text-sm font-bold text-white">£99<span className="text-xs text-gray-500 font-normal">/mo</span></span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-0.5">Unlimited listings, API access</p>
-                  </button>
-                </div>
+            <button
+              onClick={() => isPro ? handleBilling() : handleBilling("plus")}
+              disabled={checkoutLoading || verifyingPayment}
+              className={`text-xs px-3 py-1.5 rounded-full transition-all disabled:opacity-50 border flex items-center gap-2 ${
+                isPro
+                  ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-600"
+                  : "bg-gray-800 hover:bg-yellow-400 hover:text-black border-gray-600"
+              }`}
+            >
+              {verifyingPayment ? (
+                <>
+                  <Loader2 className="animate-spin" size={12} />
+                  Verifying Payment...
+                </>
+              ) : checkoutLoading ? (
+                "..."
+              ) : isPro ? (
+                "Manage Subscription"
+              ) : (
+                <>
+                  <Zap size={12} />
+                  Upgrade to Plus
+                </>
               )}
-            </div>
+            </button>
 
             <button
               onClick={handleLogout}
