@@ -11,12 +11,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    // Limit retries so a stale token doesn't block page load
     storageKey: 'buzztate-auth',
+    // Don't auto-detect session on init — we'll call getSession() explicitly
+    // This prevents the stale token retry loop from blocking page load
+    detectSessionInUrl: true,
   },
   global: {
     fetch: (url, options) => {
-      // Short timeout for auth requests to prevent infinite hangs
+      // 5-second timeout for token refresh to prevent infinite retry loops
       if (typeof url === 'string' && url.includes('token?grant_type=refresh')) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);

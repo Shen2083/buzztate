@@ -18,19 +18,18 @@ import EtsyListingTranslation from "@/pages/landing/EtsyListingTranslation";
 import AmazonDeTranslation from "@/pages/landing/AmazonDeTranslation";
 import AmazonJpTranslation from "@/pages/landing/AmazonJpTranslation";
 
-function Router() {
+/**
+ * Auth-gated wrapper — only used for /app route.
+ * Renders children when session is resolved, shows auth page if not logged in.
+ */
+function ProtectedRoute() {
   const [session, setSession] = useState<any>(null);
-  const [location, setLocation] = useLocation();
-  const [loading, setLoading] = useState(true); // Added loading state to prevent flash
+  const [loading, setLoading] = useState(true);
 
-  // 1. Handle Auth Session & Subscriptions
   useEffect(() => {
-    // Safety timeout: render the page even if Supabase auth hangs (e.g. stale token retry loop)
-    const timeout = setTimeout(() => {
-      setLoading(false);
-    }, 3000);
+    // Hard cap: never block for more than 2 seconds
+    const timeout = setTimeout(() => setLoading(false), 2000);
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       clearTimeout(timeout);
       setSession(session);
@@ -40,7 +39,6 @@ function Router() {
       setLoading(false);
     });
 
-    // Listen for changes (Login/Logout)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -53,41 +51,49 @@ function Router() {
     };
   }, []);
 
-  // 2. Handle Redirects (Separated for stability)
-  useEffect(() => {
-    if (!loading && session && location === "/auth") {
-      setLocation("/app"); // Kick logged-in users out of Auth page
-    }
-  }, [session, location, loading, setLocation]);
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#000" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: 40, height: 40, border: "3px solid #333", borderTopColor: "#facc15", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
+          <p style={{ color: "#666", marginTop: 16, fontFamily: "system-ui", fontSize: 14 }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (loading) return null; // Or a loading spinner
+  return session ? <Home session={session} /> : <AuthPage />;
+}
+
+function Router() {
+  const [location, setLocation] = useLocation();
+
+  // Redirect /auth to /app if user navigates there directly while logged in
+  useEffect(() => {
+    if (location === "/auth") {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) setLocation("/app");
+      }).catch(() => {});
+    }
+  }, [location, setLocation]);
 
   return (
     <Switch>
-      {/* Public Landing Page */}
+      {/* Public pages — render instantly, no auth check */}
       <Route path="/" component={Landing} />
-
-      {/* Login/Signup Page */}
       <Route path="/auth" component={AuthPage} />
-
-      {/* Marketplace SEO Pages */}
       <Route path="/amazon-listing-translation" component={AmazonListingTranslation} />
       <Route path="/shopify-product-translation" component={ShopifyProductTranslation} />
       <Route path="/etsy-listing-translation" component={EtsyListingTranslation} />
       <Route path="/amazon-de-translation" component={AmazonDeTranslation} />
       <Route path="/amazon-jp-translation" component={AmazonJpTranslation} />
-
-      {/* Dynamic SEO Pages for Languages (e.g. /translate/spanish) */}
       <Route path="/translate/:lang">
         {(params) => <LanguageLanding lang={params.lang} />}
       </Route>
 
-      {/* Protected App Route */}
-      <Route path="/app">
-        {session ? <Home session={session} /> : <AuthPage />}
-      </Route>
+      {/* Protected app — only this route waits for auth */}
+      <Route path="/app" component={ProtectedRoute} />
 
-      {/* 404 Page */}
       <Route component={NotFound} />
     </Switch>
   );
