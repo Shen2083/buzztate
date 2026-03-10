@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { Check, Globe, ShoppingBag, Store } from "lucide-react";
+import { Check, Globe, ShoppingBag, Store, Lock } from "lucide-react";
 import { MARKETPLACE_PROFILES, type MarketplaceId } from "../../../lib/marketplace-profiles";
+
+/** The first marketplace is free; the rest require Plus */
+const FREE_MARKETPLACE: MarketplaceId = "amazon_de";
 
 interface MarketplaceSelectorProps {
   selectedMarketplace: MarketplaceId | null;
   onSelect: (id: MarketplaceId) => void;
   selectedLanguage: string;
   onLanguageChange: (lang: string) => void;
+  isPro?: boolean;
 }
 
 /** Group marketplaces by platform for the UI */
@@ -52,6 +56,7 @@ export default function MarketplaceSelector({
   onSelect,
   selectedLanguage,
   onLanguageChange,
+  isPro = false,
 }: MarketplaceSelectorProps) {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
@@ -59,7 +64,10 @@ export default function MarketplaceSelector({
     ? MARKETPLACE_LANGUAGES[selectedMarketplace] || []
     : [];
 
+  const isMarketplaceLocked = (id: MarketplaceId) => !isPro && id !== FREE_MARKETPLACE;
+
   const handleMarketplaceSelect = (id: MarketplaceId) => {
+    if (isMarketplaceLocked(id)) return;
     onSelect(id);
     // Auto-select the first (or only) language for this marketplace
     const langs = MARKETPLACE_LANGUAGES[id] || [];
@@ -83,6 +91,7 @@ export default function MarketplaceSelector({
             const Icon = group.icon;
             const isExpanded = expandedGroup === group.label || group.marketplaces.length === 1;
             const hasSelection = group.marketplaces.includes(selectedMarketplace as MarketplaceId);
+            const groupLocked = group.marketplaces.every((id) => isMarketplaceLocked(id));
 
             return (
               <div key={group.label} className="border border-gray-800 rounded-xl overflow-hidden">
@@ -96,17 +105,25 @@ export default function MarketplaceSelector({
                     }
                   }}
                   className={`w-full flex items-center gap-3 p-3 text-left transition-all ${
-                    hasSelection
-                      ? "bg-yellow-400/10 border-yellow-400/30"
-                      : "hover:bg-gray-800/50"
+                    groupLocked
+                      ? "text-gray-600 cursor-not-allowed"
+                      : hasSelection
+                        ? "bg-yellow-400/10 border-yellow-400/30"
+                        : "hover:bg-gray-800/50"
                   }`}
                 >
-                  <Icon size={16} className={hasSelection ? "text-yellow-400" : "text-gray-500"} />
-                  <span className={`text-sm font-bold flex-grow ${hasSelection ? "text-white" : "text-gray-400"}`}>
+                  <Icon size={16} className={hasSelection && !groupLocked ? "text-yellow-400" : "text-gray-500"} />
+                  <span className={`text-sm font-bold flex-grow ${hasSelection && !groupLocked ? "text-white" : "text-gray-400"}`}>
                     {group.label}
                   </span>
-                  {hasSelection && <Check size={14} className="text-yellow-400" />}
-                  {group.marketplaces.length > 1 && (
+                  {groupLocked && (
+                    <span className="flex items-center gap-1">
+                      <Lock size={10} className="text-gray-600" />
+                      <span className="text-[10px] bg-yellow-400/10 text-yellow-400 px-1.5 py-0.5 rounded font-bold">Plus</span>
+                    </span>
+                  )}
+                  {hasSelection && !groupLocked && <Check size={14} className="text-yellow-400" />}
+                  {group.marketplaces.length > 1 && !groupLocked && (
                     <span className="text-xs text-gray-600">
                       {group.marketplaces.length} markets
                     </span>
@@ -119,20 +136,29 @@ export default function MarketplaceSelector({
                     {group.marketplaces.map((id) => {
                       const profile = MARKETPLACE_PROFILES[id];
                       const isSelected = selectedMarketplace === id;
+                      const locked = isMarketplaceLocked(id);
 
                       return (
                         <button
                           key={id}
                           onClick={() => handleMarketplaceSelect(id)}
                           className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all ${
-                            isSelected
-                              ? "bg-yellow-400 text-black"
-                              : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
+                            locked
+                              ? "text-gray-600 cursor-not-allowed"
+                              : isSelected
+                                ? "bg-yellow-400 text-black"
+                                : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
                           }`}
                         >
                           <span className="text-sm">{profile.name}</span>
                           <span className="text-xs opacity-60 ml-auto">{profile.locale}</span>
-                          {isSelected && <Check size={12} />}
+                          {locked && (
+                            <span className="flex items-center gap-1">
+                              <Lock size={10} className="text-gray-600" />
+                              <span className="text-[10px] bg-yellow-400/10 text-yellow-400 px-1.5 py-0.5 rounded font-bold">Plus</span>
+                            </span>
+                          )}
+                          {isSelected && !locked && <Check size={12} />}
                         </button>
                       );
                     })}

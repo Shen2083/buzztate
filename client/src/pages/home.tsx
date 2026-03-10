@@ -43,6 +43,8 @@ export default function Home({ session }: { session: any }) {
   const [isPro, setIsPro] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const [usageCount, setUsageCount] = useState(0);
+  const [usageLimit, setUsageLimit] = useState(5);
 
   const [activeTab, setActiveTab] = useState("create");
   const [inputText, setInputText] = useState("");
@@ -72,12 +74,16 @@ export default function Home({ session }: { session: any }) {
       // Force refresh data from DB to ensure we aren't reading stale cache
       const { data } = await supabase
         .from('profiles')
-        .select('is_pro')
+        .select('is_pro, plan_tier, listings_used_this_month')
         .eq('id', session.user.id)
         .single();
 
       if (data?.is_pro) {
         setIsPro(true);
+        setUsageLimit(200);
+      }
+      if (data) {
+        setUsageCount(data.listings_used_this_month || 0);
       }
 
       // Verify Payment via Session ID
@@ -490,6 +496,10 @@ export default function Home({ session }: { session: any }) {
       }
 
       if (!failed) {
+        // Update usage counter from the last response
+        if (lastUsage) {
+          setUsageCount(lastUsage.used);
+        }
         const flagCount = allResults.reduce((s: number, r: any) => s + r.qualityFlags.length, 0);
         toast({
           title: "Localization Complete",
@@ -532,6 +542,12 @@ export default function Home({ session }: { session: any }) {
           </div>
 
           <div className="flex items-center gap-4">
+            <span className="hidden sm:flex items-center gap-1.5 text-xs text-gray-500">
+              <span className={usageCount >= usageLimit ? "text-red-400 font-bold" : "text-gray-400"}>
+                {usageCount}/{usageLimit}
+              </span>
+              localizations
+            </span>
             <button
               onClick={() => isPro ? handleBilling() : handleBilling("plus")}
               disabled={checkoutLoading || verifyingPayment}
@@ -815,6 +831,7 @@ export default function Home({ session }: { session: any }) {
                   onSelect={setSelectedMarketplace}
                   selectedLanguage={selectedLocalizeLang}
                   onLanguageChange={setSelectedLocalizeLang}
+                  isPro={isPro}
                 />
 
                 <button

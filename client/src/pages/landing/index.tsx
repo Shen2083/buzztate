@@ -282,8 +282,8 @@ export default function Landing() {
               <div className="text-4xl font-bold mt-4 mb-2">$0</div>
               <p className="text-gray-500 text-sm mb-6">Try it out — no card needed</p>
               <ul className="space-y-3 mb-8 flex-grow text-sm">
-                <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> 5 localizations/month</li>
-                <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> 2 languages</li>
+                <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> 5 listings/month</li>
+                <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> 1 marketplace</li>
                 <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> All export formats</li>
               </ul>
               <Link href="/auth?mode=signup" className="w-full block text-center py-3 rounded-xl border border-gray-700 hover:bg-gray-800 font-bold transition-all text-sm">
@@ -299,7 +299,7 @@ export default function Landing() {
               <p className="text-gray-300 text-sm mb-6">For serious sellers</p>
               <ul className="space-y-3 mb-8 flex-grow text-sm">
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> 200 localizations/month</li>
-                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All languages</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All supported marketplaces</li>
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All export formats</li>
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Priority processing</li>
               </ul>
@@ -307,6 +307,27 @@ export default function Landing() {
                 Upgrade to Plus
               </Link>
             </div>
+          </div>
+
+          {/* Supported Marketplaces */}
+          <div className="mt-16 text-center">
+            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-6">Supported Marketplaces</h3>
+            <div className="flex flex-wrap justify-center gap-4 mb-4">
+              {[
+                { flag: "\u{1F1E9}\u{1F1EA}", name: "Amazon Germany" },
+                { flag: "\u{1F1EB}\u{1F1F7}", name: "Amazon France" },
+                { flag: "\u{1F1EA}\u{1F1F8}", name: "Amazon Spain" },
+                { flag: "\u{1F1EE}\u{1F1F9}", name: "Amazon Italy" },
+                { flag: "\u{1F1EF}\u{1F1F5}", name: "Amazon Japan" },
+              ].map((mp) => (
+                <span key={mp.name} className="flex items-center gap-2 bg-gray-900 border border-gray-800 px-4 py-2 rounded-full text-sm text-gray-300">
+                  <span className="text-lg">{mp.flag}</span> {mp.name}
+                </span>
+              ))}
+            </div>
+            <p className="text-sm text-gray-600 mt-4">
+              More marketplaces coming soon — <a href="mailto:teamz@buzztate.com?subject=Marketplace%20Request&body=I%27d%20like%20to%20request%20support%20for%3A%20" className="text-yellow-400/70 hover:text-yellow-400 underline underline-offset-2 transition-colors">request yours</a>.
+            </p>
           </div>
         </div>
       </div>
