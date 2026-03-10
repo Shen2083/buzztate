@@ -25,9 +25,18 @@ function Router() {
 
   // 1. Handle Auth Session & Subscriptions
   useEffect(() => {
+    // Safety timeout: render the page even if Supabase auth hangs (e.g. stale token retry loop)
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timeout);
       setSession(session);
+      setLoading(false);
+    }).catch(() => {
+      clearTimeout(timeout);
       setLoading(false);
     });
 
@@ -38,7 +47,10 @@ function Router() {
       setSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   // 2. Handle Redirects (Separated for stability)
