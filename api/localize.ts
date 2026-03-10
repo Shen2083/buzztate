@@ -31,12 +31,10 @@ function getOpenAI() {
 /** How many listings to send to OpenAI per batch (to avoid timeouts) */
 const BATCH_SIZE = 5;
 
-/** Tier limits: listings per month */
-const TIER_LIMITS: Record<string, { listingsPerMonth: number; maxPerRequest: number }> = {
-  free:    { listingsPerMonth: 5,         maxPerRequest: 5 },
-  starter: { listingsPerMonth: 100,       maxPerRequest: 50 },
-  growth:  { listingsPerMonth: 500,       maxPerRequest: 100 },
-  scale:   { listingsPerMonth: Infinity,  maxPerRequest: 100 },
+/** Tier limits: localizations per month (1 localization = 1 listing × 1 language) */
+const TIER_LIMITS: Record<string, { localizationsPerMonth: number; maxPerRequest: number }> = {
+  free: { localizationsPerMonth: 5,   maxPerRequest: 5 },
+  plus: { localizationsPerMonth: 200, maxPerRequest: 50 },
 };
 
 export default async function handler(req: any, res: any) {
@@ -114,12 +112,12 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // Check monthly limit
-    const remaining = tierConfig.listingsPerMonth - listingsUsed;
+    // Check monthly limit (each listing counts as 1 localization)
+    const remaining = tierConfig.localizationsPerMonth - listingsUsed;
     if (listings.length > remaining) {
       return res.status(403).json({
-        error: `Monthly limit reached. Your ${planTier} plan allows ${tierConfig.listingsPerMonth} listings/month. Used: ${listingsUsed}, remaining: ${remaining}.`,
-        upgrade: true,
+        error: `Monthly limit reached. Your ${planTier === 'free' ? 'Free' : 'Plus'} plan allows ${tierConfig.localizationsPerMonth} localizations/month. Used: ${listingsUsed}, remaining: ${remaining}.`,
+        upgrade: planTier === 'free',
       });
     }
 
@@ -195,7 +193,7 @@ export default async function handler(req: any, res: any) {
       targetLanguage,
       usage: {
         used: listingsUsed + listings.length,
-        limit: tierConfig.listingsPerMonth,
+        limit: tierConfig.localizationsPerMonth,
         plan: planTier,
       },
     });

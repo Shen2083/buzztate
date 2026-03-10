@@ -12,25 +12,13 @@ function getStripe(): Stripe {
   return stripeClient;
 }
 
-/** Plan definitions matching the new e-commerce tier structure */
+/** Plan definitions — simplified to a single paid tier */
 const PLANS: Record<string, { name: string; description: string; amount: number; currency: string }> = {
-  starter: {
-    name: 'Buzztate Starter',
-    description: '100 listings/month, 5 languages, all marketplaces.',
-    amount: 2900, // £29.00
-    currency: 'gbp',
-  },
-  growth: {
-    name: 'Buzztate Growth',
-    description: '500 listings/month, all languages, priority processing.',
-    amount: 5900, // £59.00
-    currency: 'gbp',
-  },
-  scale: {
-    name: 'Buzztate Scale',
-    description: 'Unlimited listings, API access, bulk processing.',
-    amount: 9900, // £99.00
-    currency: 'gbp',
+  plus: {
+    name: 'Buzztate Plus',
+    description: '200 localizations/month, all languages, all export formats, priority processing.',
+    amount: 4900, // $49.00
+    currency: 'usd',
   },
 };
 
@@ -54,7 +42,7 @@ export default async function handler(req: any, res: any) {
     }
 
     // Determine which plan the user wants
-    const planId = req.body?.plan || 'starter';
+    const planId = req.body?.plan || 'plus';
     const plan = PLANS[planId];
 
     if (!plan) {
