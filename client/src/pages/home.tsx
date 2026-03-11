@@ -71,6 +71,13 @@ export default function Home({ session }: { session: any }) {
   const [totalLocalizations, setTotalLocalizations] = useState(0);
   const [doneLocalizations, setDoneLocalizations] = useState(0);
 
+  // Language overrides for marketplaces that need user selection (Shopify, Etsy)
+  const [languageOverrides, setLanguageOverrides] = useState<Record<string, string>>({});
+
+  const handleLanguageChange = (marketplaceId: MarketplaceId, language: string) => {
+    setLanguageOverrides((prev) => ({ ...prev, [marketplaceId]: language }));
+  };
+
   // 1. CHECK PRO STATUS & VERIFY PAYMENT
   useEffect(() => {
     const checkStatus = async () => {
@@ -308,11 +315,28 @@ export default function Home({ session }: { session: any }) {
   /** Send listings in small chunks to avoid Vercel function timeouts */
   const LOCALIZE_CHUNK_SIZE = 3;
 
+  /** Resolve the target language for a marketplace, using overrides for Shopify/Etsy */
+  const getTargetLanguage = (mpId: MarketplaceId): string => {
+    return languageOverrides[mpId] || MARKETPLACE_TARGET_LANGUAGE[mpId] || "";
+  };
+
+  /** Check if all selected marketplaces have a target language configured */
+  const allLanguagesReady = selectedMarketplaces.every((mpId) => getTargetLanguage(mpId).length > 0);
+
   const handleLocalize = async () => {
     if (parsedListings.length === 0 || selectedMarketplaces.length === 0) {
       toast({
         title: "Missing selection",
         description: "Please upload a file, map columns, and select at least one marketplace.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!allLanguagesReady) {
+      toast({
+        title: "Language required",
+        description: "Please select a target language for each marketplace before localizing.",
         variant: "destructive",
       });
       return;
@@ -341,7 +365,7 @@ export default function Home({ session }: { session: any }) {
     const initialProgress: MarketplaceProgress[] = selectedMarketplaces.map((mpId, idx) => ({
       marketplaceId: mpId,
       marketplaceName: MARKETPLACE_PROFILES[mpId]?.name || mpId,
-      targetLanguage: MARKETPLACE_TARGET_LANGUAGE[mpId] || mpId,
+      targetLanguage: getTargetLanguage(mpId),
       status: idx === 0 ? "in_progress" : "pending",
       listingsDone: 0,
       listingsTotal: listingsToProcess.length,
@@ -370,7 +394,7 @@ export default function Home({ session }: { session: any }) {
         }
 
         const mpId = selectedMarketplaces[mpIdx];
-        const targetLanguage = MARKETPLACE_TARGET_LANGUAGE[mpId];
+        const targetLanguage = getTargetLanguage(mpId);
 
         // Mark this marketplace as in_progress
         setMarketplaceProgressList((prev) =>
@@ -505,6 +529,7 @@ export default function Home({ session }: { session: any }) {
     setLocalizeCompleted(false);
     setLocalizeCancelled(false);
     setSelectedMarketplaces([]);
+    setLanguageOverrides({});
     setFileParseError(null);
     setCurrentListingTitle("");
     setMarketplaceProgressList([]);
@@ -867,11 +892,13 @@ export default function Home({ session }: { session: any }) {
                 selectedMarketplaces={selectedMarketplaces}
                 onSelect={setSelectedMarketplaces}
                 isPro={isPro}
+                languageOverrides={languageOverrides}
+                onLanguageChange={handleLanguageChange}
               />
 
               <button
                 onClick={handleLocalize}
-                disabled={localizeLoading || parsedListings.length === 0 || selectedMarketplaces.length === 0 || !navigator.onLine}
+                disabled={localizeLoading || parsedListings.length === 0 || selectedMarketplaces.length === 0 || !allLanguagesReady || !navigator.onLine}
                 className="w-full bg-yellow-400 text-black font-extrabold py-5 rounded-xl hover:bg-yellow-300 disabled:bg-gray-800 disabled:text-gray-500 transition-all text-lg flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.2)]"
               >
                 {localizeLoading ? (
