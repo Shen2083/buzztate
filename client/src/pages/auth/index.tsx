@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
+import { trackSignUp } from "@/lib/gtag";
 import { Loader2, Mail, Lock, ArrowRight, CheckCircle, ArrowLeft, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 import Footer from "@/components/Footer";
@@ -64,6 +65,7 @@ export default function AuthPage() {
           password,
         });
         if (error) throw error;
+        trackSignUp();
         setSignupSuccess(true);
       }
     } catch (error: any) {

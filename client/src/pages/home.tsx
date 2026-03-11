@@ -6,7 +6,8 @@ import { toast } from "@/hooks/use-toast";
 import type { ColumnMapping, ParsedListing, LocalizationResultItem } from "@shared/schema";
 import type { MarketplaceId } from "../../../lib/marketplace-profiles";
 import { MARKETPLACE_PROFILES } from "../../../lib/marketplace-profiles";
-import { parseUploadedFile, applyColumnMappings, type ParsedFileResult } from "@/lib/file-parser-client";
+import { parseUploadedFile, applyColumnMappings, detectPlatform, type ParsedFileResult } from "@/lib/file-parser-client";
+import { trackFileUpload, trackColumnsMapped, trackLocalizationStarted, trackLocalizationCompleted, trackBeginCheckout, trackPurchase } from "@/lib/gtag";
 import { fetchWithRetry, parseApiError, networkError } from "@/lib/api-error";
 import FileUpload from "@/components/FileUpload";
 import ColumnMapper from "@/components/ColumnMapper";
@@ -122,6 +123,7 @@ export default function Home({ session }: { session: any }) {
 
           if (result.success) {
             setIsPro(true);
+            trackPurchase(sessionId);
             toast({
               title: "Welcome to Plus!",
               description: "You now have unlimited listings and all marketplaces.",
@@ -171,6 +173,7 @@ export default function Home({ session }: { session: any }) {
   // 3. HANDLE BILLING
   const handleBilling = async (plan?: string) => {
     setCheckoutLoading(true);
+    if (!isPro) trackBeginCheckout();
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       if (!currentSession?.access_token) {
@@ -276,6 +279,7 @@ export default function Home({ session }: { session: any }) {
       }
 
       setParsedFile(result);
+      trackFileUpload(result.detectedFormat, result.rows.length, detectPlatform(result.headers));
       toast({
         title: "File parsed",
         description: `Found ${result.rows.length} listing${result.rows.length !== 1 ? "s" : ""} with ${result.headers.length} columns.`,
@@ -292,6 +296,15 @@ export default function Home({ session }: { session: any }) {
     setConfirmedMappings(mappings);
     const listings = applyColumnMappings(parsedFile.rows, mappings);
     setParsedListings(listings);
+
+    // Track columns_mapped event
+    const suggested = parsedFile.suggestedMappings;
+    const autoDetected = mappings.filter((m, i) =>
+      m.targetField !== "ignore" && suggested[i] && suggested[i].targetField === m.targetField
+    ).length;
+    const manualMapped = mappings.filter((m) => m.targetField !== "ignore").length - autoDetected;
+    trackColumnsMapped(autoDetected, manualMapped);
+
     toast({
       title: "Columns mapped",
       description: `${listings.length} listing${listings.length !== 1 ? "s" : ""} ready for localization.`,
@@ -404,6 +417,14 @@ export default function Home({ session }: { session: any }) {
     setDoneLocalizations(0);
     setFailedCount(0);
     setCurrentListingTitle(listingsToProcess[0]?.title || "");
+
+    const localizationStartTime = Date.now();
+    trackLocalizationStarted(
+      listingsToProcess.length,
+      selectedMarketplaces.length,
+      totalCount,
+      selectedMarketplaces
+    );
 
     // Initialize per-marketplace progress
     const initialProgress: MarketplaceProgress[] = selectedMarketplaces.map((mpId) => ({
@@ -555,6 +576,20 @@ export default function Home({ session }: { session: any }) {
       );
     } else {
       setLocalizeCompleted(true);
+
+      // Track localization_completed event
+      const allResults = Object.values(multiResultsRef.current).flatMap((m) => m.results);
+      const completedFailed = allResults.filter((r) => r.qualityFlags.some((f) => f.issue === "api_error" || f.issue === "content_filter")).length;
+      const completedWarnings = allResults.filter((r) => r.qualityFlags.length > 0).length - completedFailed;
+      trackLocalizationCompleted({
+        listingCount: listingsToProcess.length,
+        marketplaceCount: selectedMarketplaces.length,
+        totalLocalizations: totalCount,
+        successful: allResults.length - completedFailed,
+        warnings: completedWarnings,
+        failed: completedFailed,
+        durationSeconds: Math.round((Date.now() - localizationStartTime) / 1000),
+      });
     }
 
     if (lastUsage) {

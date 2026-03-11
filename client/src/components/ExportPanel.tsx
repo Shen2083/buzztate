@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Download, FileSpreadsheet, AlertTriangle, Check, ChevronDown, Loader2, Package } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { trackFileDownload } from "@/lib/gtag";
 import type { LocalizationResultItem, QualityFlag } from "@shared/schema";
 import { MARKETPLACE_PROFILES } from "../../../lib/marketplace-profiles";
 import type { MarketplaceId } from "../../../lib/marketplace-profiles";
@@ -140,6 +141,7 @@ export default function ExportPanel({
       );
       const blob = new Blob([content], { type: mimeType });
       downloadBlob(blob, `buzztate_${filename}`);
+      trackFileDownload("individual", marketplaceId);
       toast({ title: "Download started", description: `buzztate_${filename} is downloading.` });
     } catch (err) {
       console.error("Export failed:", err);
@@ -171,6 +173,7 @@ export default function ExportPanel({
 
       const blob = await zip.generateAsync({ type: "blob" });
       downloadBlob(blob, "buzztate_localized.zip");
+      trackFileDownload("zip", "all");
       toast({ title: "Download started", description: "buzztate_localized.zip is downloading." });
     } catch (err) {
       console.error("ZIP export failed:", err);
