@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Loader2, X, Check, AlertTriangle, Circle } from "lucide-react";
 
 export interface MarketplaceProgress {
@@ -83,15 +83,53 @@ export default function LocalizationProgress({
     };
   }, [isRunning]);
 
+  // Rolling speed: track timestamps of last 10 completions
+  const completionTimesRef = useRef<number[]>([]);
+  const prevDoneRef = useRef(0);
+
   useEffect(() => {
     if (doneLocalizations > 0) setShowSlowHint(false);
+    // Record timestamp for each new completion
+    if (doneLocalizations > prevDoneRef.current) {
+      const now = Date.now();
+      const newCompletions = doneLocalizations - prevDoneRef.current;
+      for (let i = 0; i < newCompletions; i++) {
+        completionTimesRef.current.push(now);
+      }
+      // Keep only last 10
+      if (completionTimesRef.current.length > 10) {
+        completionTimesRef.current = completionTimesRef.current.slice(-10);
+      }
+    }
+    prevDoneRef.current = doneLocalizations;
   }, [doneLocalizations]);
 
+  // Reset on new run
+  useEffect(() => {
+    if (isRunning) {
+      completionTimesRef.current = [];
+      prevDoneRef.current = 0;
+    }
+  }, [isRunning]);
+
   const percent = totalLocalizations > 0 ? Math.round((doneLocalizations / totalLocalizations) * 100) : 0;
+
+  // Rolling speed (items/sec) from last 10 completions
+  const rollingSpeed = (() => {
+    const times = completionTimesRef.current;
+    if (times.length < 2) return 0;
+    const timeSpan = (times[times.length - 1] - times[0]) / 1000;
+    if (timeSpan <= 0) return 0;
+    return (times.length - 1) / timeSpan;
+  })();
+
+  // ETA based on rolling speed (more responsive than overall average)
   const estimatedRemaining =
-    doneLocalizations > 0 && isRunning
-      ? Math.round((elapsed / doneLocalizations) * (totalLocalizations - doneLocalizations))
-      : 0;
+    rollingSpeed > 0 && isRunning
+      ? Math.round((totalLocalizations - doneLocalizations) / rollingSpeed)
+      : doneLocalizations > 0 && isRunning
+        ? Math.round((elapsed / doneLocalizations) * (totalLocalizations - doneLocalizations))
+        : 0;
 
   const currentMarketplace = marketplaceProgress.find((m) => m.status === "in_progress");
   const completedMarketplaces = marketplaceProgress.filter((m) => m.status === "completed");
@@ -275,8 +313,11 @@ export default function LocalizationProgress({
 
       {/* Overall progress */}
       <div className="flex justify-between items-center text-xs text-gray-500 mb-4">
-        <span>Overall: {doneLocalizations} of {totalLocalizations} localizations complete</span>
+        <span>Processing: {doneLocalizations} of {totalLocalizations} localizations</span>
         <div className="flex gap-4">
+          {rollingSpeed > 0 && (
+            <span>~{rollingSpeed.toFixed(1)} listings/sec</span>
+          )}
           <span>Elapsed: {formatTime(elapsed)}</span>
           {doneLocalizations > 0 && doneLocalizations < totalLocalizations && (
             <span>~{formatTime(estimatedRemaining)} remaining</span>
