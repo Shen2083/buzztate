@@ -32,6 +32,8 @@ export default function Home({ session }: { session: any }) {
   const [usageCount, setUsageCount] = useState(0);
   const usageLimit = 5; // Free tier monthly cap
   const [showHistory, setShowHistory] = useState(false);
+  const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
 
   const [history, setHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -55,7 +57,7 @@ export default function Home({ session }: { session: any }) {
       // plan_tier and listings_used_this_month may not exist if migration hasn't run yet.
       const { data, error } = await supabase
         .from('profiles')
-        .select('is_pro, plan_tier, listings_used_this_month')
+        .select('is_pro, plan_tier, listings_used_this_month, cancel_at_period_end, current_period_end')
         .eq('id', session.user.id)
         .single();
 
@@ -73,9 +75,10 @@ export default function Home({ session }: { session: any }) {
       } else if (data) {
         if (data.is_pro) {
           setIsPro(true);
-
         }
         setUsageCount(data.listings_used_this_month || 0);
+        setCancelAtPeriodEnd(data.cancel_at_period_end || false);
+        setCurrentPeriodEnd(data.current_period_end || null);
       }
 
       // Verify Payment via Session ID
@@ -481,6 +484,23 @@ export default function Home({ session }: { session: any }) {
           </div>
         </div>
       </nav>
+
+      {/* Cancellation grace period banner */}
+      {isPro && cancelAtPeriodEnd && currentPeriodEnd && (
+        <div className="max-w-7xl w-full px-6 mt-4">
+          <div className="flex items-center gap-3 bg-yellow-400/10 border border-yellow-400/20 rounded-xl p-4">
+            <AlertTriangle size={18} className="text-yellow-400 flex-shrink-0" />
+            <div className="flex-grow">
+              <p className="text-sm text-yellow-200 font-medium">
+                Your Plus plan is active until {new Date(currentPeriodEnd).toLocaleDateString()}. After that, you'll be on the Free plan.
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                You can reactivate anytime from "Manage Subscription" before the period ends.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Localize Listings — main content */}
       <div className="max-w-7xl w-full p-6 mt-2 space-y-6">

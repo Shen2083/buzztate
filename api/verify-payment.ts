@@ -96,7 +96,10 @@ export default async function handler(req: any, res: any) {
           .from("profiles")
           .update({
             is_pro: true,
+            plan_tier: 'plus',
             stripe_customer_id: customerId,
+            listings_used_this_month: 0,
+            listings_reset_date: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
           .eq("id", userId)
@@ -116,7 +119,10 @@ export default async function handler(req: any, res: any) {
             .insert({
               id: userId,
               is_pro: true,
+              plan_tier: 'plus',
               stripe_customer_id: customerId,
+              listings_used_this_month: 0,
+              listings_reset_date: new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
 
@@ -129,7 +135,7 @@ export default async function handler(req: any, res: any) {
           console.log("Profile upgraded successfully.");
         }
 
-        return res.json({ success: true, message: "Upgraded to Pro" });
+        return res.json({ success: true, message: "Upgraded to Plus" });
       } else {
         console.warn("No user ID found in payment session");
         return res.json({ success: false, message: "No user ID in session" });
