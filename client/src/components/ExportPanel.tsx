@@ -44,13 +44,13 @@ function getMarketplaceExportContent(
     };
   } else if (marketplaceId === "shopify_international") {
     return {
-      content: exportShopifyCSV(results),
+      content: exportShopifyCSV(results, originalRows),
       filename: `shopify_${targetLanguage.toLowerCase()}.csv`,
       mimeType: "text/csv;charset=utf-8;",
     };
   } else if (marketplaceId === "etsy_international") {
     return {
-      content: exportEtsyCSV(results),
+      content: exportEtsyCSV(results, originalRows),
       filename: `etsy_${targetLanguage.toLowerCase()}.csv`,
       mimeType: "text/csv;charset=utf-8;",
     };
