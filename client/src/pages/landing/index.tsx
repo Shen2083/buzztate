@@ -72,12 +72,12 @@ export default function Landing() {
 
       {/* ============ NAVIGATION ============ */}
       <nav className="w-full border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex justify-between items-center">
           <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-              <span className="text-3xl">⚡</span>
-              <span className="font-bold text-xl tracking-tight">Buzztate</span>
-              <span className="text-[10px] bg-yellow-400/10 text-yellow-400 px-2 py-0.5 rounded font-bold uppercase ml-1">for Sellers</span>
+              <span className="text-2xl md:text-3xl">⚡</span>
+              <span className="font-bold text-lg md:text-xl tracking-tight">Buzztate</span>
+              <span className="hidden md:inline text-[10px] bg-yellow-400/10 text-yellow-400 px-2 py-0.5 rounded font-bold uppercase ml-1">for Sellers</span>
             </div>
           </Link>
 
@@ -88,13 +88,18 @@ export default function Landing() {
             <button onClick={() => scrollToSection("faq")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">FAQ</button>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Link href="/auth?mode=login" className="text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors">
+          <div className="flex items-center gap-3 md:gap-4">
+            <Link href="/auth?mode=login" className="hidden md:inline text-sm font-bold text-gray-400 hover:text-white cursor-pointer transition-colors">
               Log In
             </Link>
-            <Link href="/auth?mode=signup" className="bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-full font-bold text-sm transition-all">
-              Try Free — 5 Listings
-            </Link>
+            <div className="flex flex-col items-end gap-0.5 md:block">
+              <Link href="/auth?mode=signup" className="bg-yellow-400 hover:bg-yellow-300 text-black px-4 md:px-6 py-2 rounded-full font-bold text-xs md:text-sm transition-all whitespace-nowrap">
+                Try Free — 5 Listings
+              </Link>
+              <Link href="/auth?mode=login" className="md:hidden text-[11px] font-medium text-gray-500 hover:text-white transition-colors mt-0.5">
+                Log In
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
