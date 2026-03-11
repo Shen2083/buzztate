@@ -1,14 +1,29 @@
 import { useState } from "react";
-import { Check, Globe, ShoppingBag, Store, Lock, Zap, Square, CheckSquare, MinusSquare } from "lucide-react";
+import { Check, Globe, ShoppingBag, Store, Lock, Zap, Square, CheckSquare, MinusSquare, ChevronDown } from "lucide-react";
 import { MARKETPLACE_PROFILES, type MarketplaceId } from "../../../lib/marketplace-profiles";
 
 /** The first marketplace is free; the rest require Plus */
 const FREE_MARKETPLACE: MarketplaceId = "amazon_de";
 
+/** Marketplaces that require explicit language selection from the user */
+const MARKETPLACES_NEEDING_LANGUAGE: MarketplaceId[] = ["shopify_international", "etsy_international"];
+
+/** Available languages for Shopify and Etsy */
+const MULTI_LANGUAGE_OPTIONS = [
+  "English", "Spanish", "French", "German", "Japanese", "Italian", "Portuguese",
+  "Chinese (Simplified)", "Chinese (Traditional)", "Korean", "Russian", "Arabic",
+  "Hindi", "Dutch", "Turkish", "Polish", "Swedish", "Danish", "Norwegian",
+  "Finnish", "Greek", "Hebrew", "Thai", "Vietnamese", "Indonesian", "Malay",
+  "Czech", "Hungarian", "Romanian", "Ukrainian",
+] as const;
+
 interface MarketplaceSelectorProps {
   selectedMarketplaces: MarketplaceId[];
   onSelect: (ids: MarketplaceId[]) => void;
   isPro?: boolean;
+  /** Language overrides for marketplaces that need user selection (Shopify, Etsy) */
+  languageOverrides?: Record<string, string>;
+  onLanguageChange?: (marketplaceId: MarketplaceId, language: string) => void;
 }
 
 /** Group marketplaces by platform for the UI */
@@ -37,6 +52,8 @@ export default function MarketplaceSelector({
   selectedMarketplaces,
   onSelect,
   isPro = false,
+  languageOverrides = {},
+  onLanguageChange,
 }: MarketplaceSelectorProps) {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [showLockedHint, setShowLockedHint] = useState(false);
@@ -165,6 +182,35 @@ export default function MarketplaceSelector({
                     </span>
                   )}
                 </button>
+
+                {/* Language selector for single-marketplace groups that need it (Shopify, Etsy) */}
+                {group.marketplaces.length === 1 &&
+                  hasSelection &&
+                  MARKETPLACES_NEEDING_LANGUAGE.includes(group.marketplaces[0]) && (
+                  <div className="border-t border-gray-800 bg-black/30 px-3 py-3">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">
+                      Target Language
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={languageOverrides[group.marketplaces[0]] || ""}
+                        onChange={(e) => onLanguageChange?.(group.marketplaces[0], e.target.value)}
+                        className="w-full appearance-none bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-yellow-400 focus:outline-none cursor-pointer pr-8"
+                      >
+                        <option value="" disabled>Select a language...</option>
+                        {MULTI_LANGUAGE_OPTIONS.map((lang) => (
+                          <option key={lang} value={lang}>{lang}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                    </div>
+                    {!languageOverrides[group.marketplaces[0]] && (
+                      <p className="text-[10px] text-yellow-400/70 mt-1.5">
+                        Please select a target language to continue.
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Expanded marketplace list */}
                 {isExpanded && group.marketplaces.length > 1 && (
