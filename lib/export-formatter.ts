@@ -88,18 +88,10 @@ const SHOPIFY_TRANSLATABLE: Record<string, (r: LocalizationResultItem) => string
   "seo description": (r) => r.localized.seo_meta_description || "",
 };
 
-/** Minimal Shopify columns for cross-platform export */
-const SHOPIFY_CROSS_PLATFORM_COLUMNS = [
-  "Handle", "Title", "Body (HTML)", "Vendor", "Type", "Tags", "Published",
-  "Variant SKU", "Variant Price", "Image Src", "Image Alt Text",
-  "SEO Title", "SEO Description", "Status",
+/** Essential Shopify columns to ensure in output even if source doesn't have them */
+const SHOPIFY_ESSENTIAL_COLUMNS = [
+  "Handle", "Title", "Body (HTML)", "Tags", "SEO Title", "SEO Description",
 ];
-
-const PASSTHROUGH_TO_SHOPIFY: Record<string, [string, string][]> = {
-  etsy: [["sku", "variant sku"], ["price", "variant price"], ["image url 1", "image src"]],
-  amazon: [["sku", "variant sku"], ["standard_price", "variant price"], ["brand_name", "vendor"]],
-  unknown: [],
-};
 
 // ---- Etsy column definitions ----
 
@@ -110,16 +102,10 @@ const ETSY_TRANSLATABLE: Record<string, (r: LocalizationResultItem) => string> =
   "tags": (r) => r.localized.keywords || "",
 };
 
-/** Minimal Etsy columns for cross-platform export */
-const ETSY_CROSS_PLATFORM_COLUMNS = [
-  "Title", "Description", "Tags", "Price", "Currency Code", "Quantity", "SKU",
+/** Essential Etsy columns to ensure in output even if source doesn't have them */
+const ETSY_ESSENTIAL_COLUMNS = [
+  "Title", "Description", "Tags",
 ];
-
-const PASSTHROUGH_TO_ETSY: Record<string, [string, string][]> = {
-  shopify: [["variant sku", "sku"], ["variant price", "price"]],
-  amazon: [["sku", "sku"], ["standard_price", "price"]],
-  unknown: [],
-};
 
 // ==============================================================
 // Export functions
@@ -215,106 +201,72 @@ export function exportAmazonFlatFile(
 
 /**
  * Generate a Shopify-compatible CSV export.
- * Handles both same-platform (all columns preserved) and cross-platform exports.
+ * Preserves ALL source columns unchanged, adds essential Shopify columns
+ * if missing, and overwrites translatable fields with localized versions.
  */
 export function exportShopifyCSV(
   results: LocalizationResultItem[],
   originalRows: Record<string, string>[]
 ): string {
   if (results.length === 0) return "";
-
-  const sourceHeaders = originalRows.length > 0 ? Object.keys(originalRows[0]) : [];
-  const sourcePlatform = detectSourcePlatform(sourceHeaders);
-
-  if (sourcePlatform === "shopify" && sourceHeaders.length > 0) {
-    // Same-platform: preserve ALL original columns, replace translatable ones
-    return exportSamePlatformCSV(results, originalRows, sourceHeaders, SHOPIFY_TRANSLATABLE);
-  }
-
-  // Cross-platform: generate Shopify format columns
-  const headers = SHOPIFY_CROSS_PLATFORM_COLUMNS;
-  const passthroughPairs = PASSTHROUGH_TO_SHOPIFY[sourcePlatform] || [];
-
-  const rows = results.map((r) => {
-    const originalRow = originalRows[r.sourceRow] || {};
-
-    const passthrough: Record<string, string> = {};
-    for (const [sourceCol, shopifyCol] of passthroughPairs) {
-      const val = findValueCI(originalRow, sourceCol);
-      if (val !== undefined) passthrough[shopifyCol] = val;
-    }
-
-    return headers.map((h) => {
-      const lower = h.toLowerCase();
-      const getter = SHOPIFY_TRANSLATABLE[lower];
-      if (getter) return csvEscape(getter(r));
-      return csvEscape(passthrough[lower] || "");
-    });
-  });
-
-  return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+  return exportWithColumnPreservation(results, originalRows, SHOPIFY_TRANSLATABLE, SHOPIFY_ESSENTIAL_COLUMNS);
 }
 
 /**
  * Generate an Etsy-compatible CSV export.
- * Handles both same-platform (all columns preserved) and cross-platform exports.
+ * Preserves ALL source columns unchanged, adds essential Etsy columns
+ * if missing, and overwrites translatable fields with localized versions.
  */
 export function exportEtsyCSV(
   results: LocalizationResultItem[],
   originalRows: Record<string, string>[]
 ): string {
   if (results.length === 0) return "";
-
-  const sourceHeaders = originalRows.length > 0 ? Object.keys(originalRows[0]) : [];
-  const sourcePlatform = detectSourcePlatform(sourceHeaders);
-
-  if (sourcePlatform === "etsy" && sourceHeaders.length > 0) {
-    // Same-platform: preserve ALL original columns, replace translatable ones
-    return exportSamePlatformCSV(results, originalRows, sourceHeaders, ETSY_TRANSLATABLE);
-  }
-
-  // Cross-platform: generate Etsy format columns
-  const headers = ETSY_CROSS_PLATFORM_COLUMNS;
-  const passthroughPairs = PASSTHROUGH_TO_ETSY[sourcePlatform] || [];
-
-  const rows = results.map((r) => {
-    const originalRow = originalRows[r.sourceRow] || {};
-
-    const passthrough: Record<string, string> = {};
-    for (const [sourceCol, etsyCol] of passthroughPairs) {
-      const val = findValueCI(originalRow, sourceCol);
-      if (val !== undefined) passthrough[etsyCol] = val;
-    }
-
-    return headers.map((h) => {
-      const lower = h.toLowerCase();
-      const getter = ETSY_TRANSLATABLE[lower];
-      if (getter) return csvEscape(getter(r));
-      return csvEscape(passthrough[lower] || "");
-    });
-  });
-
-  return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+  return exportWithColumnPreservation(results, originalRows, ETSY_TRANSLATABLE, ETSY_ESSENTIAL_COLUMNS);
 }
 
-// ---- Shared same-platform helpers ----
+// ---- Shared helpers ----
 
 /**
- * Same-platform CSV export: preserves ALL original columns, replaces translatable fields.
+ * Unified CSV export that preserves ALL original columns, prepends any missing
+ * essential columns, and overwrites translatable fields with localized data.
+ * Works for both same-platform and cross-platform exports (Shopify, Etsy).
  */
-function exportSamePlatformCSV(
+function exportWithColumnPreservation(
   results: LocalizationResultItem[],
   originalRows: Record<string, string>[],
-  headers: string[],
   translatableMap: Record<string, (r: LocalizationResultItem) => string>,
+  essentialColumns: string[],
 ): string {
+  // Start with ALL source headers from the original file
+  const sourceHeaders = originalRows.length > 0 ? Object.keys(originalRows[0]) : [];
+
+  // Build a case-insensitive set of existing headers for dedup
+  const existingLower = new Set(sourceHeaders.map((h) => h.toLowerCase().trim()));
+
+  // Prepend any essential columns that aren't already in the source
+  const extraHeaders: string[] = [];
+  for (const col of essentialColumns) {
+    if (!existingLower.has(col.toLowerCase().trim())) {
+      extraHeaders.push(col);
+    }
+  }
+
+  const headers = [...extraHeaders, ...sourceHeaders];
+
   const rows = results.map((r) => {
     const originalRow = originalRows[r.sourceRow] || {};
+
     return headers.map((h) => {
+      // Check if this column is translatable (case-insensitive match)
       const lower = h.toLowerCase().trim();
       const getter = translatableMap[lower];
       if (getter) return csvEscape(getter(r));
-      return csvEscape(originalRow[h] || "");
+
+      // Pass through the original value unchanged
+      // Use case-insensitive lookup to handle header casing differences
+      const val = findValueCI(originalRow, h);
+      return csvEscape(val || "");
     });
   });
 
