@@ -92,18 +92,64 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // Handle subscription cancellation
+    // Handle subscription updates (cancel-at-period-end, reactivation, status changes)
+    if (event.type === 'customer.subscription.updated') {
+      const subscription = event.data.object as Stripe.Subscription;
+      const customerId = subscription.customer as string;
+
+      console.log(`Subscription updated for customer: ${customerId}, status: ${subscription.status}, cancel_at_period_end: ${subscription.cancel_at_period_end}`);
+
+      if (subscription.status === 'active') {
+        // Active subscription — update cancel_at_period_end tracking
+        const updateData: Record<string, any> = {
+          is_pro: true,
+          plan_tier: 'plus',
+          cancel_at_period_end: subscription.cancel_at_period_end,
+          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error } = await supabase
+          .from('profiles')
+          .update(updateData)
+          .eq('stripe_customer_id', customerId);
+
+        if (error) {
+          console.error('Supabase subscription update failed:', error);
+        }
+      } else if (['canceled', 'unpaid', 'past_due'].includes(subscription.status)) {
+        // Downgrade to free
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            is_pro: false,
+            plan_tier: 'free',
+            cancel_at_period_end: false,
+            current_period_end: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('stripe_customer_id', customerId);
+
+        if (error) {
+          console.error('Supabase downgrade on status change failed:', error);
+        }
+      }
+    }
+
+    // Handle subscription deletion (final cancellation after period end)
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription;
       const customerId = subscription.customer as string;
 
-      console.log(`Subscription cancelled for customer: ${customerId}`);
+      console.log(`Subscription deleted for customer: ${customerId}`);
 
       const { error } = await supabase
         .from('profiles')
         .update({
           is_pro: false,
           plan_tier: 'free',
+          cancel_at_period_end: false,
+          current_period_end: null,
           updated_at: new Date().toISOString()
         })
         .eq('stripe_customer_id', customerId);
@@ -111,6 +157,17 @@ export default async function handler(req: any, res: any) {
       if (error) {
         console.error('Supabase downgrade failed:', error);
       }
+    }
+
+    // Handle failed invoice payments (log but don't immediately downgrade)
+    if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object as Stripe.Invoice;
+      const customerId = invoice.customer as string;
+
+      console.warn(`Payment failed for customer: ${customerId}, invoice: ${invoice.id}, attempt: ${invoice.attempt_count}`);
+
+      // Stripe will retry automatically and eventually mark subscription as past_due/unpaid
+      // which will be handled by customer.subscription.updated above
     }
 
     res.json({ received: true });
