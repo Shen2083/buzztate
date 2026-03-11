@@ -136,7 +136,7 @@ function normalizeHeader(header: string): string {
 /**
  * Detect which platform the CSV likely came from based on header names.
  */
-function detectPlatform(headers: string[]): "shopify" | "etsy" | "amazon" | "unknown" {
+export function detectPlatform(headers: string[]): "shopify" | "etsy" | "amazon" | "unknown" {
   const headerSet = new Set(headers);
   if (headerSet.has("Body (HTML)") || headerSet.has("Variant SKU") || headerSet.has("Handle")) {
     return "shopify";
