@@ -22,6 +22,13 @@ function findValueCI(row: Record<string, string>, targetColumn: string): string 
   return undefined;
 }
 
+// ---- Sorting helper ----
+
+/** Sort results by their original source row index to preserve input order */
+function sortBySourceRow(results: LocalizationResultItem[]): LocalizationResultItem[] {
+  return [...results].sort((a, b) => a.sourceRow - b.sourceRow);
+}
+
 // ---- Escaping helpers ----
 
 function csvEscape(value: string): string {
@@ -86,11 +93,12 @@ const SHOPIFY_TRANSLATABLE: Record<string, (r: LocalizationResultItem) => string
   "tags": (r) => r.localized.keywords || "",
   "seo title": (r) => r.localized.seo_meta_title || "",
   "seo description": (r) => r.localized.seo_meta_description || "",
+  "image alt text": (r) => r.localized.image_alt_text || "",
 };
 
 /** Essential Shopify columns to ensure in output even if source doesn't have them */
 const SHOPIFY_ESSENTIAL_COLUMNS = [
-  "Handle", "Title", "Body (HTML)", "Tags", "SEO Title", "SEO Description",
+  "Handle", "Title", "Body (HTML)", "Tags", "SEO Title", "SEO Description", "Image Alt Text",
 ];
 
 // ---- Etsy column definitions ----
@@ -118,6 +126,7 @@ export function exportGenericCSV(
   results: LocalizationResultItem[],
   targetLanguage: string
 ): string {
+  results = sortBySourceRow(results);
   const BULLET_COUNT = 5;
 
   const headers = [
@@ -166,6 +175,7 @@ export function exportAmazonFlatFile(
   originalRows: Record<string, string>[]
 ): string {
   if (results.length === 0) return "";
+  results = sortBySourceRow(results);
 
   const sourceHeaders = originalRows.length > 0 ? Object.keys(originalRows[0]) : [];
   const sourcePlatform = detectSourcePlatform(sourceHeaders);
@@ -238,6 +248,7 @@ function exportWithColumnPreservation(
   translatableMap: Record<string, (r: LocalizationResultItem) => string>,
   essentialColumns: string[],
 ): string {
+  results = sortBySourceRow(results);
   // Start with ALL source headers from the original file
   const sourceHeaders = originalRows.length > 0 ? Object.keys(originalRows[0]) : [];
 
@@ -283,6 +294,7 @@ function exportSamePlatformTSV(
   headers: string[],
   translatableMap: Record<string, (r: LocalizationResultItem) => string>,
 ): string {
+  results = sortBySourceRow(results);
   const rows = results.map((r) => {
     const originalRow = originalRows[r.sourceRow] || {};
     return headers.map((h) => {
