@@ -16,7 +16,7 @@ function getStripe(): Stripe {
 const PLANS: Record<string, { name: string; description: string; amount: number; currency: string }> = {
   plus: {
     name: 'Buzztate Plus',
-    description: '200 localizations/month, all languages, all export formats, priority processing.',
+    description: 'Unlimited localizations, up to 200 per batch, all marketplaces, priority processing.',
     amount: 4900, // $49.00
     currency: 'usd',
   },

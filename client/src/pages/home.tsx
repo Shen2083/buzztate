@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Zap, History, Clock, Copy, LogOut, Loader2, FileSpreadsheet } from "lucide-react";
+import { Zap, History, Clock, Copy, LogOut, Loader2, FileSpreadsheet, AlertTriangle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import type { ColumnMapping, ParsedListing, LocalizationResultItem } from "@shared/schema";
@@ -30,7 +30,7 @@ export default function Home({ session }: { session: any }) {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
-  const [usageLimit, setUsageLimit] = useState(5);
+  const usageLimit = 5; // Free tier monthly cap
   const [showHistory, setShowHistory] = useState(false);
 
   const [history, setHistory] = useState<any[]>([]);
@@ -46,6 +46,7 @@ export default function Home({ session }: { session: any }) {
   const [localizeLoading, setLocalizeLoading] = useState(false);
   const [localizeProgress, setLocalizeProgress] = useState({ done: 0, total: 0 });
   const [fileParseLoading, setFileParseLoading] = useState(false);
+  const MAX_BATCH_SIZE = 200;
 
   // 1. CHECK PRO STATUS & VERIFY PAYMENT
   useEffect(() => {
@@ -67,12 +68,12 @@ export default function Home({ session }: { session: any }) {
           .single();
         if (fallback?.is_pro) {
           setIsPro(true);
-          setUsageLimit(200);
+
         }
       } else if (data) {
         if (data.is_pro) {
           setIsPro(true);
-          setUsageLimit(200);
+
         }
         setUsageCount(data.listings_used_this_month || 0);
       }
@@ -95,7 +96,7 @@ export default function Home({ session }: { session: any }) {
 
           if (result.success) {
             setIsPro(true);
-            setUsageLimit(200);
+  
             toast({
               title: "Payment Verified!",
               description: "You're now on the Plus plan. Enjoy all features!",
@@ -254,6 +255,14 @@ export default function Home({ session }: { session: any }) {
       description: `${listings.length} listings ready for localization.`,
     });
   }, [parsedFile]);
+
+  const trimToMaxBatch = () => {
+    setParsedListings((prev) => prev.slice(0, MAX_BATCH_SIZE));
+    toast({
+      title: "Trimmed to 200",
+      description: "We'll localize the first 200 listings. Upload the rest in a separate batch.",
+    });
+  };
 
   /** Send listings in small chunks to avoid Vercel function timeouts */
   const LOCALIZE_CHUNK_SIZE = 3;
@@ -422,12 +431,14 @@ export default function Home({ session }: { session: any }) {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="hidden sm:flex items-center gap-1.5 text-xs text-gray-500">
-              <span className={usageCount >= usageLimit ? "text-red-400 font-bold" : "text-gray-400"}>
-                {usageCount}/{usageLimit}
+            {!isPro && (
+              <span className="hidden sm:flex items-center gap-1.5 text-xs text-gray-500">
+                <span className={usageCount >= usageLimit ? "text-red-400 font-bold" : "text-gray-400"}>
+                  {usageCount}/{usageLimit}
+                </span>
+                localizations this month
               </span>
-              localizations
-            </span>
+            )}
             <button
               onClick={() => isPro ? handleBilling() : handleBilling("plus")}
               disabled={checkoutLoading || verifyingPayment}
@@ -522,6 +533,28 @@ export default function Home({ session }: { session: any }) {
                     Start Over
                   </button>
                 </div>
+
+                {/* Batch limit warning */}
+                {parsedListings.length > MAX_BATCH_SIZE && (
+                  <div className="flex items-start gap-3 bg-yellow-400/5 border border-yellow-400/20 rounded-xl p-4 mb-3">
+                    <AlertTriangle size={18} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-grow">
+                      <p className="text-sm text-yellow-200 font-medium">
+                        This file has {parsedListings.length} listings. Plus supports up to 200 per batch.
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Split your file into smaller batches, or localize the first 200 and come back for the rest.
+                      </p>
+                      <button
+                        onClick={trimToMaxBatch}
+                        className="mt-2 text-xs bg-yellow-400 text-black font-bold px-3 py-1.5 rounded-lg hover:bg-yellow-300 transition-colors"
+                      >
+                        Localize first 200
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="max-h-[300px] overflow-y-auto space-y-2">
                   {parsedListings.slice(0, 10).map((listing, i) => (
                     <div key={i} className="bg-black/30 rounded-lg p-3 border border-gray-800">
