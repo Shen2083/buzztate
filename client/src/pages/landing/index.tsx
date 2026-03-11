@@ -133,8 +133,8 @@ export default function Landing() {
         <div className="w-full max-w-3xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
             {/* Source */}
-            <div className="bg-gray-900/60 border border-gray-800 rounded-xl px-5 py-3 text-sm">
-              <span className="text-gray-500 text-xs block mb-1">Source</span>
+            <div className="bg-gray-900/60 border border-gray-800 rounded-xl px-5 py-3 text-sm lg:text-base">
+              <span className="text-gray-500 text-xs lg:text-sm block mb-1">Source</span>
               <span className="text-white font-bold">Etsy CSV</span>
             </div>
 
@@ -145,7 +145,7 @@ export default function Landing() {
             </div>
 
             {/* Buzztate */}
-            <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-xl px-5 py-3 text-sm">
+            <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-xl px-5 py-3 text-sm lg:text-base">
               <span className="text-yellow-400 font-extrabold">⚡ Buzztate</span>
             </div>
 
@@ -157,13 +157,13 @@ export default function Landing() {
 
             {/* Outputs */}
             <div className="flex flex-col gap-2">
-              <div className="bg-gray-900/60 border border-gray-800 rounded-lg px-4 py-2 text-xs flex items-center gap-2">
+              <div className="bg-gray-900/60 border border-gray-800 rounded-lg px-4 py-2 text-xs lg:text-sm flex items-center gap-2">
                 <span>🇩🇪</span> <span className="text-gray-300 font-mono">amazon_de.tsv</span>
               </div>
-              <div className="bg-gray-900/60 border border-gray-800 rounded-lg px-4 py-2 text-xs flex items-center gap-2">
+              <div className="bg-gray-900/60 border border-gray-800 rounded-lg px-4 py-2 text-xs lg:text-sm flex items-center gap-2">
                 <span>🇫🇷</span> <span className="text-gray-300 font-mono">amazon_fr.tsv</span>
               </div>
-              <div className="bg-gray-900/60 border border-gray-800 rounded-lg px-4 py-2 text-xs flex items-center gap-2">
+              <div className="bg-gray-900/60 border border-gray-800 rounded-lg px-4 py-2 text-xs lg:text-sm flex items-center gap-2">
                 <span>🛍️</span> <span className="text-gray-300 font-mono">shopify_it.csv</span>
               </div>
             </div>
@@ -242,7 +242,7 @@ export default function Landing() {
 
             {/* Field mapping diagram */}
             <div className="bg-gray-900/30 border border-gray-800 rounded-2xl overflow-hidden max-w-3xl mx-auto text-left">
-              <div className="grid grid-cols-[1fr_auto_1fr] text-xs font-bold uppercase tracking-wider text-gray-500 border-b border-gray-800">
+              <div className="grid grid-cols-[1fr_auto_1fr] text-xs lg:text-sm font-bold uppercase tracking-wider text-gray-500 border-b border-gray-800">
                 <div className="px-6 py-3">Etsy Listing</div>
                 <div className="px-4 py-3"></div>
                 <div className="px-6 py-3">Amazon Listing (DE)</div>
@@ -250,7 +250,7 @@ export default function Landing() {
               {FIELD_MAPPING_ROWS.map((row, i) => (
                 <div
                   key={i}
-                  className={`grid grid-cols-[1fr_auto_1fr] text-sm ${
+                  className={`grid grid-cols-[1fr_auto_1fr] text-sm lg:text-base ${
                     i < FIELD_MAPPING_ROWS.length - 1 ? "border-b border-gray-800/50" : ""
                   }`}
                 >
@@ -319,10 +319,10 @@ export default function Landing() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center p-8 rounded-2xl bg-black border border-gray-800">
-              <div className="w-16 h-16 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 lg:w-20 lg:h-20 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Upload size={28} className="text-yellow-400" />
               </div>
-              <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 1</div>
+              <div className="text-xs lg:text-sm text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 1</div>
               <h3 className="text-xl lg:text-2xl font-bold mb-3">Upload your listings</h3>
               <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
                 Export from Amazon Seller Central, Shopify Admin, or Etsy — CSV, XLSX, or TSV. Buzztate auto-detects your columns.
@@ -330,10 +330,10 @@ export default function Landing() {
             </div>
 
             <div className="text-center p-8 rounded-2xl bg-black border border-gray-800">
-              <div className="w-16 h-16 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 lg:w-20 lg:h-20 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Globe size={28} className="text-yellow-400" />
               </div>
-              <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 2</div>
+              <div className="text-xs lg:text-sm text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 2</div>
               <h3 className="text-xl lg:text-2xl font-bold mb-3">Pick your target marketplaces</h3>
               <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
                 Select any combination: Amazon Germany, France, Spain, Italy, Japan. Plus Shopify and Etsy in any supported language. Localize into multiple markets in a single run.
@@ -341,10 +341,10 @@ export default function Landing() {
             </div>
 
             <div className="text-center p-8 rounded-2xl bg-black border border-gray-800">
-              <div className="w-16 h-16 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 lg:w-20 lg:h-20 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Download size={28} className="text-yellow-400" />
               </div>
-              <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 3</div>
+              <div className="text-xs lg:text-sm text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 3</div>
               <h3 className="text-xl lg:text-2xl font-bold mb-3">Download marketplace-ready files</h3>
               <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
                 Get a ZIP with one file per marketplace, formatted for direct import. Amazon TSV, Shopify CSV, Etsy CSV — each in the exact format the platform expects. Upload and sell.
@@ -366,55 +366,55 @@ export default function Landing() {
             {/* Original */}
             <div className="bg-black border border-gray-800 rounded-2xl p-8">
               <div className="flex items-center gap-2 mb-6">
-                <span className="text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded-full font-bold uppercase">Original — Etsy English</span>
+                <span className="text-xs lg:text-sm bg-gray-800 text-gray-400 px-3 py-1 rounded-full font-bold uppercase">Original — Etsy English</span>
               </div>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-sm lg:text-base">
                 <div>
-                  <span className="text-xs text-gray-600 uppercase font-bold block mb-1">Title</span>
+                  <span className="text-xs lg:text-sm text-gray-600 uppercase font-bold block mb-1">Title</span>
                   <p className="text-gray-300">Linen Bread Bag - Reusable Baguette & Loaf Storage, Handmade from European Flax, Keeps Bread Fresh 3x Longer, Zero Waste Kitchen</p>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-600 uppercase font-bold block mb-1">Description</span>
-                  <p className="text-gray-500 text-xs leading-relaxed">Our handmade linen bread bag keeps your artisan bread, baguettes, and sourdough fresh up to 3x longer than plastic. Made from 100% European flax linen, hand-sewn with reinforced seams. Machine washable. Perfect zero-waste gift for bread lovers...</p>
+                  <span className="text-xs lg:text-sm text-gray-600 uppercase font-bold block mb-1">Description</span>
+                  <p className="text-gray-500 text-xs lg:text-sm leading-relaxed">Our handmade linen bread bag keeps your artisan bread, baguettes, and sourdough fresh up to 3x longer than plastic. Made from 100% European flax linen, hand-sewn with reinforced seams. Machine washable. Perfect zero-waste gift for bread lovers...</p>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-600 uppercase font-bold block mb-1">Tags</span>
-                  <p className="text-gray-500 text-xs">bread bag, linen bag, reusable bread storage, baguette bag, sourdough keeper, zero waste kitchen...</p>
+                  <span className="text-xs lg:text-sm text-gray-600 uppercase font-bold block mb-1">Tags</span>
+                  <p className="text-gray-500 text-xs lg:text-sm">bread bag, linen bag, reusable bread storage, baguette bag, sourdough keeper, zero waste kitchen...</p>
                 </div>
-                <div className="text-xs text-gray-700 italic pt-2 border-t border-gray-800/50">No bullet points — Etsy doesn't use them</div>
+                <div className="text-xs lg:text-sm text-gray-700 italic pt-2 border-t border-gray-800/50">No bullet points — Etsy doesn't use them</div>
               </div>
             </div>
 
             {/* Localized */}
             <div className="bg-black border border-yellow-400/30 rounded-2xl p-8 relative">
-              <div className="absolute top-0 right-0 bg-yellow-400 text-black text-[10px] font-extrabold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wider">BUZZTATE</div>
+              <div className="absolute top-0 right-0 bg-yellow-400 text-black text-[10px] lg:text-xs font-extrabold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wider">BUZZTATE</div>
               <div className="flex items-center gap-2 mb-6">
-                <span className="text-xs bg-yellow-400/10 text-yellow-400 px-3 py-1 rounded-full font-bold uppercase">Localized — Amazon Germany</span>
+                <span className="text-xs lg:text-sm bg-yellow-400/10 text-yellow-400 px-3 py-1 rounded-full font-bold uppercase">Localized — Amazon Germany</span>
               </div>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-sm lg:text-base">
                 <div>
-                  <span className="text-xs text-yellow-400/60 uppercase font-bold block mb-1 font-mono">item_name</span>
+                  <span className="text-xs lg:text-sm text-yellow-400/60 uppercase font-bold block mb-1 font-mono">item_name</span>
                   <p className="text-white">Leinen Brottasche - Wiederverwendbare Baguette- & Laiblagerung, Handgefertigt aus Europäischem Flachs</p>
                 </div>
                 <div>
-                  <span className="text-xs text-yellow-400/60 uppercase font-bold block mb-1 font-mono">bullet_point1</span>
-                  <p className="text-yellow-400 text-xs">Hält Brot bis zu 3x länger frisch als Plastikverpackung — natürliche Luftzirkulation durch Leinengewebe</p>
+                  <span className="text-xs lg:text-sm text-yellow-400/60 uppercase font-bold block mb-1 font-mono">bullet_point1</span>
+                  <p className="text-yellow-400 text-xs lg:text-sm">Hält Brot bis zu 3x länger frisch als Plastikverpackung — natürliche Luftzirkulation durch Leinengewebe</p>
                 </div>
                 <div>
-                  <span className="text-xs text-yellow-400/60 uppercase font-bold block mb-1 font-mono">bullet_point2</span>
-                  <p className="text-yellow-400 text-xs">100% europäisches Flachsleinen — handgenäht mit verstärkten Nähten für jahrelange Haltbarkeit</p>
+                  <span className="text-xs lg:text-sm text-yellow-400/60 uppercase font-bold block mb-1 font-mono">bullet_point2</span>
+                  <p className="text-yellow-400 text-xs lg:text-sm">100% europäisches Flachsleinen — handgenäht mit verstärkten Nähten für jahrelange Haltbarkeit</p>
                 </div>
                 <div>
-                  <span className="text-xs text-yellow-400/60 uppercase font-bold block mb-1 font-mono">bullet_point3</span>
-                  <p className="text-yellow-400 text-xs">Maschinenwaschbar bei 30°C — pflegeleicht und hygienisch</p>
+                  <span className="text-xs lg:text-sm text-yellow-400/60 uppercase font-bold block mb-1 font-mono">bullet_point3</span>
+                  <p className="text-yellow-400 text-xs lg:text-sm">Maschinenwaschbar bei 30°C — pflegeleicht und hygienisch</p>
                 </div>
                 <div>
-                  <span className="text-xs text-yellow-400/60 uppercase font-bold block mb-1 font-mono">generic_keywords</span>
-                  <p className="text-gray-400 text-xs">Brottasche Leinen, Brotbeutel wiederverwendbar, Baguettetasche, Brotaufbewahrung...</p>
+                  <span className="text-xs lg:text-sm text-yellow-400/60 uppercase font-bold block mb-1 font-mono">generic_keywords</span>
+                  <p className="text-gray-400 text-xs lg:text-sm">Brottasche Leinen, Brotbeutel wiederverwendbar, Baguettetasche, Brotaufbewahrung...</p>
                 </div>
               </div>
               <div className="mt-6 pt-4 border-t border-gray-800/50">
-                <p className="text-xs text-green-400 flex items-center gap-1.5">
+                <p className="text-xs lg:text-sm text-green-400 flex items-center gap-1.5">
                   <Check size={12} /> Bullet points generated from description. Ready for Seller Central import.
                 </p>
               </div>
@@ -431,7 +431,7 @@ export default function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-8 md:gap-12 items-start max-w-4xl mx-auto">
             {/* Upload From */}
             <div>
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-6">Upload From</h3>
+              <h3 className="text-xs lg:text-sm font-bold text-gray-500 uppercase tracking-wider mb-6">Upload From</h3>
               <div className="space-y-3">
                 {[
                   { icon: ShoppingBag, name: "Amazon", formats: ".csv / .tsv" },
@@ -440,8 +440,8 @@ export default function Landing() {
                 ].map((p) => (
                   <div key={p.name} className="flex items-center gap-3 bg-black border border-gray-800 rounded-xl px-5 py-4">
                     <p.icon size={18} className="text-gray-500" />
-                    <span className="font-bold text-white text-sm">{p.name}</span>
-                    <span className="text-xs text-gray-600 ml-auto font-mono">{p.formats}</span>
+                    <span className="font-bold text-white text-sm lg:text-base">{p.name}</span>
+                    <span className="text-xs lg:text-sm text-gray-600 ml-auto font-mono">{p.formats}</span>
                   </div>
                 ))}
               </div>
@@ -457,7 +457,7 @@ export default function Landing() {
 
             {/* Localize To */}
             <div>
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-6">Localize To</h3>
+              <h3 className="text-xs lg:text-sm font-bold text-gray-500 uppercase tracking-wider mb-6">Localize To</h3>
               <div className="space-y-3">
                 {[
                   { flag: "🇩🇪", name: "Amazon Germany" },
@@ -469,15 +469,15 @@ export default function Landing() {
                   { flag: "🎨", name: "Etsy (any language)" },
                 ].map((m) => (
                   <div key={m.name} className="flex items-center gap-3 bg-black border border-gray-800 rounded-xl px-5 py-3">
-                    <span className="text-lg">{m.flag}</span>
-                    <span className="text-sm text-gray-300">{m.name}</span>
+                    <span className="text-lg lg:text-xl">{m.flag}</span>
+                    <span className="text-sm lg:text-base text-gray-300">{m.name}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <p className="text-center text-sm text-gray-600 mt-10">
+          <p className="text-center text-sm lg:text-base text-gray-600 mt-10">
             More marketplaces coming soon — <a href="mailto:teamz@buzztate.com?subject=Marketplace%20Request&body=I%27d%20like%20to%20request%20support%20for%3A%20" className="text-yellow-400/70 hover:text-yellow-400 underline underline-offset-2 transition-colors">request yours</a>.
           </p>
         </div>
@@ -491,34 +491,34 @@ export default function Landing() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-3xl mx-auto">
             {/* Free */}
-            <div className="p-8 rounded-2xl border border-gray-800 bg-black flex flex-col">
-              <h3 className="text-lg font-bold text-gray-400">Free</h3>
-              <div className="text-4xl font-bold mt-4 mb-2">$0</div>
-              <p className="text-gray-500 text-sm mb-6">Try it out — no card needed</p>
-              <ul className="space-y-3 mb-8 flex-grow text-sm">
+            <div className="p-8 lg:p-10 rounded-2xl border border-gray-800 bg-black flex flex-col">
+              <h3 className="text-lg lg:text-xl font-bold text-gray-400">Free</h3>
+              <div className="text-4xl lg:text-5xl font-bold mt-4 mb-2">$0</div>
+              <p className="text-gray-500 text-sm lg:text-base mb-6">Try it out — no card needed</p>
+              <ul className="space-y-3 mb-8 flex-grow text-sm lg:text-base">
                 <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> 5 listings/month</li>
                 <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> 1 marketplace</li>
                 <li className="flex items-center gap-2 text-gray-400"><Check size={16} className="text-gray-500" /> All export formats</li>
               </ul>
-              <Link href="/auth?mode=signup" className="w-full block text-center py-3 rounded-xl border border-gray-700 hover:bg-gray-800 font-bold transition-all text-sm">
+              <Link href="/auth?mode=signup" className="w-full block text-center py-3 lg:py-4 rounded-xl border border-gray-700 hover:bg-gray-800 font-bold transition-all text-sm lg:text-base">
                 Start Free
               </Link>
             </div>
 
             {/* Plus */}
-            <div className="p-8 rounded-2xl border border-yellow-400 bg-gray-900/30 flex flex-col relative shadow-2xl shadow-yellow-400/5">
-              <div className="absolute top-0 right-0 bg-yellow-400 text-black text-[10px] font-extrabold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wider">MOST POPULAR</div>
-              <h3 className="text-lg font-bold text-white">Plus</h3>
-              <div className="text-4xl font-bold mt-4 mb-2 text-yellow-400">$49<span className="text-lg text-gray-400 font-normal">/mo</span></div>
-              <p className="text-gray-300 text-sm mb-6">For serious sellers</p>
-              <ul className="space-y-3 mb-8 flex-grow text-sm">
+            <div className="p-8 lg:p-10 rounded-2xl border border-yellow-400 bg-gray-900/30 flex flex-col relative shadow-2xl shadow-yellow-400/5">
+              <div className="absolute top-0 right-0 bg-yellow-400 text-black text-[10px] lg:text-xs font-extrabold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wider">MOST POPULAR</div>
+              <h3 className="text-lg lg:text-xl font-bold text-white">Plus</h3>
+              <div className="text-4xl lg:text-5xl font-bold mt-4 mb-2 text-yellow-400">$49<span className="text-lg lg:text-xl text-gray-400 font-normal">/mo</span></div>
+              <p className="text-gray-300 text-sm lg:text-base mb-6">For serious sellers</p>
+              <ul className="space-y-3 mb-8 flex-grow text-sm lg:text-base">
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Unlimited listings</li>
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Up to 200 per batch</li>
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All supported marketplaces</li>
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All export formats</li>
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Priority processing</li>
               </ul>
-              <Link href="/auth?mode=signup&intent=plus" className="w-full block text-center py-3 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold transition-all text-sm shadow-lg">
+              <Link href="/auth?mode=signup&intent=plus" className="w-full block text-center py-3 lg:py-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold transition-all text-sm lg:text-base shadow-lg">
                 Upgrade to Plus
               </Link>
             </div>
@@ -539,14 +539,14 @@ export default function Landing() {
                     onClick={() => toggleFaq(index)}
                     className="w-full flex justify-between items-center p-6 text-left cursor-pointer focus:outline-none"
                   >
-                    <span className="font-bold text-lg pr-4">{faq.question}</span>
+                    <span className="font-bold text-lg lg:text-xl pr-4">{faq.question}</span>
                     <span className={`transition-transform duration-300 text-yellow-400 flex-shrink-0 ${isOpen ? "rotate-180" : ""}`}>
                       <ChevronDown />
                     </span>
                   </button>
                   <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
                     <div className="overflow-hidden">
-                      <div className="px-6 pb-6 text-gray-400 leading-relaxed">
+                      <div className="px-6 pb-6 text-gray-400 leading-relaxed lg:text-lg">
                         {faq.answer}
                       </div>
                     </div>
@@ -575,45 +575,45 @@ export default function Landing() {
       <footer className="w-full py-16 border-t border-gray-900 mt-auto bg-black text-left">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
           <div>
-            <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Marketplaces</span>
+            <span className="block text-sm lg:text-base font-bold text-gray-400 uppercase tracking-wider mb-6">Marketplaces</span>
             <ul className="space-y-3">
-              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Listing Translation</Link></li>
-              <li><Link href="/shopify-product-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Shopify Product Translation</Link></li>
-              <li><Link href="/etsy-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Etsy Listing Translation</Link></li>
+              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm lg:text-base transition-colors">Amazon Listing Translation</Link></li>
+              <li><Link href="/shopify-product-translation" className="text-gray-500 hover:text-yellow-400 text-sm lg:text-base transition-colors">Shopify Product Translation</Link></li>
+              <li><Link href="/etsy-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm lg:text-base transition-colors">Etsy Listing Translation</Link></li>
             </ul>
           </div>
           <div>
-            <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Amazon Markets</span>
+            <span className="block text-sm lg:text-base font-bold text-gray-400 uppercase tracking-wider mb-6">Amazon Markets</span>
             <ul className="space-y-3">
-              <li><Link href="/amazon-de-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Germany (.de)</Link></li>
-              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon France (.fr)</Link></li>
-              <li><Link href="/amazon-jp-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Japan (.co.jp)</Link></li>
-              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Spain (.es)</Link></li>
-              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Italy (.it)</Link></li>
+              <li><Link href="/amazon-de-translation" className="text-gray-500 hover:text-yellow-400 text-sm lg:text-base transition-colors">Amazon Germany (.de)</Link></li>
+              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm lg:text-base transition-colors">Amazon France (.fr)</Link></li>
+              <li><Link href="/amazon-jp-translation" className="text-gray-500 hover:text-yellow-400 text-sm lg:text-base transition-colors">Amazon Japan (.co.jp)</Link></li>
+              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm lg:text-base transition-colors">Amazon Spain (.es)</Link></li>
+              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm lg:text-base transition-colors">Amazon Italy (.it)</Link></li>
             </ul>
           </div>
           <div>
-            <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Resources</span>
+            <span className="block text-sm lg:text-base font-bold text-gray-400 uppercase tracking-wider mb-6">Resources</span>
             <ul className="space-y-3">
-              <li><button onClick={() => scrollToSection("pricing")} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Pricing</button></li>
-              <li><button onClick={() => scrollToSection("faq")} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">FAQ</button></li>
-              <li><a href="mailto:teamz@buzztate.com" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Contact Us</a></li>
+              <li><button onClick={() => scrollToSection("pricing")} className="text-gray-500 hover:text-yellow-400 text-sm lg:text-base transition-colors">Pricing</button></li>
+              <li><button onClick={() => scrollToSection("faq")} className="text-gray-500 hover:text-yellow-400 text-sm lg:text-base transition-colors">FAQ</button></li>
+              <li><a href="mailto:teamz@buzztate.com" className="text-gray-500 hover:text-yellow-400 text-sm lg:text-base transition-colors">Contact Us</a></li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-gray-900 pt-8 text-center">
-          <p className="text-sm text-gray-500 mb-2">
+          <p className="text-sm lg:text-base text-gray-500 mb-2">
             Need help? <a href="mailto:teamz@buzztate.com" className="text-yellow-400 hover:underline transition-colors">teamz@buzztate.com</a>
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-gray-500 mt-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs lg:text-sm text-gray-500 mt-4">
             <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy Policy</Link>
             <span className="text-gray-700">|</span>
             <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms of Service</Link>
             <span className="text-gray-700">|</span>
             <a href="mailto:teamz@buzztate.com" className="hover:text-gray-300 transition-colors">teamz@buzztate.com</a>
           </div>
-          <p className="text-xs text-gray-600 mt-3">&copy; 2026 Buzztate. All rights reserved.</p>
+          <p className="text-xs lg:text-sm text-gray-600 mt-3">&copy; 2026 Buzztate. All rights reserved.</p>
         </div>
       </footer>
     </div>
