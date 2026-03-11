@@ -184,8 +184,8 @@ export default function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Card 1 */}
             <div className="bg-black border border-gray-800 rounded-2xl p-8 hover:border-gray-700 transition-colors">
-              <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-5">
-                <X size={22} className="text-red-400" />
+              <div className="w-14 h-14 bg-red-500/10 rounded-xl flex items-center justify-center mb-5 mx-auto">
+                <X size={28} className="text-red-400" />
               </div>
               <h3 className="text-lg lg:text-xl font-bold mb-3">Translation tools miss the point</h3>
               <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
@@ -195,8 +195,8 @@ export default function Landing() {
 
             {/* Card 2 */}
             <div className="bg-black border border-gray-800 rounded-2xl p-8 hover:border-gray-700 transition-colors">
-              <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-5">
-                <AlertTriangle size={22} className="text-red-400" />
+              <div className="w-14 h-14 bg-red-500/10 rounded-xl flex items-center justify-center mb-5 mx-auto">
+                <AlertTriangle size={28} className="text-red-400" />
               </div>
               <h3 className="text-lg lg:text-xl font-bold mb-3">Every platform has different rules</h3>
               <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
@@ -206,8 +206,8 @@ export default function Landing() {
 
             {/* Card 3 */}
             <div className="bg-black border border-gray-800 rounded-2xl p-8 hover:border-gray-700 transition-colors">
-              <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-5">
-                <RefreshCw size={22} className="text-red-400" />
+              <div className="w-14 h-14 bg-red-500/10 rounded-xl flex items-center justify-center mb-5 mx-auto">
+                <RefreshCw size={28} className="text-red-400" />
               </div>
               <h3 className="text-lg lg:text-xl font-bold mb-3">Cross-platform expansion is manual hell</h3>
               <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
@@ -283,9 +283,9 @@ export default function Landing() {
             </p>
 
             {/* Flag insight cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-4 max-w-4xl mx-auto">
               {MARKET_INSIGHTS.map((m) => (
-                <div key={m.country} className="bg-black border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors text-left">
+                <div key={m.country} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.7rem)] bg-black border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors text-left">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-2xl">{m.flag}</span>
                     <span className="font-bold text-white text-sm lg:text-base">{m.country}</span>
