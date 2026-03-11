@@ -106,25 +106,25 @@ export default function Landing() {
 
       {/* ============ HERO ============ */}
       <div className="flex flex-col items-center justify-start text-center px-6 pt-20 pb-16">
-        <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full mb-8">
+        <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 text-xs lg:text-sm font-bold uppercase tracking-wider px-4 py-2 rounded-full mb-8">
           <ArrowRightLeft size={14} /> Cross-Platform Listing Localization
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight max-w-5xl">
+        <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-extrabold tracking-tight mb-6 leading-[1.1] max-w-5xl">
           One Upload. Every Marketplace. <br />
           <span className="text-yellow-400">Every Language.</span>
         </h1>
 
-        <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-xl lg:text-2xl text-gray-400 mb-10 max-w-2xl lg:max-w-3xl mx-auto leading-relaxed">
           Upload your Amazon, Shopify, or Etsy listings. Get localized, marketplace-ready files for 5 international markets.
           Buzztate doesn't just translate — it <strong className="text-white">converts your listings across platforms</strong> and generates missing fields automatically.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 mb-16">
-          <Link href="/auth?mode=signup" className="bg-yellow-400 hover:bg-yellow-300 text-black px-8 py-4 rounded-xl font-extrabold text-lg transition-all shadow-[0_0_20px_rgba(250,204,21,0.2)] flex items-center gap-2">
+          <Link href="/auth?mode=signup" className="bg-yellow-400 hover:bg-yellow-300 text-black px-8 lg:px-10 py-4 lg:py-5 rounded-xl font-extrabold text-lg lg:text-xl transition-all shadow-[0_0_20px_rgba(250,204,21,0.2)] flex items-center gap-2">
             Try Free — 5 Listings <ArrowRight size={18} />
           </Link>
-          <button onClick={() => scrollToSection("how-it-works")} className="px-8 py-4 rounded-xl border border-gray-700 hover:bg-gray-900 text-white font-bold transition-all">
+          <button onClick={() => scrollToSection("how-it-works")} className="px-8 lg:px-10 py-4 lg:py-5 rounded-xl border border-gray-700 hover:bg-gray-900 text-white font-bold text-lg lg:text-xl transition-all">
             See How It Works
           </button>
         </div>
@@ -174,10 +174,10 @@ export default function Landing() {
       {/* ============ SECTION 1: THE PROBLEM ============ */}
       <div className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-4">
             Expanding internationally shouldn't take weeks
           </h2>
-          <p className="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
+          <p className="text-gray-400 text-center mb-16 max-w-2xl mx-auto lg:text-lg">
             Three problems every cross-border seller faces.
           </p>
 
@@ -187,8 +187,8 @@ export default function Landing() {
               <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-5">
                 <X size={22} className="text-red-400" />
               </div>
-              <h3 className="text-lg font-bold mb-3">Translation tools miss the point</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
+              <h3 className="text-lg lg:text-xl font-bold mb-3">Translation tools miss the point</h3>
+              <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
                 Google Translate gives you words. Sellers need marketplace-optimized listings with the right keywords, character limits, and cultural tone for each market.
               </p>
             </div>
@@ -198,8 +198,8 @@ export default function Landing() {
               <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-5">
                 <AlertTriangle size={22} className="text-red-400" />
               </div>
-              <h3 className="text-lg font-bold mb-3">Every platform has different rules</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
+              <h3 className="text-lg lg:text-xl font-bold mb-3">Every platform has different rules</h3>
+              <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
                 Amazon wants 5 bullet points under 500 characters. Etsy wants 13 tags under 20 characters each. Shopify needs SEO meta descriptions at 160 characters. One listing format doesn't fit all.
               </p>
             </div>
@@ -209,8 +209,8 @@ export default function Landing() {
               <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-5">
                 <RefreshCw size={22} className="text-red-400" />
               </div>
-              <h3 className="text-lg font-bold mb-3">Cross-platform expansion is manual hell</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
+              <h3 className="text-lg lg:text-xl font-bold mb-3">Cross-platform expansion is manual hell</h3>
+              <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
                 Selling on Etsy and want to expand to Amazon? You'd have to rewrite every listing from scratch — different format, different fields, different structure. Until now.
               </p>
             </div>
@@ -221,27 +221,27 @@ export default function Landing() {
       {/* ============ SECTION 2: THREE SUPERPOWERS ============ */}
       <div className="w-full py-24">
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-4">
             Three things Buzztate does that no translation tool can
           </h2>
-          <p className="text-gray-400 text-center mb-20 max-w-2xl mx-auto">
+          <p className="text-gray-400 text-center mb-20 max-w-2xl mx-auto lg:text-lg">
             It's not a translator. It's a cross-platform listing converter with built-in localization.
           </p>
 
           {/* Superpower 1: Cross-Platform Conversion */}
-          <div className="mb-24">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-yellow-400/10 rounded-xl flex items-center justify-center">
+          <div className="mb-24 text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-yellow-400/10 rounded-xl flex items-center justify-center">
                 <ArrowRightLeft size={20} className="text-yellow-400" />
               </div>
-              <h3 className="text-2xl font-extrabold">Cross-Platform Conversion</h3>
+              <h3 className="text-2xl lg:text-3xl font-extrabold">Cross-Platform Conversion</h3>
             </div>
-            <p className="text-gray-400 mb-8 max-w-3xl leading-relaxed">
+            <p className="text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed lg:text-lg">
               Upload Etsy listings, download Amazon-ready files. Upload Shopify products, get Etsy-formatted listings. Buzztate automatically maps fields between platforms and generates any missing ones — like creating 5 Amazon bullet points from your Etsy description.
             </p>
 
             {/* Field mapping diagram */}
-            <div className="bg-gray-900/30 border border-gray-800 rounded-2xl overflow-hidden max-w-3xl">
+            <div className="bg-gray-900/30 border border-gray-800 rounded-2xl overflow-hidden max-w-3xl mx-auto text-left">
               <div className="grid grid-cols-[1fr_auto_1fr] text-xs font-bold uppercase tracking-wider text-gray-500 border-b border-gray-800">
                 <div className="px-6 py-3">Etsy Listing</div>
                 <div className="px-4 py-3"></div>
@@ -271,40 +271,40 @@ export default function Landing() {
           </div>
 
           {/* Superpower 2: Marketplace-Aware Localization */}
-          <div className="mb-24">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-yellow-400/10 rounded-xl flex items-center justify-center">
+          <div className="mb-24 text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-yellow-400/10 rounded-xl flex items-center justify-center">
                 <Globe size={20} className="text-yellow-400" />
               </div>
-              <h3 className="text-2xl font-extrabold">Marketplace-Aware Localization</h3>
+              <h3 className="text-2xl lg:text-3xl font-extrabold">Marketplace-Aware Localization</h3>
             </div>
-            <p className="text-gray-400 mb-8 max-w-3xl leading-relaxed">
+            <p className="text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed lg:text-lg">
               Not word-for-word translation. Buzztate knows that German Amazon shoppers search with compound words, that Japanese listings need 3x more detail, and that French descriptions should feel elegant. Each marketplace gets content optimized for how local shoppers actually search and buy.
             </p>
 
             {/* Flag insight cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
               {MARKET_INSIGHTS.map((m) => (
-                <div key={m.country} className="bg-black border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors">
+                <div key={m.country} className="bg-black border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors text-left">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-2xl">{m.flag}</span>
-                    <span className="font-bold text-white text-sm">{m.country}</span>
+                    <span className="font-bold text-white text-sm lg:text-base">{m.country}</span>
                   </div>
-                  <p className="text-xs text-gray-400 leading-relaxed">{m.insight}</p>
+                  <p className="text-xs lg:text-sm text-gray-400 leading-relaxed">{m.insight}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Superpower 3: Quality Checks */}
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-yellow-400/10 rounded-xl flex items-center justify-center">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-yellow-400/10 rounded-xl flex items-center justify-center">
                 <Shield size={20} className="text-yellow-400" />
               </div>
-              <h3 className="text-2xl font-extrabold">Quality Checks Built In</h3>
+              <h3 className="text-2xl lg:text-3xl font-extrabold">Quality Checks Built In</h3>
             </div>
-            <p className="text-gray-400 max-w-3xl leading-relaxed">
+            <p className="text-gray-400 max-w-3xl mx-auto leading-relaxed lg:text-lg">
               Every localized listing is checked against platform-specific rules. Character limits, required fields, keyword density — Buzztate flags issues before you upload to Seller Central. No more rejected listings or truncated titles.
             </p>
           </div>
@@ -314,8 +314,8 @@ export default function Landing() {
       {/* ============ SECTION 3: HOW IT WORKS ============ */}
       <div id="how-it-works" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">How It Works</h2>
-          <p className="text-gray-400 text-center mb-16 max-w-xl mx-auto">Three steps. CSV in, marketplace-ready files out.</p>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-4">How It Works</h2>
+          <p className="text-gray-400 text-center mb-16 max-w-xl mx-auto lg:text-lg">Three steps. CSV in, marketplace-ready files out.</p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center p-8 rounded-2xl bg-black border border-gray-800">
@@ -323,8 +323,8 @@ export default function Landing() {
                 <Upload size={28} className="text-yellow-400" />
               </div>
               <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 1</div>
-              <h3 className="text-xl font-bold mb-3">Upload your listings</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
+              <h3 className="text-xl lg:text-2xl font-bold mb-3">Upload your listings</h3>
+              <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
                 Export from Amazon Seller Central, Shopify Admin, or Etsy — CSV, XLSX, or TSV. Buzztate auto-detects your columns.
               </p>
             </div>
@@ -334,8 +334,8 @@ export default function Landing() {
                 <Globe size={28} className="text-yellow-400" />
               </div>
               <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 2</div>
-              <h3 className="text-xl font-bold mb-3">Pick your target marketplaces</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
+              <h3 className="text-xl lg:text-2xl font-bold mb-3">Pick your target marketplaces</h3>
+              <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
                 Select any combination: Amazon Germany, France, Spain, Italy, Japan. Plus Shopify and Etsy in any supported language. Localize into multiple markets in a single run.
               </p>
             </div>
@@ -345,8 +345,8 @@ export default function Landing() {
                 <Download size={28} className="text-yellow-400" />
               </div>
               <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 3</div>
-              <h3 className="text-xl font-bold mb-3">Download marketplace-ready files</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
+              <h3 className="text-xl lg:text-2xl font-bold mb-3">Download marketplace-ready files</h3>
+              <p className="text-gray-400 text-sm lg:text-base leading-relaxed">
                 Get a ZIP with one file per marketplace, formatted for direct import. Amazon TSV, Shopify CSV, Etsy CSV — each in the exact format the platform expects. Upload and sell.
               </p>
             </div>
@@ -357,8 +357,8 @@ export default function Landing() {
       {/* ============ SECTION 4: BEFORE / AFTER ============ */}
       <div className="w-full py-24">
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">See the difference</h2>
-          <p className="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-4">See the difference</h2>
+          <p className="text-gray-400 text-center mb-16 max-w-2xl mx-auto lg:text-lg">
             An Etsy bread bag listing converted and localized for Amazon Germany — with bullet points generated automatically.
           </p>
 
@@ -426,7 +426,7 @@ export default function Landing() {
       {/* ============ SECTION 5: SUPPORTED PLATFORMS ============ */}
       <div id="platforms" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-16">Supported Platforms</h2>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-16">Supported Platforms</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-8 md:gap-12 items-start max-w-4xl mx-auto">
             {/* Upload From */}
@@ -486,8 +486,8 @@ export default function Landing() {
       {/* ============ SECTION 6: PRICING ============ */}
       <div id="pricing" className="w-full py-24">
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">Simple, Transparent Pricing</h2>
-          <p className="text-gray-400 text-center mb-16">Start free. Upgrade when you're ready to scale.</p>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-4">Simple, Transparent Pricing</h2>
+          <p className="text-gray-400 text-center mb-16 lg:text-lg">Start free. Upgrade when you're ready to scale.</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-3xl mx-auto">
             {/* Free */}
@@ -529,7 +529,7 @@ export default function Landing() {
       {/* ============ SECTION 7: FAQ ============ */}
       <div id="faq" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
         <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-bold mb-10 text-center">Frequently Asked Questions</h2>
+          <h2 className="text-3xl lg:text-4xl font-bold mb-10 text-center">Frequently Asked Questions</h2>
           <div className="space-y-4">
             {FAQS.map((faq, index) => {
               const isOpen = openFaqIndex === index;
@@ -561,11 +561,11 @@ export default function Landing() {
       {/* ============ SECTION 8: FINAL CTA ============ */}
       <div className="w-full py-24">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
             Your listings. Every market. <span className="text-yellow-400">Ready in minutes.</span>
           </h2>
-          <p className="text-gray-400 text-lg mb-10">No credit card required.</p>
-          <Link href="/auth?mode=signup" className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black px-10 py-5 rounded-xl font-extrabold text-lg transition-all shadow-[0_0_30px_rgba(250,204,21,0.2)]">
+          <p className="text-gray-400 text-lg lg:text-xl mb-10">No credit card required.</p>
+          <Link href="/auth?mode=signup" className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black px-10 lg:px-12 py-5 lg:py-6 rounded-xl font-extrabold text-lg lg:text-xl transition-all shadow-[0_0_30px_rgba(250,204,21,0.2)]">
             Try Free — 5 Listings <ArrowRight size={20} />
           </Link>
         </div>
