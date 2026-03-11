@@ -44,8 +44,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(404).json({ error: `No user found with email: ${email}` });
   }
 
-  // Update their profile to Plus
-  const { error: updateError } = await supabase
+  // Update their profile to Plus — try with plan_tier first,
+  // fall back to is_pro only if column doesn't exist yet
+  let updateError;
+  const { error: err1 } = await supabase
     .from("profiles")
     .upsert({
       id: user.id,
@@ -53,6 +55,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       plan_tier: "plus",
       listings_used_this_month: 0,
     }, { onConflict: "id" });
+
+  if (err1) {
+    // plan_tier column may not exist — fall back to is_pro only
+    const { error: err2 } = await supabase
+      .from("profiles")
+      .update({ is_pro: true })
+      .eq("id", user.id);
+    updateError = err2;
+  } else {
+    updateError = null;
+  }
 
   if (updateError) {
     console.error("Failed to update profile:", updateError);
