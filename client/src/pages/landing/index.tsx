@@ -105,7 +105,7 @@ export default function Landing() {
       </nav>
 
       {/* ============ HERO ============ */}
-      <div className="flex-grow flex flex-col items-center justify-start text-center px-6 pt-20 pb-16">
+      <div className="flex flex-col items-center justify-start text-center px-6 pt-20 pb-16">
         <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full mb-8">
           <ArrowRightLeft size={14} /> Cross-Platform Listing Localization
         </div>
