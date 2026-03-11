@@ -52,7 +52,7 @@ export default function TermsOfService() {
           <p>You may cancel your Plus subscription at any time through the Stripe Customer Portal (accessible via "Manage Subscription" in the app). Upon cancellation, you retain Plus access until the end of your current billing period. After that, your account reverts to the Free plan.</p>
 
           <h3>Refunds</h3>
-          <p>We do not offer refunds for partial billing periods. If you experience a technical issue that prevents you from using the Service, contact <a href="mailto:support@buzztate.com">support@buzztate.com</a> and we will assess on a case-by-case basis.</p>
+          <p>We do not offer refunds for partial billing periods. If you experience a technical issue that prevents you from using the Service, contact <a href="mailto:teamz@buzztate.com">teamz@buzztate.com</a> and we will assess on a case-by-case basis.</p>
 
           <h3>Price changes</h3>
           <p>We may change our pricing with 30 days' notice. Price changes do not apply to the current billing period. Continued use after a price change constitutes acceptance of the new pricing.</p>
@@ -117,7 +117,7 @@ export default function TermsOfService() {
           <h2>12. Termination</h2>
 
           <h3>By you</h3>
-          <p>You may stop using the Service and delete your account at any time by contacting <a href="mailto:support@buzztate.com">support@buzztate.com</a>.</p>
+          <p>You may stop using the Service and delete your account at any time by contacting <a href="mailto:teamz@buzztate.com">teamz@buzztate.com</a>.</p>
 
           <h3>By us</h3>
           <p>We may suspend or terminate your access to the Service at any time if you violate these Terms, if required by law, or if we discontinue the Service. We will provide reasonable notice where possible.</p>
@@ -139,7 +139,7 @@ export default function TermsOfService() {
 
           <h2>17. Contact</h2>
           <p>For questions about these Terms:</p>
-          <p>Email: <a href="mailto:support@buzztate.com">support@buzztate.com</a></p>
+          <p>Email: <a href="mailto:teamz@buzztate.com">teamz@buzztate.com</a></p>
         </article>
       </div>
 
