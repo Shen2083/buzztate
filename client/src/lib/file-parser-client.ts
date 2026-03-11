@@ -10,82 +10,236 @@ export interface ParsedFileResult {
   suggestedMappings: ColumnMapping[];
 }
 
-// ---- Smart defaults for auto-detecting columns ----
+// ---- Platform-specific exact column name → target field maps ----
+// These are checked first (highest priority). Each maps a source column name
+// to exactly one target field. Once a target field is assigned, it is never
+// assigned again (no duplicates).
 
-const TITLE_PATTERNS = [
-  "title", "product_title", "name", "product_name", "item_name", "listing_title",
-];
-const DESCRIPTION_PATTERNS = [
-  "description", "product_description", "body_html", "body", "listing_description",
-  "product_description_html",
-];
-const BULLET_PATTERNS = [
-  "bullet_point", "bullet_point1", "bullet_point2", "bullet_point3",
-  "bullet_point4", "bullet_point5",
-  "bulletpoint", "bulletpoint1", "bulletpoint2", "bulletpoint3",
-  "bulletpoint4", "bulletpoint5",
-  "bullet", "bullet1", "bullet2", "bullet3", "bullet4", "bullet5",
-  "key_product_features", "key_product_feature",
-  "feature_bullet", "product_bullet",
-];
-const KEYWORD_PATTERNS = [
-  "search_terms", "keywords", "tags", "generic_keyword", "generic_keywords",
-  "search_keywords",
-];
-const PRICE_PATTERNS = ["price", "standard_price", "list_price", "sale_price"];
-const CATEGORY_PATTERNS = [
-  "category", "product_type", "item_type", "recommended_browse_nodes",
+/** Shopify CSV exact column name → target field */
+const SHOPIFY_EXACT_MAP: Record<string, string> = {
+  "Title": "title",
+  "Body (HTML)": "description",
+  "Tags": "keywords",
+  "SEO Title": "seoMetaTitle",
+  "SEO Description": "seoMetaDescription",
+  "Image Alt Text": "imageAltText",
+  "Variant Price": "price",
+  // Ignore columns (pass through unchanged)
+  "Handle": "ignore",
+  "Variant Compare At Price": "ignore",
+  "Option1 Name": "ignore",
+  "Option1 Value": "ignore",
+  "Option2 Name": "ignore",
+  "Option2 Value": "ignore",
+  "Option3 Name": "ignore",
+  "Option3 Value": "ignore",
+  "Variant SKU": "ignore",
+  "Vendor": "ignore",
+  "Product Category": "ignore",
+  "Type": "ignore",
+  "Published": "ignore",
+  "Image Src": "ignore",
+  "Image Position": "ignore",
+  "Status": "ignore",
+  "Variant Inventory Qty": "ignore",
+  "Variant Grams": "ignore",
+  "Variant Inventory Policy": "ignore",
+  "Variant Fulfillment Service": "ignore",
+  "Variant Requires Shipping": "ignore",
+  "Variant Taxable": "ignore",
+  "Variant Barcode": "ignore",
+  "Gift Card": "ignore",
+  "Variant Image": "ignore",
+  "Variant Weight Unit": "ignore",
+  "Variant Tax Code": "ignore",
+  "Cost per item": "ignore",
+};
+
+/** Etsy CSV exact column name → target field */
+const ETSY_EXACT_MAP: Record<string, string> = {
+  "Title": "title",
+  "Description": "description",
+  "Tags": "keywords",
+  "Price": "price",
+  // Ignore columns
+  "Listing ID": "ignore",
+  "Currency Code": "ignore",
+  "Quantity": "ignore",
+  "Materials": "ignore",
+  "Image URL 1": "ignore",
+  "Image URL 2": "ignore",
+  "Image URL 3": "ignore",
+  "Image URL 4": "ignore",
+  "Image URL 5": "ignore",
+  "Section": "ignore",
+  "Category": "ignore",
+  "SKU": "ignore",
+  "State": "ignore",
+  "Shop Section": "ignore",
+  "Renewal": "ignore",
+  "Who Made": "ignore",
+  "When Made": "ignore",
+  "Recipient": "ignore",
+  "Occasion": "ignore",
+  "Style": "ignore",
+  "Shipping Template": "ignore",
+  "Processing Min": "ignore",
+  "Processing Max": "ignore",
+};
+
+/** Amazon flat file exact column name → target field */
+const AMAZON_EXACT_MAP: Record<string, string> = {
+  "item_name": "title",
+  "Product Title": "title",
+  "product_description": "description",
+  "bullet_point1": "bulletPoints.0",
+  "bullet_point2": "bulletPoints.1",
+  "bullet_point3": "bulletPoints.2",
+  "bullet_point4": "bulletPoints.3",
+  "bullet_point5": "bulletPoints.4",
+  "generic_keyword": "keywords",
+  "generic_keywords1": "keywords",
+  "standard_price": "price",
+  // Ignore columns
+  "sku": "ignore",
+  "asin": "ignore",
+  "brand": "ignore",
+  "brand_name": "ignore",
+  "manufacturer": "ignore",
+  "upc": "ignore",
+  "ean": "ignore",
+  "parent_sku": "ignore",
+  "parent_child": "ignore",
+  "variation_theme": "ignore",
+  "item_type": "ignore",
+  "recommended_browse_nodes": "ignore",
+};
+
+// ---- Fallback fuzzy patterns (only used when no exact match is found) ----
+
+const FUZZY_RULES: { patterns: string[]; target: string }[] = [
+  { patterns: ["title", "product_title", "product_name", "item_name", "listing_title"], target: "title" },
+  { patterns: ["description", "product_description", "body_html", "body", "listing_description"], target: "description" },
+  { patterns: ["bullet_point", "bulletpoint", "feature_bullet", "product_bullet", "key_product_feature"], target: "bulletPoints" },
+  { patterns: ["search_terms", "keywords", "tags", "generic_keyword", "generic_keywords", "search_keywords"], target: "keywords" },
+  { patterns: ["seo_title", "meta_title"], target: "seoMetaTitle" },
+  { patterns: ["seo_description", "meta_description"], target: "seoMetaDescription" },
+  { patterns: ["image_alt_text", "image_alt", "alt_text"], target: "imageAltText" },
+  { patterns: ["standard_price", "variant_price", "list_price", "sale_price"], target: "price" },
+  { patterns: ["product_type", "item_type", "recommended_browse_nodes"], target: "category" },
 ];
 
 function normalizeHeader(header: string): string {
-  return header.toLowerCase().replace(/[\s\-]+/g, "_").trim();
+  return header.toLowerCase().replace(/[\s\-()]+/g, "_").trim();
 }
 
-function matchesPatterns(normalized: string, patterns: string[]): boolean {
-  return patterns.some(
-    (p) =>
-      normalized === p ||
-      normalized.startsWith(p + "_") ||
-      normalized.endsWith("_" + p) ||
-      // Match "bullet_1" against "bullet" pattern (base + _N suffix)
-      (!/\d/.test(p) && new RegExp(`^${p}_?\\d+$`).test(normalized))
-  );
+/**
+ * Detect which platform the CSV likely came from based on header names.
+ */
+function detectPlatform(headers: string[]): "shopify" | "etsy" | "amazon" | "unknown" {
+  const headerSet = new Set(headers);
+  if (headerSet.has("Body (HTML)") || headerSet.has("Variant SKU") || headerSet.has("Handle")) {
+    return "shopify";
+  }
+  if (headerSet.has("Listing ID") || headerSet.has("Currency Code") || headerSet.has("Who Made")) {
+    return "etsy";
+  }
+  if (headerSet.has("item_name") || headerSet.has("bullet_point1") || headerSet.has("generic_keyword") || headerSet.has("asin")) {
+    return "amazon";
+  }
+  return "unknown";
 }
 
 /**
  * Auto-detect column mappings from header names.
- * Returns suggested mappings with smart defaults.
+ * Uses exact-match priority to avoid duplicate mappings.
+ *
+ * Strategy:
+ * 1. Detect platform (Shopify, Etsy, Amazon) from header fingerprints
+ * 2. First pass: exact column name matches from platform-specific map
+ * 3. Second pass: fuzzy/substring matching for remaining unmapped columns
+ * 4. Never map two source columns to the same target field (except "ignore" and "doNotTranslate")
  */
 export function autoDetectColumns(headers: string[]): ColumnMapping[] {
+  const platform = detectPlatform(headers);
+
+  // Pick the right exact-match map for the detected platform
+  const exactMap: Record<string, string> =
+    platform === "shopify" ? SHOPIFY_EXACT_MAP :
+    platform === "etsy" ? ETSY_EXACT_MAP :
+    platform === "amazon" ? AMAZON_EXACT_MAP :
+    {};
+
+  // Track which target fields have already been assigned (to prevent duplicates).
+  // "ignore" and "doNotTranslate" can be reused, so they're never added here.
+  const usedTargets = new Set<string>();
+  const mappings: ColumnMapping[] = new Array(headers.length);
+  const unmappedIndices: number[] = [];
+
   let bulletIndex = 0;
 
-  return headers.map((header) => {
+  // Pass 1: exact matches from platform-specific map
+  for (let i = 0; i < headers.length; i++) {
+    const header = headers[i];
+    const target = exactMap[header];
+
+    if (target !== undefined) {
+      if (target === "ignore" || target === "doNotTranslate") {
+        mappings[i] = { sourceColumn: header, targetField: target };
+      } else if (!usedTargets.has(target)) {
+        mappings[i] = { sourceColumn: header, targetField: target };
+        usedTargets.add(target);
+        if (target.startsWith("bulletPoints.")) bulletIndex++;
+      } else {
+        // Target already taken — leave for pass 2 or default to ignore
+        unmappedIndices.push(i);
+      }
+    } else {
+      unmappedIndices.push(i);
+    }
+  }
+
+  // Pass 2: fuzzy matching for remaining unmapped columns
+  for (const i of unmappedIndices) {
+    const header = headers[i];
     const norm = normalizeHeader(header);
+    let matched = false;
 
-    if (matchesPatterns(norm, TITLE_PATTERNS)) {
-      return { sourceColumn: header, targetField: "title" };
-    }
-    if (matchesPatterns(norm, DESCRIPTION_PATTERNS)) {
-      return { sourceColumn: header, targetField: "description" };
-    }
-    if (matchesPatterns(norm, BULLET_PATTERNS)) {
-      const idx = Math.min(bulletIndex, 4);
-      bulletIndex++;
-      return { sourceColumn: header, targetField: `bulletPoints.${idx}` };
-    }
-    if (matchesPatterns(norm, KEYWORD_PATTERNS)) {
-      return { sourceColumn: header, targetField: "keywords" };
-    }
-    if (matchesPatterns(norm, PRICE_PATTERNS)) {
-      return { sourceColumn: header, targetField: "price" };
-    }
-    if (matchesPatterns(norm, CATEGORY_PATTERNS)) {
-      return { sourceColumn: header, targetField: "category" };
+    for (const rule of FUZZY_RULES) {
+      // Only match if normalized header exactly equals a pattern
+      // or starts/ends with the pattern (to catch numbered variants like bullet_point3)
+      const isMatch = rule.patterns.some(
+        (p) =>
+          norm === p ||
+          norm === p + "s" ||
+          (!/\d/.test(p) && new RegExp(`^${p}_?\\d+$`).test(norm))
+      );
+
+      if (!isMatch) continue;
+
+      if (rule.target === "bulletPoints") {
+        const idx = Math.min(bulletIndex, 4);
+        const bulletTarget = `bulletPoints.${idx}`;
+        if (!usedTargets.has(bulletTarget)) {
+          mappings[i] = { sourceColumn: header, targetField: bulletTarget };
+          usedTargets.add(bulletTarget);
+          bulletIndex++;
+          matched = true;
+        }
+      } else if (!usedTargets.has(rule.target)) {
+        mappings[i] = { sourceColumn: header, targetField: rule.target };
+        usedTargets.add(rule.target);
+        matched = true;
+      }
+      break; // First matching rule wins
     }
 
-    // Default: ignore unmapped columns (user can remap in UI)
-    return { sourceColumn: header, targetField: "ignore" };
-  });
+    if (!matched) {
+      mappings[i] = { sourceColumn: header, targetField: "ignore" };
+    }
+  }
+
+  return mappings;
 }
 
 /**
@@ -197,6 +351,12 @@ export function applyColumnMappings(
         listing.title = value;
       } else if (target === "description") {
         listing.description = value;
+      } else if (target === "seoMetaTitle") {
+        listing.seoMetaTitle = value;
+      } else if (target === "seoMetaDescription") {
+        listing.seoMetaDescription = value;
+      } else if (target === "imageAltText") {
+        listing.imageAltText = value;
       } else if (target === "keywords") {
         listing.keywords = value;
       } else if (target === "price") {
