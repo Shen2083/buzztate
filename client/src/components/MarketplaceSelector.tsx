@@ -1,15 +1,13 @@
 import { useState } from "react";
-import { Check, Globe, ShoppingBag, Store, Lock, Zap } from "lucide-react";
+import { Check, Globe, ShoppingBag, Store, Lock, Zap, Square, CheckSquare, MinusSquare } from "lucide-react";
 import { MARKETPLACE_PROFILES, type MarketplaceId } from "../../../lib/marketplace-profiles";
 
 /** The first marketplace is free; the rest require Plus */
 const FREE_MARKETPLACE: MarketplaceId = "amazon_de";
 
 interface MarketplaceSelectorProps {
-  selectedMarketplace: MarketplaceId | null;
-  onSelect: (id: MarketplaceId) => void;
-  selectedLanguage: string;
-  onLanguageChange: (lang: string) => void;
+  selectedMarketplaces: MarketplaceId[];
+  onSelect: (ids: MarketplaceId[]) => void;
   isPro?: boolean;
 }
 
@@ -32,63 +30,67 @@ const MARKETPLACE_GROUPS = [
   },
 ];
 
-/** Languages available per marketplace locale */
-const MARKETPLACE_LANGUAGES: Record<string, string[]> = {
-  amazon_de: ["German"],
-  amazon_fr: ["French"],
-  amazon_es: ["Spanish"],
-  amazon_it: ["Italian"],
-  amazon_jp: ["Japanese"],
-  shopify_international: [
-    "German", "French", "Spanish", "Italian", "Japanese", "Portuguese",
-    "Chinese (Simplified)", "Korean", "Dutch", "Swedish", "Danish",
-    "Norwegian", "Finnish", "Polish", "Czech", "Hungarian", "Romanian",
-    "Turkish", "Arabic", "Hindi", "Thai", "Vietnamese", "Indonesian",
-  ],
-  etsy_international: [
-    "German", "French", "Spanish", "Italian", "Japanese", "Portuguese",
-    "Dutch", "Polish", "Swedish", "Danish", "Norwegian", "Finnish",
-  ],
-};
+/** All Amazon marketplace IDs */
+const ALL_AMAZON_MARKETPLACES: MarketplaceId[] = ["amazon_de", "amazon_fr", "amazon_es", "amazon_it", "amazon_jp"];
 
 export default function MarketplaceSelector({
-  selectedMarketplace,
+  selectedMarketplaces,
   onSelect,
-  selectedLanguage,
-  onLanguageChange,
   isPro = false,
 }: MarketplaceSelectorProps) {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [showLockedHint, setShowLockedHint] = useState(false);
 
-  const availableLanguages = selectedMarketplace
-    ? MARKETPLACE_LANGUAGES[selectedMarketplace] || []
-    : [];
-
   const isMarketplaceLocked = (id: MarketplaceId) => !isPro && id !== FREE_MARKETPLACE;
 
-  const handleMarketplaceSelect = (id: MarketplaceId) => {
+  const toggleMarketplace = (id: MarketplaceId) => {
     if (isMarketplaceLocked(id)) {
       setShowLockedHint(true);
       setTimeout(() => setShowLockedHint(false), 3000);
       return;
     }
-    onSelect(id);
-    // Auto-select the first (or only) language for this marketplace
-    const langs = MARKETPLACE_LANGUAGES[id] || [];
-    if (langs.length === 1) {
-      onLanguageChange(langs[0]);
-    } else if (!langs.includes(selectedLanguage)) {
-      onLanguageChange(langs[0] || "");
+
+    if (!isPro) {
+      // Free users: single-select only
+      if (selectedMarketplaces.includes(id)) {
+        onSelect([]);
+      } else {
+        onSelect([id]);
+      }
+      return;
+    }
+
+    // Plus users: multi-select
+    if (selectedMarketplaces.includes(id)) {
+      onSelect(selectedMarketplaces.filter((m) => m !== id));
+    } else {
+      onSelect([...selectedMarketplaces, id]);
     }
   };
+
+  const handleSelectAll = () => {
+    if (!isPro) return;
+    const allUnlocked = ALL_AMAZON_MARKETPLACES; // all are unlocked for Plus
+    const allSelected = allUnlocked.every((id) => selectedMarketplaces.includes(id));
+    if (allSelected) {
+      // Deselect all Amazon marketplaces
+      onSelect(selectedMarketplaces.filter((id) => !allUnlocked.includes(id)));
+    } else {
+      // Select all Amazon marketplaces (keep any non-Amazon selections)
+      const nonAmazon = selectedMarketplaces.filter((id) => !allUnlocked.includes(id));
+      onSelect([...nonAmazon, ...allUnlocked]);
+    }
+  };
+
+  const allAmazonSelected = ALL_AMAZON_MARKETPLACES.every((id) => selectedMarketplaces.includes(id));
+  const someAmazonSelected = ALL_AMAZON_MARKETPLACES.some((id) => selectedMarketplaces.includes(id)) && !allAmazonSelected;
 
   return (
     <div className="space-y-4">
       {/* Marketplace groups */}
       <div>
         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">
-          Target Marketplace
+          Target Marketplace{isPro ? "s" : ""}
         </label>
 
         {showLockedHint && (
@@ -98,11 +100,20 @@ export default function MarketplaceSelector({
           </div>
         )}
 
+        {/* Selection count */}
+        {selectedMarketplaces.length > 0 && (
+          <div className="mb-3 text-xs text-gray-400">
+            <span className="text-yellow-400 font-bold">{selectedMarketplaces.length}</span>{" "}
+            marketplace{selectedMarketplaces.length !== 1 ? "s" : ""} selected
+          </div>
+        )}
+
         <div className="space-y-2">
           {MARKETPLACE_GROUPS.map((group) => {
             const Icon = group.icon;
             const isExpanded = expandedGroup === group.label || group.marketplaces.length === 1;
-            const hasSelection = group.marketplaces.includes(selectedMarketplace as MarketplaceId);
+            const selectedInGroup = group.marketplaces.filter((id) => selectedMarketplaces.includes(id));
+            const hasSelection = selectedInGroup.length > 0;
             const groupLocked = group.marketplaces.every((id) => isMarketplaceLocked(id));
 
             return (
@@ -111,7 +122,7 @@ export default function MarketplaceSelector({
                 <button
                   onClick={() => {
                     if (group.marketplaces.length === 1) {
-                      handleMarketplaceSelect(group.marketplaces[0]);
+                      toggleMarketplace(group.marketplaces[0]);
                     } else {
                       setExpandedGroup(expandedGroup === group.label ? null : group.label);
                     }
@@ -124,7 +135,21 @@ export default function MarketplaceSelector({
                         : "hover:bg-gray-800/50"
                   }`}
                 >
-                  <Icon size={16} className={hasSelection && !groupLocked ? "text-yellow-400" : "text-gray-500"} />
+                  {/* Checkbox for single-marketplace groups */}
+                  {group.marketplaces.length === 1 && !groupLocked && (
+                    hasSelection
+                      ? <CheckSquare size={16} className="text-yellow-400" />
+                      : <Square size={16} className="text-gray-600" />
+                  )}
+                  {group.marketplaces.length > 1 && !groupLocked && hasSelection && (
+                    <span className="text-xs bg-yellow-400 text-black rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                      {selectedInGroup.length}
+                    </span>
+                  )}
+                  {group.marketplaces.length > 1 && !groupLocked && !hasSelection && (
+                    <Icon size={16} className="text-gray-500" />
+                  )}
+                  {groupLocked && <Icon size={16} className="text-gray-500" />}
                   <span className={`text-sm font-bold flex-grow ${hasSelection && !groupLocked ? "text-white" : "text-gray-400"}`}>
                     {group.label}
                   </span>
@@ -134,7 +159,6 @@ export default function MarketplaceSelector({
                       <span className="text-[10px] bg-yellow-400/10 text-yellow-400 px-1.5 py-0.5 rounded font-bold">Plus</span>
                     </span>
                   )}
-                  {hasSelection && !groupLocked && <Check size={14} className="text-yellow-400" />}
                   {group.marketplaces.length > 1 && !groupLocked && (
                     <span className="text-xs text-gray-600">
                       {group.marketplaces.length} markets
@@ -145,23 +169,43 @@ export default function MarketplaceSelector({
                 {/* Expanded marketplace list */}
                 {isExpanded && group.marketplaces.length > 1 && (
                   <div className="border-t border-gray-800 bg-black/30">
+                    {/* Select All for this group (Plus only) */}
+                    {isPro && group.label === "Amazon" && (
+                      <button
+                        onClick={handleSelectAll}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-left transition-all text-gray-400 hover:bg-gray-800/50 hover:text-white border-b border-gray-800/50"
+                      >
+                        {allAmazonSelected
+                          ? <CheckSquare size={14} className="text-yellow-400" />
+                          : someAmazonSelected
+                            ? <MinusSquare size={14} className="text-yellow-400" />
+                            : <Square size={14} className="text-gray-600" />
+                        }
+                        <span className="text-xs font-bold uppercase tracking-wider">Select All</span>
+                      </button>
+                    )}
                     {group.marketplaces.map((id) => {
                       const profile = MARKETPLACE_PROFILES[id];
-                      const isSelected = selectedMarketplace === id;
+                      const isSelected = selectedMarketplaces.includes(id);
                       const locked = isMarketplaceLocked(id);
 
                       return (
                         <button
                           key={id}
-                          onClick={() => handleMarketplaceSelect(id)}
+                          onClick={() => toggleMarketplace(id)}
                           className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all ${
                             locked
                               ? "text-gray-600 cursor-not-allowed"
                               : isSelected
-                                ? "bg-yellow-400 text-black"
+                                ? "bg-yellow-400/10 text-white"
                                 : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
                           }`}
                         >
+                          {!locked && (
+                            isSelected
+                              ? <CheckSquare size={14} className="text-yellow-400" />
+                              : <Square size={14} className="text-gray-600" />
+                          )}
                           <span className="text-sm">{profile.name}</span>
                           <span className="text-xs opacity-60 ml-auto">{profile.locale}</span>
                           {locked && (
@@ -170,7 +214,6 @@ export default function MarketplaceSelector({
                               <span className="text-[10px] bg-yellow-400/10 text-yellow-400 px-1.5 py-0.5 rounded font-bold">Plus</span>
                             </span>
                           )}
-                          {isSelected && !locked && <Check size={12} />}
                         </button>
                       );
                     })}
@@ -182,48 +225,36 @@ export default function MarketplaceSelector({
         </div>
       </div>
 
-      {/* Language selector (for multi-language marketplaces like Shopify/Etsy) */}
-      {selectedMarketplace && availableLanguages.length > 1 && (
-        <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">
-            Target Language
-          </label>
-          <div className="max-h-[200px] overflow-y-auto border border-gray-800 rounded-xl bg-black/30 p-1 space-y-0.5">
-            {availableLanguages.map((lang) => (
-              <button
-                key={lang}
-                onClick={() => onLanguageChange(lang)}
-                className={`w-full text-left text-sm py-2 px-3 rounded-md transition-all flex items-center justify-between ${
-                  selectedLanguage === lang
-                    ? "bg-yellow-400 text-black font-bold"
-                    : "text-gray-400 hover:bg-gray-800"
-                }`}
-              >
-                {lang}
-                {selectedLanguage === lang && <Check size={14} />}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Selected marketplace info */}
-      {selectedMarketplace && (
+      {/* Selected marketplace rules summary */}
+      {selectedMarketplaces.length === 1 && (
         <div className="bg-gray-900/30 border border-gray-800 rounded-xl p-3">
           <p className="text-xs text-gray-500 mb-1 font-bold uppercase">Marketplace Rules</p>
           <div className="space-y-1">
             <p className="text-xs text-gray-400">
-              Title: max {MARKETPLACE_PROFILES[selectedMarketplace].titleMaxChars} chars
+              Title: max {MARKETPLACE_PROFILES[selectedMarketplaces[0]].titleMaxChars} chars
             </p>
             <p className="text-xs text-gray-400">
-              Description: max {MARKETPLACE_PROFILES[selectedMarketplace].descriptionMaxChars} chars
+              Description: max {MARKETPLACE_PROFILES[selectedMarketplaces[0]].descriptionMaxChars} chars
             </p>
-            {MARKETPLACE_PROFILES[selectedMarketplace].bulletPointCount > 0 && (
+            {MARKETPLACE_PROFILES[selectedMarketplaces[0]].bulletPointCount > 0 && (
               <p className="text-xs text-gray-400">
-                {MARKETPLACE_PROFILES[selectedMarketplace].bulletPointCount} bullet points, max{" "}
-                {MARKETPLACE_PROFILES[selectedMarketplace].bulletPointMaxChars} chars each
+                {MARKETPLACE_PROFILES[selectedMarketplaces[0]].bulletPointCount} bullet points, max{" "}
+                {MARKETPLACE_PROFILES[selectedMarketplaces[0]].bulletPointMaxChars} chars each
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {selectedMarketplaces.length > 1 && (
+        <div className="bg-gray-900/30 border border-gray-800 rounded-xl p-3">
+          <p className="text-xs text-gray-500 mb-1 font-bold uppercase">Selected Marketplaces</p>
+          <div className="space-y-1">
+            {selectedMarketplaces.map((id) => (
+              <p key={id} className="text-xs text-gray-400">
+                {MARKETPLACE_PROFILES[id].name} — {MARKETPLACE_PROFILES[id].locale}
+              </p>
+            ))}
           </div>
         </div>
       )}

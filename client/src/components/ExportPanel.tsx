@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Download, FileSpreadsheet, AlertTriangle, Check, ChevronDown, Loader2 } from "lucide-react";
+import { Download, FileSpreadsheet, AlertTriangle, Check, ChevronDown, Loader2, Package } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { LocalizationResultItem, QualityFlag } from "@shared/schema";
 import { MARKETPLACE_PROFILES } from "../../../lib/marketplace-profiles";
+import type { MarketplaceId } from "../../../lib/marketplace-profiles";
 import {
   exportGenericCSV,
   exportAmazonFlatFile,
@@ -10,133 +11,178 @@ import {
   exportEtsyCSV,
   exportXLSX,
 } from "../../../lib/export-formatter";
+import JSZip from "jszip";
 
-interface ExportPanelProps {
-  results: LocalizationResultItem[];
-  marketplace: string;
-  targetLanguage: string;
-  /** Original raw rows from the uploaded file — needed for Amazon flat file re-export */
-  originalRows?: Record<string, string>[];
+/** Results grouped by marketplace */
+export interface MultiMarketplaceResults {
+  [marketplaceId: string]: {
+    results: LocalizationResultItem[];
+    targetLanguage: string;
+  };
 }
 
-type ExportFormat = "generic_csv" | "amazon_flat" | "shopify_csv" | "etsy_csv" | "xlsx";
+interface ExportPanelProps {
+  /** Results per marketplace */
+  multiResults: MultiMarketplaceResults;
+  /** Original raw rows from the uploaded file */
+  originalRows?: Record<string, string>[];
+  /** Is this a single-marketplace export? (skip ZIP) */
+  isSingleMarketplace?: boolean;
+}
 
-const FORMAT_OPTIONS: { id: ExportFormat; label: string; description: string; marketplaces: string[] }[] = [
-  {
-    id: "generic_csv",
-    label: "Generic CSV",
-    description: "Side-by-side original + translated columns",
-    marketplaces: [],
-  },
-  {
-    id: "xlsx",
-    label: "Excel (.xlsx)",
-    description: "Full workbook with quality report sheet",
-    marketplaces: [],
-  },
-  {
-    id: "amazon_flat",
-    label: "Amazon Flat File",
-    description: "Tab-delimited file for Seller Central import",
-    marketplaces: ["amazon_de", "amazon_fr", "amazon_es", "amazon_it", "amazon_jp"],
-  },
-  {
-    id: "shopify_csv",
-    label: "Shopify CSV",
-    description: "CSV matching Shopify product import schema",
-    marketplaces: ["shopify_international"],
-  },
-  {
-    id: "etsy_csv",
-    label: "Etsy CSV",
-    description: "CSV matching Etsy bulk edit format",
-    marketplaces: ["etsy_international"],
-  },
-];
+function getMarketplaceExportContent(
+  marketplaceId: string,
+  results: LocalizationResultItem[],
+  targetLanguage: string,
+  originalRows: Record<string, string>[]
+): { content: string; filename: string; mimeType: string } {
+  if (marketplaceId.startsWith("amazon_")) {
+    return {
+      content: exportAmazonFlatFile(results, originalRows),
+      filename: `${marketplaceId}.tsv`,
+      mimeType: "text/tab-separated-values",
+    };
+  } else if (marketplaceId === "shopify_international") {
+    return {
+      content: exportShopifyCSV(results),
+      filename: `shopify_${targetLanguage.toLowerCase()}.csv`,
+      mimeType: "text/csv;charset=utf-8;",
+    };
+  } else if (marketplaceId === "etsy_international") {
+    return {
+      content: exportEtsyCSV(results),
+      filename: `etsy_${targetLanguage.toLowerCase()}.csv`,
+      mimeType: "text/csv;charset=utf-8;",
+    };
+  }
+  return {
+    content: exportGenericCSV(results, targetLanguage),
+    filename: `${marketplaceId}_${targetLanguage.toLowerCase()}.csv`,
+    mimeType: "text/csv;charset=utf-8;",
+  };
+}
+
+function buildSummaryCSV(multiResults: MultiMarketplaceResults): string {
+  const headers = ["listing_title", "marketplace", "status", "warnings", "char_counts"];
+  const rows: string[][] = [];
+
+  for (const [marketplaceId, { results, targetLanguage }] of Object.entries(multiResults)) {
+    const profile = MARKETPLACE_PROFILES[marketplaceId];
+    const marketplaceName = profile?.name || marketplaceId;
+
+    for (const r of results) {
+      const hasErrors = r.qualityFlags.some((f) => f.issue === "api_error" || f.issue === "content_filter");
+      const hasWarnings = r.qualityFlags.length > 0 && !hasErrors;
+      const status = hasErrors ? "failed" : hasWarnings ? "warning" : "success";
+      const warnings = r.qualityFlags.map((f) => `${f.field}: ${f.detail}`).join("; ") || "";
+      const titleLen = r.localized.title?.length || 0;
+      const descLen = r.localized.description?.length || 0;
+      const charCounts = `title:${titleLen}, desc:${descLen}`;
+
+      rows.push([
+        csvEscape(r.original.title),
+        csvEscape(marketplaceName),
+        status,
+        csvEscape(warnings),
+        csvEscape(charCounts),
+      ]);
+    }
+  }
+
+  return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+}
+
+function csvEscape(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function ExportPanel({
-  results,
-  marketplace,
-  targetLanguage,
+  multiResults,
   originalRows,
+  isSingleMarketplace = false,
 }: ExportPanelProps) {
-  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("generic_csv");
   const [exporting, setExporting] = useState(false);
+  const [exportingIndividual, setExportingIndividual] = useState<string | null>(null);
 
-  const profile = MARKETPLACE_PROFILES[marketplace];
-
-  // Filter format options to show relevant ones first
-  const relevantFormats = FORMAT_OPTIONS.filter(
-    (f) => f.marketplaces.length === 0 || f.marketplaces.includes(marketplace)
-  );
+  const marketplaceIds = Object.keys(multiResults);
+  const totalResults = Object.values(multiResults).reduce((s, m) => s + m.results.length, 0);
 
   // Aggregate quality stats
-  const totalFlags = results.reduce((sum, r) => sum + r.qualityFlags.length, 0);
-  const listingsWithFlags = results.filter((r) => r.qualityFlags.length > 0).length;
-  const exceededLimits = results
+  const allResults = Object.values(multiResults).flatMap((m) => m.results);
+  const totalFlags = allResults.reduce((sum, r) => sum + r.qualityFlags.length, 0);
+  const listingsWithFlags = allResults.filter((r) => r.qualityFlags.length > 0).length;
+  const exceededLimits = allResults
     .flatMap((r) => r.qualityFlags)
     .filter((f) => f.issue === "exceeded_limit").length;
 
-  const handleExport = async () => {
-    setExporting(true);
+  // Single marketplace: simple single-file download (legacy behavior)
+  const handleSingleDownload = async (marketplaceId: string) => {
+    setExportingIndividual(marketplaceId);
     try {
-      let content: string | Uint8Array;
-      let filename: string;
-      let mimeType: string;
-
-      switch (selectedFormat) {
-        case "amazon_flat":
-          content = exportAmazonFlatFile(results, originalRows || []);
-          filename = `buzztate_amazon_${targetLanguage.toLowerCase()}.tsv`;
-          mimeType = "text/tab-separated-values";
-          break;
-        case "shopify_csv":
-          content = exportShopifyCSV(results);
-          filename = `buzztate_shopify_${targetLanguage.toLowerCase()}.csv`;
-          mimeType = "text/csv;charset=utf-8;";
-          break;
-        case "etsy_csv":
-          content = exportEtsyCSV(results);
-          filename = `buzztate_etsy_${targetLanguage.toLowerCase()}.csv`;
-          mimeType = "text/csv;charset=utf-8;";
-          break;
-        case "xlsx":
-          content = await exportXLSX(results, targetLanguage, profile);
-          filename = `buzztate_${marketplace}_${targetLanguage.toLowerCase()}.xlsx`;
-          mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-          break;
-        default:
-          content = exportGenericCSV(results, targetLanguage);
-          filename = `buzztate_localized_${targetLanguage.toLowerCase()}.csv`;
-          mimeType = "text/csv;charset=utf-8;";
-      }
-
-      const blob =
-        content instanceof Uint8Array
-          ? new Blob([content], { type: mimeType })
-          : new Blob([content], { type: mimeType });
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      link.click();
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: "Download started",
-        description: `${filename} is downloading.`,
-      });
+      const { results, targetLanguage } = multiResults[marketplaceId];
+      const { content, filename, mimeType } = getMarketplaceExportContent(
+        marketplaceId,
+        results,
+        targetLanguage,
+        originalRows || []
+      );
+      const blob = new Blob([content], { type: mimeType });
+      downloadBlob(blob, `buzztate_${filename}`);
+      toast({ title: "Download started", description: `buzztate_${filename} is downloading.` });
     } catch (err) {
       console.error("Export failed:", err);
-      toast({
-        title: "Export failed",
-        description: "Something went wrong while preparing your download. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Export failed", description: "Please try again.", variant: "destructive" });
+    }
+    setExportingIndividual(null);
+  };
+
+  // Multi marketplace: ZIP download
+  const handleZipDownload = async () => {
+    setExporting(true);
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder("buzztate_localized")!;
+
+      for (const [marketplaceId, { results, targetLanguage }] of Object.entries(multiResults)) {
+        const { content, filename } = getMarketplaceExportContent(
+          marketplaceId,
+          results,
+          targetLanguage,
+          originalRows || []
+        );
+        folder.file(filename, content);
+      }
+
+      // Add summary CSV
+      const summary = buildSummaryCSV(multiResults);
+      folder.file("_summary.csv", summary);
+
+      const blob = await zip.generateAsync({ type: "blob" });
+      downloadBlob(blob, "buzztate_localized.zip");
+      toast({ title: "Download started", description: "buzztate_localized.zip is downloading." });
+    } catch (err) {
+      console.error("ZIP export failed:", err);
+      toast({ title: "Export failed", description: "Please try again.", variant: "destructive" });
     }
     setExporting(false);
   };
+
+  // For single marketplace, use the first one for profile display
+  const singleMarketplaceId = isSingleMarketplace ? marketplaceIds[0] : null;
+  const singleProfile = singleMarketplaceId ? MARKETPLACE_PROFILES[singleMarketplaceId] : null;
+  const singleLang = singleMarketplaceId ? multiResults[singleMarketplaceId]?.targetLanguage : null;
 
   return (
     <div className="bg-gray-900/50 border border-gray-800 rounded-2xl overflow-hidden">
@@ -149,18 +195,31 @@ export default function ExportPanel({
               Export Results
             </h3>
             <p className="text-xs text-gray-500 mt-1">
-              {results.length} listing{results.length !== 1 ? "s" : ""} localized for{" "}
-              {profile?.name || marketplace} in {targetLanguage}
+              {isSingleMarketplace && singleProfile
+                ? `${totalResults} listing${totalResults !== 1 ? "s" : ""} localized for ${singleProfile.name} in ${singleLang}`
+                : `${totalResults} localizations across ${marketplaceIds.length} marketplace${marketplaceIds.length !== 1 ? "s" : ""}`
+              }
             </p>
           </div>
-          <button
-            onClick={handleExport}
-            disabled={exporting || results.length === 0}
-            className="bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-all"
-          >
-            {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-            {exporting ? "Preparing..." : "Download"}
-          </button>
+          {isSingleMarketplace && singleMarketplaceId ? (
+            <button
+              onClick={() => handleSingleDownload(singleMarketplaceId)}
+              disabled={exporting || totalResults === 0}
+              className="bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-all"
+            >
+              {exportingIndividual ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              {exportingIndividual ? "Preparing..." : "Download"}
+            </button>
+          ) : (
+            <button
+              onClick={handleZipDownload}
+              disabled={exporting || totalResults === 0}
+              className="bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-all"
+            >
+              {exporting ? <Loader2 size={14} className="animate-spin" /> : <Package size={14} />}
+              {exporting ? "Preparing ZIP..." : "Download All (ZIP)"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -186,41 +245,46 @@ export default function ExportPanel({
         </div>
       )}
 
-      {/* Format selector */}
-      <div className="p-4">
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
-          Export Format
-        </label>
-        <div className="space-y-2">
-          {relevantFormats.map((fmt) => (
-            <button
-              key={fmt.id}
-              onClick={() => setSelectedFormat(fmt.id)}
-              className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
-                selectedFormat === fmt.id
-                  ? "border-green-500/50 bg-green-500/5"
-                  : "border-gray-800 hover:border-gray-700 bg-black/20"
-              }`}
-            >
-              <div
-                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  selectedFormat === fmt.id ? "border-green-400" : "border-gray-600"
-                }`}
-              >
-                {selectedFormat === fmt.id && (
-                  <div className="w-2 h-2 rounded-full bg-green-400" />
-                )}
-              </div>
-              <div>
-                <p className={`text-sm font-medium ${selectedFormat === fmt.id ? "text-white" : "text-gray-400"}`}>
-                  {fmt.label}
-                </p>
-                <p className="text-xs text-gray-600">{fmt.description}</p>
-              </div>
-            </button>
-          ))}
+      {/* Per-marketplace file downloads (multi-marketplace only) */}
+      {!isSingleMarketplace && marketplaceIds.length > 1 && (
+        <div className="p-4">
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+            Individual Files
+          </label>
+          <div className="space-y-2">
+            {marketplaceIds.map((mpId) => {
+              const { results, targetLanguage } = multiResults[mpId];
+              const profile = MARKETPLACE_PROFILES[mpId];
+              const { filename } = getMarketplaceExportContent(mpId, results, targetLanguage, []);
+              const isExporting = exportingIndividual === mpId;
+
+              return (
+                <div
+                  key={mpId}
+                  className="flex items-center justify-between bg-black/20 border border-gray-800 rounded-lg p-3"
+                >
+                  <div>
+                    <p className="text-sm text-gray-300 font-medium">
+                      {profile?.name || mpId}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {results.length} listing{results.length !== 1 ? "s" : ""} — {filename}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleSingleDownload(mpId)}
+                    disabled={isExporting}
+                    className="text-xs text-green-400 hover:text-green-300 font-bold flex items-center gap-1 transition-colors"
+                  >
+                    {isExporting ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                    Download
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Quality detail (collapsed) */}
       {totalFlags > 0 && (
@@ -234,35 +298,42 @@ export default function ExportPanel({
               <thead>
                 <tr className="text-gray-600">
                   <th className="text-left p-1">Row</th>
+                  {!isSingleMarketplace && <th className="text-left p-1">Marketplace</th>}
                   <th className="text-left p-1">Field</th>
                   <th className="text-left p-1">Issue</th>
                   <th className="text-left p-1">Detail</th>
                 </tr>
               </thead>
               <tbody>
-                {results
-                  .filter((r) => r.qualityFlags.length > 0)
-                  .flatMap((r) =>
-                    r.qualityFlags.map((f, i) => (
-                      <tr key={`${r.sourceRow}-${i}`} className="border-t border-gray-800/50">
-                        <td className="p-1 text-gray-400">{r.sourceRow}</td>
-                        <td className="p-1 text-gray-400 font-mono">{f.field}</td>
-                        <td className="p-1">
-                          <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                              f.issue === "exceeded_limit"
-                                ? "bg-red-400/10 text-red-400"
-                                : f.issue === "empty"
-                                ? "bg-red-400/10 text-red-400"
-                                : "bg-amber-400/10 text-amber-400"
-                            }`}
-                          >
-                            {f.issue}
-                          </span>
-                        </td>
-                        <td className="p-1 text-gray-500">{f.detail}</td>
-                      </tr>
-                    ))
+                {Object.entries(multiResults)
+                  .flatMap(([mpId, { results }]) =>
+                    results
+                      .filter((r) => r.qualityFlags.length > 0)
+                      .flatMap((r) =>
+                        r.qualityFlags.map((f, i) => (
+                          <tr key={`${mpId}-${r.sourceRow}-${i}`} className="border-t border-gray-800/50">
+                            <td className="p-1 text-gray-400">{r.sourceRow}</td>
+                            {!isSingleMarketplace && (
+                              <td className="p-1 text-gray-400">{MARKETPLACE_PROFILES[mpId]?.name || mpId}</td>
+                            )}
+                            <td className="p-1 text-gray-400 font-mono">{f.field}</td>
+                            <td className="p-1">
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                  f.issue === "exceeded_limit"
+                                    ? "bg-red-400/10 text-red-400"
+                                    : f.issue === "empty"
+                                    ? "bg-red-400/10 text-red-400"
+                                    : "bg-amber-400/10 text-amber-400"
+                                }`}
+                              >
+                                {f.issue}
+                              </span>
+                            </td>
+                            <td className="p-1 text-gray-500">{f.detail}</td>
+                          </tr>
+                        ))
+                      )
                   )}
               </tbody>
             </table>
