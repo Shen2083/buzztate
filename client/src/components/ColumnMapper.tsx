@@ -14,6 +14,9 @@ const STORAGE_KEY = "buzztate_column_mappings";
 const TARGET_LABELS: Record<string, string> = {
   title: "Product Title",
   description: "Description",
+  seoMetaTitle: "SEO Title",
+  seoMetaDescription: "SEO Description",
+  imageAltText: "Image Alt Text",
   "bulletPoints.0": "Bullet Point 1",
   "bulletPoints.1": "Bullet Point 2",
   "bulletPoints.2": "Bullet Point 3",

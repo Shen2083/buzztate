@@ -92,6 +92,9 @@ export interface ParsedListing {
   keywords?: string;
   price?: string;
   category?: string;
+  seoMetaTitle?: string;
+  seoMetaDescription?: string;
+  imageAltText?: string;
   /** Row index from the original file (for mapping back on export) */
   sourceRow?: number;
   /** Any extra columns the user chose not to map — preserved for export */
@@ -140,6 +143,9 @@ export interface ColumnMapping {
 export const MAPPING_TARGETS = [
   "title",
   "description",
+  "seoMetaTitle",
+  "seoMetaDescription",
+  "imageAltText",
   "bulletPoints.0",
   "bulletPoints.1",
   "bulletPoints.2",

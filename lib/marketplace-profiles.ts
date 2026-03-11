@@ -167,6 +167,7 @@ export const DO_NOT_TRANSLATE_FIELDS = [
  */
 export const AMAZON_COLUMN_MAP: Record<string, string> = {
   item_name: "title",
+  "Product Title": "title",
   product_description: "description",
   bullet_point1: "bulletPoints.0",
   bullet_point2: "bulletPoints.1",
@@ -174,6 +175,8 @@ export const AMAZON_COLUMN_MAP: Record<string, string> = {
   bullet_point4: "bulletPoints.3",
   bullet_point5: "bulletPoints.4",
   generic_keyword: "keywords",
+  generic_keywords1: "keywords",
+  standard_price: "price",
 };
 
 /**
@@ -185,6 +188,8 @@ export const SHOPIFY_COLUMN_MAP: Record<string, string> = {
   Tags: "keywords",
   "SEO Title": "seoMetaTitle",
   "SEO Description": "seoMetaDescription",
+  "Image Alt Text": "imageAltText",
+  "Variant Price": "price",
 };
 
 /**
@@ -194,4 +199,5 @@ export const ETSY_COLUMN_MAP: Record<string, string> = {
   Title: "title",
   Description: "description",
   Tags: "keywords",
+  Price: "price",
 };
