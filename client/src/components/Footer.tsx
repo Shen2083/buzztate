@@ -14,7 +14,7 @@ export default function Footer({ minimal = false }: { minimal?: boolean }) {
           <span className="text-gray-700">|</span>
           <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms of Service</Link>
           <span className="text-gray-700">|</span>
-          <a href="mailto:support@buzztate.com" className="hover:text-gray-300 transition-colors">support@buzztate.com</a>
+          <a href="mailto:teamz@buzztate.com" className="hover:text-gray-300 transition-colors">teamz@buzztate.com</a>
         </div>
         <p className="text-xs text-gray-600">&copy; 2026 Buzztate. All rights reserved.</p>
       </div>

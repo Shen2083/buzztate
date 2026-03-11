@@ -199,7 +199,7 @@ export default function Home({ session }: { session: any }) {
       } catch {
         toast({
           title: isPro ? "Couldn't open subscription manager" : "Couldn't connect to payment provider",
-          description: isPro ? "Please try again or contact support@buzztate.com." : "Please try again. You haven't been charged.",
+          description: isPro ? "Please try again or contact teamz@buzztate.com." : "Please try again. You haven't been charged.",
           variant: "destructive"
         });
         setCheckoutLoading(false);
