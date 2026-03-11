@@ -31,11 +31,15 @@ function getOpenAI() {
 /** How many listings to send to OpenAI per batch (to avoid timeouts) */
 const BATCH_SIZE = 5;
 
-/** Tier limits: localizations per month (1 localization = 1 listing × 1 language) */
+/** Tier limits */
 const TIER_LIMITS: Record<string, { localizationsPerMonth: number; maxPerRequest: number }> = {
   free: { localizationsPerMonth: 5,   maxPerRequest: 5 },
-  plus: { localizationsPerMonth: 200, maxPerRequest: 50 },
+  plus: { localizationsPerMonth: Infinity, maxPerRequest: 200 },
 };
+
+/** Plus cooldown: 2 minutes between batch submissions per user */
+const PLUS_COOLDOWN_MS = 2 * 60 * 1000;
+const lastBatchTimestamps = new Map<string, number>();
 
 export default async function handler(req: any, res: any) {
   try {
@@ -108,17 +112,34 @@ export default async function handler(req: any, res: any) {
     // Check per-request limit
     if (listings.length > tierConfig.maxPerRequest) {
       return res.status(403).json({
-        error: `Your ${planTier} plan allows max ${tierConfig.maxPerRequest} listings per request. You sent ${listings.length}.`,
+        error: `Your ${planTier === 'free' ? 'Free' : 'Plus'} plan allows up to ${tierConfig.maxPerRequest} listings per batch. You sent ${listings.length}.`,
       });
     }
 
-    // Check monthly limit (each listing counts as 1 localization)
-    const remaining = tierConfig.localizationsPerMonth - listingsUsed;
-    if (listings.length > remaining) {
-      return res.status(403).json({
-        error: `Monthly limit reached. Your ${planTier === 'free' ? 'Free' : 'Plus'} plan allows ${tierConfig.localizationsPerMonth} localizations/month. Used: ${listingsUsed}, remaining: ${remaining}.`,
-        upgrade: planTier === 'free',
-      });
+    // Plus: enforce 2-minute cooldown between batches
+    if (planTier === 'plus' && userId) {
+      const lastTs = lastBatchTimestamps.get(userId);
+      if (lastTs) {
+        const elapsed = Date.now() - lastTs;
+        if (elapsed < PLUS_COOLDOWN_MS) {
+          const waitSec = Math.ceil((PLUS_COOLDOWN_MS - elapsed) / 1000);
+          return res.status(429).json({
+            error: `Your previous batch is still processing. You can submit another in ${waitSec} seconds.`,
+            retryAfter: waitSec,
+          });
+        }
+      }
+    }
+
+    // Free: enforce monthly cap
+    if (planTier === 'free') {
+      const remaining = tierConfig.localizationsPerMonth - listingsUsed;
+      if (listings.length > remaining) {
+        return res.status(403).json({
+          error: `Monthly limit reached. Your Free plan allows ${tierConfig.localizationsPerMonth} localizations/month. Used: ${listingsUsed}, remaining: ${remaining}.`,
+          upgrade: true,
+        });
+      }
     }
 
     // Process listings in batches
@@ -140,9 +161,14 @@ export default async function handler(req: any, res: any) {
       allResults.push(...batchResults);
     }
 
+    // Record cooldown timestamp for Plus users
+    if (planTier === 'plus' && userId) {
+      lastBatchTimestamps.set(userId, Date.now());
+    }
+
     // Update usage counter and save job history if authenticated
     if (userId) {
-      // Increment usage
+      // Increment usage (still tracked for free tier enforcement + analytics)
       await supabase
         .from("profiles")
         .update({

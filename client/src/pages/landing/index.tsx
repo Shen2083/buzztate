@@ -298,7 +298,8 @@ export default function Landing() {
               <div className="text-4xl font-bold mt-4 mb-2 text-yellow-400">$49<span className="text-lg text-gray-400 font-normal">/mo</span></div>
               <p className="text-gray-300 text-sm mb-6">For serious sellers</p>
               <ul className="space-y-3 mb-8 flex-grow text-sm">
-                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> 200 localizations/month</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Unlimited listings</li>
+                <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Up to 200 per batch</li>
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All supported marketplaces</li>
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> All export formats</li>
                 <li className="flex items-center gap-2 text-white"><Check size={16} className="text-yellow-400" /> Priority processing</li>
