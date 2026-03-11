@@ -296,11 +296,15 @@ export default function MarketplaceSelector({
         <div className="bg-gray-900/30 border border-gray-800 rounded-xl p-3">
           <p className="text-xs text-gray-500 mb-1 font-bold uppercase">Selected Marketplaces</p>
           <div className="space-y-1">
-            {selectedMarketplaces.map((id) => (
-              <p key={id} className="text-xs text-gray-400">
-                {MARKETPLACE_PROFILES[id].name} — {MARKETPLACE_PROFILES[id].locale}
-              </p>
-            ))}
+            {selectedMarketplaces.map((id) => {
+              const profile = MARKETPLACE_PROFILES[id];
+              const displayLang = languageOverrides[id] || (profile.locale !== "varies" ? profile.locale : null);
+              return (
+                <p key={id} className="text-xs text-gray-400">
+                  {profile.name}{displayLang ? ` — ${displayLang}` : ""}
+                </p>
+              );
+            })}
           </div>
         </div>
       )}

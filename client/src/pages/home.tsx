@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Zap, History, Clock, Copy, LogOut, Loader2, AlertTriangle } from "lucide-react";
+import { Zap, History, Clock, Copy, LogOut, Loader2, AlertTriangle, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import type { ColumnMapping, ParsedListing, LocalizationResultItem } from "@shared/schema";
@@ -312,8 +312,10 @@ export default function Home({ session }: { session: any }) {
   const exceedsBatchLimit = isPro && totalLocalizationCount > MAX_BATCH_SIZE;
   const maxListingsForBatch = selectedMarketCount > 0 ? Math.floor(MAX_BATCH_SIZE / selectedMarketCount) : MAX_BATCH_SIZE;
 
-  /** Send listings in small chunks to avoid Vercel function timeouts */
-  const LOCALIZE_CHUNK_SIZE = 3;
+  /** Concurrent API calls for the localization pool */
+  const CONCURRENCY = 3;
+  /** Threshold to show confirmation dialog before starting */
+  const CONFIRM_THRESHOLD = 50;
 
   /** Resolve the target language for a marketplace, using overrides for Shopify/Etsy */
   const getTargetLanguage = (mpId: MarketplaceId): string => {
@@ -323,7 +325,25 @@ export default function Home({ session }: { session: any }) {
   /** Check if all selected marketplaces have a target language configured */
   const allLanguagesReady = selectedMarketplaces.every((mpId) => getTargetLanguage(mpId).length > 0);
 
-  const handleLocalize = async () => {
+  // Confirmation dialog state
+  const [showBatchConfirm, setShowBatchConfirm] = useState(false);
+
+  // Ref for accumulating results from concurrent workers
+  const multiResultsRef = useRef<MultiMarketplaceResults>({});
+
+  // Track failed items count
+  const [failedCount, setFailedCount] = useState(0);
+
+  // Prevent tab close during processing
+  useEffect(() => {
+    if (!localizeLoading) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [localizeLoading]);
+
+  /** Called when user clicks "Localize" — may show confirmation first */
+  const handleLocalizeClick = () => {
     if (parsedListings.length === 0 || selectedMarketplaces.length === 0) {
       toast({
         title: "Missing selection",
@@ -342,6 +362,27 @@ export default function Home({ session }: { session: any }) {
       return;
     }
 
+    // Calculate effective count
+    let effectiveListingCount = parsedListings.length;
+    if (isPro && totalLocalizationCount > MAX_BATCH_SIZE) {
+      effectiveListingCount = maxListingsForBatch;
+    } else if (!isPro && parsedListings.length > FREE_TIER_LIMIT) {
+      effectiveListingCount = FREE_TIER_LIMIT;
+    }
+    const effectiveTotal = effectiveListingCount * selectedMarketplaces.length;
+
+    if (effectiveTotal > CONFIRM_THRESHOLD) {
+      setShowBatchConfirm(true);
+      return;
+    }
+
+    startLocalization();
+  };
+
+  /** Actually start the localization process */
+  const startLocalization = async () => {
+    setShowBatchConfirm(false);
+
     // Determine listings to process (respect batch limit)
     let listingsToProcess = parsedListings;
     if (isPro && totalLocalizationCount > MAX_BATCH_SIZE) {
@@ -355,165 +396,170 @@ export default function Home({ session }: { session: any }) {
     cancelRef.current = false;
     setLocalizeLoading(true);
     setMultiResults({});
+    multiResultsRef.current = {};
     setLocalizeCompleted(false);
     setLocalizeCancelled(false);
     setTotalLocalizations(totalCount);
     setDoneLocalizations(0);
+    setFailedCount(0);
     setCurrentListingTitle(listingsToProcess[0]?.title || "");
 
     // Initialize per-marketplace progress
-    const initialProgress: MarketplaceProgress[] = selectedMarketplaces.map((mpId, idx) => ({
+    const initialProgress: MarketplaceProgress[] = selectedMarketplaces.map((mpId) => ({
       marketplaceId: mpId,
       marketplaceName: MARKETPLACE_PROFILES[mpId]?.name || mpId,
       targetLanguage: getTargetLanguage(mpId),
-      status: idx === 0 ? "in_progress" : "pending",
+      status: "pending" as const,
       listingsDone: 0,
       listingsTotal: listingsToProcess.length,
     }));
     setMarketplaceProgressList(initialProgress);
 
-    const allMultiResults: MultiMarketplaceResults = {};
-    let globalDone = 0;
-    let lastUsage: any = null;
-    let failed = false;
-
-    try {
-      const authHeaders = await getAuthHeaders();
-
-      // Sequential processing: one marketplace at a time
-      for (let mpIdx = 0; mpIdx < selectedMarketplaces.length; mpIdx++) {
-        if (cancelRef.current) {
-          setLocalizeCancelled(true);
-          // Mark remaining marketplaces as cancelled
-          setMarketplaceProgressList((prev) =>
-            prev.map((mp, i) =>
-              i >= mpIdx ? { ...mp, status: "cancelled" as const } : mp
-            )
-          );
-          break;
-        }
-
-        const mpId = selectedMarketplaces[mpIdx];
-        const targetLanguage = getTargetLanguage(mpId);
-
-        // Mark this marketplace as in_progress
-        setMarketplaceProgressList((prev) =>
-          prev.map((mp, i) =>
-            i === mpIdx ? { ...mp, status: "in_progress" as const } : mp
-          )
-        );
-
-        const mpResults: LocalizationResultItem[] = [];
-
-        // Process listings one chunk at a time
-        for (let i = 0; i < listingsToProcess.length; i += LOCALIZE_CHUNK_SIZE) {
-          if (cancelRef.current) {
-            setLocalizeCancelled(true);
-            break;
-          }
-
-          const chunk = listingsToProcess.slice(i, i + LOCALIZE_CHUNK_SIZE);
-          setCurrentListingTitle(chunk[0]?.title || "");
-
-          let response: Response;
-          try {
-            response = await fetchWithRetry("/api/localize", {
-              method: "POST",
-              headers: authHeaders,
-              body: JSON.stringify({
-                listings: chunk,
-                marketplace: mpId,
-                targetLanguage,
-                userId: session.user.id,
-              }),
-            }, 2);
-          } catch {
-            toast({
-              title: "Connection lost",
-              description: "We're having trouble connecting. Your uploaded file is still ready — please try again.",
-              variant: "destructive",
-            });
-            failed = true;
-            break;
-          }
-
-          const data = await response.json();
-
-          if (response.ok && data.results) {
-            mpResults.push(...data.results);
-            lastUsage = data.usage;
-            globalDone += data.results.length;
-
-            // Update per-marketplace progress
-            setMarketplaceProgressList((prev) =>
-              prev.map((mp, idx) =>
-                idx === mpIdx ? { ...mp, listingsDone: mpResults.length } : mp
-              )
-            );
-
-            setDoneLocalizations(globalDone);
-            setCurrentListingTitle(
-              i + LOCALIZE_CHUNK_SIZE < listingsToProcess.length
-                ? listingsToProcess[i + LOCALIZE_CHUNK_SIZE]?.title || ""
-                : ""
-            );
-          } else {
-            const apiErr = parseApiError(response, data);
-            toast({
-              title: "Localization error",
-              description: apiErr?.message || "Something went wrong.",
-              variant: "destructive",
-            });
-            failed = true;
-            break;
-          }
-        }
-
-        // Store results for this marketplace
-        if (mpResults.length > 0) {
-          allMultiResults[mpId] = { results: mpResults, targetLanguage };
-          setMultiResults({ ...allMultiResults });
-        }
-
-        if (failed || cancelRef.current) {
-          // Mark current + remaining as cancelled
-          setMarketplaceProgressList((prev) =>
-            prev.map((mp, i) => {
-              if (i === mpIdx && mpResults.length === listingsToProcess.length) {
-                return { ...mp, status: "completed" as const, listingsDone: mpResults.length };
-              }
-              if (i >= mpIdx && mp.status !== "completed") {
-                return { ...mp, status: "cancelled" as const, listingsDone: i === mpIdx ? mpResults.length : 0 };
-              }
-              return mp;
-            })
-          );
-          break;
-        }
-
-        // Mark this marketplace as completed
-        setMarketplaceProgressList((prev) =>
-          prev.map((mp, i) =>
-            i === mpIdx ? { ...mp, status: "completed" as const, listingsDone: mpResults.length } : mp
-          )
-        );
-      }
-
-      if (!failed && !cancelRef.current) {
-        if (lastUsage) {
-          setUsageCount(lastUsage.used);
-        }
-        setLocalizeCompleted(true);
-      } else if (cancelRef.current && !failed) {
-        setLocalizeCancelled(true);
-      }
-    } catch (err) {
-      toast({
-        title: "Localization failed",
-        description: "Network error. Your uploaded file is still ready — please try again.",
-        variant: "destructive",
-      });
+    // Build the task queue — grouped by marketplace so progress flows naturally
+    interface LocalizeTask {
+      listing: ParsedListing;
+      marketplaceId: MarketplaceId;
+      targetLanguage: string;
     }
+
+    const queue: LocalizeTask[] = [];
+    for (const mpId of selectedMarketplaces) {
+      const lang = getTargetLanguage(mpId);
+      for (const listing of listingsToProcess) {
+        queue.push({ listing, marketplaceId: mpId, targetLanguage: lang });
+      }
+    }
+
+    let lastUsage: any = null;
+    let queueIndex = 0;
+
+    const authHeaders = await getAuthHeaders();
+
+    /** Process a single task — called by each worker */
+    const processTask = async (task: LocalizeTask) => {
+      if (cancelRef.current) return;
+
+      setCurrentListingTitle(task.listing.title || "");
+
+      let response: Response | null = null;
+      let data: any = null;
+
+      try {
+        response = await fetchWithRetry("/api/localize", {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify({
+            listing: task.listing,
+            marketplace: task.marketplaceId,
+            targetLanguage: task.targetLanguage,
+            userId: session.user.id,
+          }),
+        }, 1);
+        data = await response.json();
+      } catch {
+        // Retry once after 2s
+        try {
+          await new Promise(r => setTimeout(r, 2000));
+          response = await fetch("/api/localize", {
+            method: "POST",
+            headers: authHeaders,
+            body: JSON.stringify({
+              listing: task.listing,
+              marketplace: task.marketplaceId,
+              targetLanguage: task.targetLanguage,
+              userId: session.user.id,
+            }),
+          });
+          data = await response.json();
+        } catch {
+          // Mark as failed, continue with rest of queue
+          setFailedCount(prev => prev + 1);
+          setDoneLocalizations(prev => prev + 1);
+          return;
+        }
+      }
+
+      if (response?.ok && data?.result) {
+        const result = data.result as LocalizationResultItem;
+        lastUsage = data.usage;
+
+        // Accumulate result for this marketplace
+        const mpId = task.marketplaceId;
+        if (!multiResultsRef.current[mpId]) {
+          multiResultsRef.current[mpId] = { results: [], targetLanguage: task.targetLanguage };
+        }
+        multiResultsRef.current[mpId].results.push(result);
+        setMultiResults({ ...multiResultsRef.current });
+
+        // Update per-marketplace progress
+        setMarketplaceProgressList(prev =>
+          prev.map(mp => {
+            if (mp.marketplaceId !== mpId) return mp;
+            const newDone = mp.listingsDone + 1;
+            return {
+              ...mp,
+              listingsDone: newDone,
+              status: newDone >= mp.listingsTotal ? "completed" : "in_progress",
+            };
+          })
+        );
+
+        setDoneLocalizations(prev => prev + 1);
+      } else {
+        // API returned an error — mark as failed but continue
+        setFailedCount(prev => prev + 1);
+        setDoneLocalizations(prev => prev + 1);
+
+        // If it's a 403 (monthly limit), show toast and stop
+        if (response?.status === 403) {
+          const apiErr = parseApiError(response, data);
+          toast({
+            title: "Limit reached",
+            description: apiErr?.message || "Monthly localization limit reached.",
+            variant: "destructive",
+          });
+          cancelRef.current = true;
+        }
+      }
+    };
+
+    /** Worker — grabs next task from queue and processes it */
+    const worker = async () => {
+      while (queueIndex < queue.length && !cancelRef.current) {
+        const idx = queueIndex++;
+        if (idx >= queue.length) break;
+        await processTask(queue[idx]);
+      }
+    };
+
+    // Run concurrent workers
+    try {
+      const workers = Array.from(
+        { length: Math.min(CONCURRENCY, queue.length) },
+        () => worker()
+      );
+      await Promise.all(workers);
+    } catch (err) {
+      console.error("Localization pool error:", err);
+    }
+
+    // Finalize
+    if (cancelRef.current) {
+      setLocalizeCancelled(true);
+      // Mark remaining marketplaces as cancelled
+      setMarketplaceProgressList(prev =>
+        prev.map(mp =>
+          mp.status === "pending" ? { ...mp, status: "cancelled" as const } : mp
+        )
+      );
+    } else {
+      setLocalizeCompleted(true);
+    }
+
+    if (lastUsage) {
+      setUsageCount(lastUsage.used);
+    }
+
     setLocalizeLoading(false);
   };
 
@@ -526,6 +572,7 @@ export default function Home({ session }: { session: any }) {
     setConfirmedMappings(null);
     setParsedListings([]);
     setMultiResults({});
+    multiResultsRef.current = {};
     setLocalizeCompleted(false);
     setLocalizeCancelled(false);
     setSelectedMarketplaces([]);
@@ -535,6 +582,8 @@ export default function Home({ session }: { session: any }) {
     setMarketplaceProgressList([]);
     setTotalLocalizations(0);
     setDoneLocalizations(0);
+    setFailedCount(0);
+    setShowBatchConfirm(false);
   };
 
   // Computed values
@@ -742,7 +791,7 @@ export default function Home({ session }: { session: any }) {
                 marketplaceProgress={marketplaceProgressList}
                 successCount={allResultsFlat.length}
                 warningCount={warningCount}
-                failCount={totalLocalizations - allResultsFlat.length > 0 && !localizeLoading ? totalLocalizations - allResultsFlat.length : 0}
+                failCount={failedCount}
                 completed={localizeCompleted}
                 cancelled={localizeCancelled}
                 onStartOver={resetLocalizeFlow}
@@ -897,7 +946,7 @@ export default function Home({ session }: { session: any }) {
               />
 
               <button
-                onClick={handleLocalize}
+                onClick={handleLocalizeClick}
                 disabled={localizeLoading || parsedListings.length === 0 || selectedMarketplaces.length === 0 || !allLanguagesReady || !navigator.onLine}
                 className="w-full bg-yellow-400 text-black font-extrabold py-5 rounded-xl hover:bg-yellow-300 disabled:bg-gray-800 disabled:text-gray-500 transition-all text-lg flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.2)]"
               >
@@ -917,6 +966,54 @@ export default function Home({ session }: { session: any }) {
           </div>
         </div>
       </div>
+
+      {/* Batch confirmation dialog */}
+      {showBatchConfirm && (() => {
+        let effectiveListingCount = parsedListings.length;
+        if (isPro && totalLocalizationCount > MAX_BATCH_SIZE) {
+          effectiveListingCount = maxListingsForBatch;
+        } else if (!isPro && parsedListings.length > FREE_TIER_LIMIT) {
+          effectiveListingCount = FREE_TIER_LIMIT;
+        }
+        const effectiveTotal = effectiveListingCount * selectedMarketplaces.length;
+        const estimatedMinutes = Math.ceil(effectiveTotal / 60);
+
+        return (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-bold text-white">Confirm Large Batch</h3>
+                <button onClick={() => setShowBatchConfirm(false)} className="text-gray-500 hover:text-white">
+                  <X size={18} />
+                </button>
+              </div>
+              <p className="text-sm text-gray-300 mb-2">
+                Ready to localize <span className="text-yellow-400 font-bold">{effectiveListingCount} listings</span> into{" "}
+                <span className="text-yellow-400 font-bold">{selectedMarketplaces.length} marketplace{selectedMarketplaces.length !== 1 ? "s" : ""}</span>{" "}
+                (<span className="text-white font-bold">{effectiveTotal} total localizations</span>).
+              </p>
+              <p className="text-xs text-gray-500 mb-6">
+                Estimated time: ~{estimatedMinutes} minute{estimatedMinutes !== 1 ? "s" : ""}. Please keep this tab open while processing.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowBatchConfirm(false)}
+                  className="flex-1 px-4 py-2.5 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-gray-600 transition-colors text-sm font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={startLocalization}
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-yellow-400 text-black font-extrabold hover:bg-yellow-300 transition-colors text-sm flex items-center justify-center gap-2"
+                >
+                  <Zap size={14} fill="black" />
+                  Start Localization
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

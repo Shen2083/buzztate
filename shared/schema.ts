@@ -167,9 +167,9 @@ export const marketplaceIds = [
 
 export type MarketplaceId = typeof marketplaceIds[number];
 
-/** Zod schema for the /api/localize request body */
+/** Zod schema for the /api/localize request body (single listing) */
 export const localizeRequestSchema = z.object({
-  listings: z.array(z.object({
+  listing: z.object({
     title: z.string().min(1),
     description: z.string().default(""),
     bulletPoints: z.array(z.string()).optional(),
@@ -178,7 +178,7 @@ export const localizeRequestSchema = z.object({
     category: z.string().optional(),
     sourceRow: z.number().optional(),
     extraFields: z.record(z.string()).optional(),
-  })).min(1, "At least one listing is required").max(100, "Max 100 listings per request"),
+  }),
   marketplace: z.enum(marketplaceIds),
   targetLanguage: z.string().min(1, "Target language is required"),
   userId: z.string().uuid().optional(),
