@@ -175,6 +175,50 @@
   }
 }
 
+/* Legal pages (Privacy Policy, Terms of Service) */
+.legal-content h1 {
+  @apply text-3xl md:text-4xl font-extrabold mb-2 leading-tight;
+}
+.legal-content .legal-meta {
+  @apply text-gray-500 text-sm mb-10 border-b border-gray-800 pb-6;
+}
+.legal-content h2 {
+  @apply text-xl font-bold mt-10 mb-4 text-white;
+}
+.legal-content h3 {
+  @apply text-base font-bold mt-6 mb-2 text-gray-300;
+}
+.legal-content p {
+  @apply text-gray-400 text-sm leading-relaxed mb-4;
+}
+.legal-content ul {
+  @apply list-disc pl-6 space-y-2 mb-4;
+}
+.legal-content li {
+  @apply text-gray-400 text-sm leading-relaxed;
+}
+.legal-content a {
+  @apply text-yellow-400 hover:underline underline-offset-2 transition-colors;
+}
+.legal-content strong {
+  @apply text-white font-semibold;
+}
+.legal-content .table-wrapper {
+  @apply overflow-x-auto mb-6 rounded-xl border border-gray-800;
+}
+.legal-content table {
+  @apply w-full text-sm;
+}
+.legal-content thead {
+  @apply bg-gray-900/60;
+}
+.legal-content th {
+  @apply text-left text-xs font-bold text-gray-500 uppercase tracking-wider px-4 py-3 border-b border-gray-800;
+}
+.legal-content td {
+  @apply text-gray-400 px-4 py-3 border-b border-gray-800/50;
+}
+
 /**
  * Using the elevate system.
  * Automatic contrast adjustment.

@@ -601,7 +601,14 @@ export default function Landing() {
           <p className="text-sm text-gray-500 mb-2">
             Need help? <a href="mailto:teamz@buzztate.com" className="text-yellow-400 hover:underline transition-colors">teamz@buzztate.com</a>
           </p>
-          <p className="text-xs text-gray-600 mt-2">&copy; 2026 Buzztate. All rights reserved.</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-gray-500 mt-4">
+            <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy Policy</Link>
+            <span className="text-gray-700">|</span>
+            <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms of Service</Link>
+            <span className="text-gray-700">|</span>
+            <a href="mailto:support@buzztate.com" className="hover:text-gray-300 transition-colors">support@buzztate.com</a>
+          </div>
+          <p className="text-xs text-gray-600 mt-3">&copy; 2026 Buzztate. All rights reserved.</p>
         </div>
       </footer>
     </div>

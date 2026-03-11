@@ -18,6 +18,8 @@ import ShopifyProductTranslation from "@/pages/landing/ShopifyProductTranslation
 import EtsyListingTranslation from "@/pages/landing/EtsyListingTranslation";
 import AmazonDeTranslation from "@/pages/landing/AmazonDeTranslation";
 import AmazonJpTranslation from "@/pages/landing/AmazonJpTranslation";
+import PrivacyPolicy from "@/pages/landing/PrivacyPolicy";
+import TermsOfService from "@/pages/landing/TermsOfService";
 
 /**
  * Auth-gated wrapper — only used for /app route.
@@ -88,6 +90,8 @@ function Router() {
       <Route path="/etsy-listing-translation" component={EtsyListingTranslation} />
       <Route path="/amazon-de-translation" component={AmazonDeTranslation} />
       <Route path="/amazon-jp-translation" component={AmazonJpTranslation} />
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/terms" component={TermsOfService} />
       <Route path="/translate/:lang">
         {(params) => <LanguageLanding lang={params.lang} />}
       </Route>

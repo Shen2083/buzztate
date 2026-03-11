@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { Loader2, Mail, Lock, ArrowRight, CheckCircle, ArrowLeft, AlertCircle } from "lucide-react";
+import { Link } from "wouter";
+import Footer from "@/components/Footer";
 
 /** Map common Supabase error messages to user-friendly text */
 function friendlyAuthError(message: string): string {
@@ -101,6 +103,7 @@ export default function AuthPage() {
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-yellow-400/10 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
 
+      <div className="flex-grow flex items-center justify-center w-full">
       <div className="w-full max-w-md bg-gray-900/60 backdrop-blur-xl border border-gray-800 rounded-3xl p-8 shadow-2xl relative z-10">
 
         {/* Header */}
@@ -255,6 +258,15 @@ export default function AuthPage() {
               )}
             </button>
 
+            {mode === "signup" && (
+              <p className="text-xs text-gray-500 text-center mt-3">
+                By creating an account, you agree to our{" "}
+                <Link href="/terms" className="text-yellow-400 hover:underline">Terms of Service</Link>
+                {" "}and{" "}
+                <Link href="/privacy" className="text-yellow-400 hover:underline">Privacy Policy</Link>.
+              </p>
+            )}
+
             <div className="pt-4 text-center border-t border-gray-800 mt-6">
               <p className="text-sm text-gray-500">
                 {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
@@ -270,6 +282,9 @@ export default function AuthPage() {
           </form>
         )}
       </div>
+      </div>
+
+      <Footer minimal />
     </div>
   );
 }

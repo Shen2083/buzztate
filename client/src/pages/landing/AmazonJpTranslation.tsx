@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { ArrowLeft, Check, ShoppingBag, ArrowRight } from "lucide-react";
+import Footer from "@/components/Footer";
 
 export default function AmazonJpTranslation() {
   return (
@@ -120,9 +121,7 @@ export default function AmazonJpTranslation() {
         </Link>
       </div>
 
-      <footer className="py-8 text-center border-t border-gray-900">
-        <p className="text-xs text-gray-600">© 2026 Buzztate. All rights reserved.</p>
-      </footer>
+      <Footer />
     </div>
   );
 }
