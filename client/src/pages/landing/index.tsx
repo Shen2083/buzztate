@@ -1,44 +1,63 @@
 import { Link } from "wouter";
-import { Check, X, ArrowRight, ChevronDown, Globe, ShoppingBag, FileSpreadsheet, Zap, Upload, Download, Shield, Mail } from "lucide-react";
+import {
+  Check, X, ArrowRight, ChevronDown, Globe, ShoppingBag,
+  FileSpreadsheet, Zap, Upload, Download, Shield, Mail,
+  ArrowRightLeft, AlertTriangle, RefreshCw,
+} from "lucide-react";
 import { useState } from "react";
+
+// ---- Data ----
 
 const FAQS = [
   {
-    question: "Is this just Google Translate?",
-    answer: "No. Google Translate does word-for-word translation. Buzztate is a marketplace-aware localization engine. It understands Amazon's search algorithm, Shopify SEO, and Etsy's tag system. It adapts your listings culturally — using formal address in German, compound nouns, local measurement units, and search keywords that actual shoppers use in each market."
+    question: "Is this just Google Translate with a CSV wrapper?",
+    answer: "No. Buzztate uses marketplace-specific AI that understands how shoppers search on each platform. A German Amazon shopper searches differently to a German Google user. We optimize for marketplace conversion, not just linguistic accuracy.",
   },
   {
-    question: "Can I import the files back to Amazon/Shopify/Etsy?",
-    answer: "Yes. Buzztate exports in the exact format each platform expects. For Amazon, you get a tab-delimited flat file matching Seller Central's import format. For Shopify, a CSV with Handle, Title, Body (HTML), and Tags columns. For Etsy, a CSV matching their bulk edit format. Upload directly — no reformatting needed."
+    question: "Can I upload Etsy listings and get Amazon files?",
+    answer: "Yes — cross-platform conversion is one of our core features. Upload from any supported platform and download files formatted for any other. We even generate missing fields, like creating Amazon bullet points from your Etsy descriptions.",
   },
   {
-    question: "What languages and marketplaces do you support?",
-    answer: "We currently support Amazon Germany (.de), France (.fr), Spain (.es), Italy (.it), and Japan (.co.jp), plus Shopify and Etsy international stores. Languages include German, French, Spanish, Italian, Japanese, Portuguese, Dutch, and many more."
+    question: "What happens to fields like SKU, price, and images?",
+    answer: "They pass through unchanged. We only localize text content — titles, descriptions, bullet points, tags, and keywords. Your SKUs, prices, image URLs, and platform-specific settings are preserved exactly as they are.",
   },
   {
     question: "How is this different from hiring a translator?",
-    answer: "Speed, cost, and marketplace expertise. A human translator charges $50-200 per listing and takes days. Buzztate localizes hundreds of listings in minutes for $49/month. More importantly, most translators don't understand Amazon SEO or marketplace-specific formatting rules — Buzztate does."
+    answer: "Speed and marketplace expertise. A translator gives you accurate language. Buzztate gives you marketplace-optimized listings with the right keywords, character limits, and cultural tone for each platform. Plus it handles 200 listings in minutes, not weeks.",
   },
   {
-    question: "Will my brand name get translated?",
-    answer: "No. Buzztate has a 'Do Not Translate' option for brand names, SKUs, ASINs, UPCs, and other fields that should stay in their original form. You control exactly which columns get localized during the column mapping step."
+    question: "What if I'm on the Free plan?",
+    answer: "You get 5 listings per month into 1 marketplace. Enough to test the quality with your actual products before committing.",
+  },
+  {
+    question: "Can I request a new marketplace?",
+    answer: "Absolutely. We're adding new markets based on seller demand. Use the request form and we'll notify you when your market goes live.",
   },
 ];
 
-const MARKETPLACES = [
-  { name: "Amazon.de", flag: "🇩🇪" },
-  { name: "Amazon.fr", flag: "🇫🇷" },
-  { name: "Amazon.es", flag: "🇪🇸" },
-  { name: "Amazon.it", flag: "🇮🇹" },
-  { name: "Amazon.co.jp", flag: "🇯🇵" },
-  { name: "Shopify", flag: "🛍️" },
-  { name: "Etsy", flag: "🎨" },
+const FIELD_MAPPING_ROWS = [
+  { etsy: "Title", arrow: true, amazon: "item_name (localized)", highlight: true },
+  { etsy: "Description (long form)", arrow: true, amazon: "product_description (localized)", highlight: true },
+  { etsy: "", arrow: true, amazon: "bullet_point1 (generated)", highlight: true },
+  { etsy: "", arrow: true, amazon: "bullet_point2 (generated)", highlight: true },
+  { etsy: "", arrow: true, amazon: "bullet_point3 (generated)", highlight: true },
+  { etsy: "", arrow: true, amazon: "bullet_point4 (generated)", highlight: true },
+  { etsy: "", arrow: true, amazon: "bullet_point5 (generated)", highlight: true },
+  { etsy: "Tags", arrow: true, amazon: "generic_keywords (localized)", highlight: true },
+  { etsy: "SKU", arrow: true, amazon: "sku (pass-through)", highlight: false },
+  { etsy: "Price", arrow: true, amazon: "standard_price (pass-through)", highlight: false },
+];
+
+const MARKET_INSIGHTS = [
+  { flag: "\u{1F1E9}\u{1F1EA}", country: "Germany", insight: "Compound search terms like 'Espressomaschine' rank higher than separated words" },
+  { flag: "\u{1F1EB}\u{1F1F7}", country: "France", insight: "Formal 'vous' address and accent-correct keywords" },
+  { flag: "\u{1F1EA}\u{1F1F8}", country: "Spain", insight: "European Spanish, not Latin American — different search patterns" },
+  { flag: "\u{1F1EE}\u{1F1F9}", country: "Italy", insight: "Lifestyle-driven descriptions that emphasize design and craftsmanship" },
+  { flag: "\u{1F1EF}\u{1F1F5}", country: "Japan", insight: "Detailed specifications and polite keigo language that Japanese shoppers expect" },
 ];
 
 export default function Landing() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
-  const [contactName, setContactName] = useState("");
-  const [contactMsg, setContactMsg] = useState("");
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
@@ -48,18 +67,10 @@ export default function Landing() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleContactSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!contactName || !contactMsg) return;
-    const subject = `Buzztate Inquiry from ${contactName}`;
-    const body = `${contactMsg}\n\n---\nSent via Buzztate Landing Page`;
-    window.location.href = `mailto:teamz@buzztate.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  };
-
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-yellow-400 selection:text-black flex flex-col">
 
-      {/* Navigation */}
+      {/* ============ NAVIGATION ============ */}
       <nav className="w-full border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
           <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
@@ -72,7 +83,7 @@ export default function Landing() {
 
           <div className="hidden md:flex items-center gap-8">
             <button onClick={() => scrollToSection("how-it-works")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">How It Works</button>
-            <button onClick={() => scrollToSection("marketplaces")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Marketplaces</button>
+            <button onClick={() => scrollToSection("platforms")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Platforms</button>
             <button onClick={() => scrollToSection("pricing")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</button>
             <button onClick={() => scrollToSection("faq")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">FAQ</button>
           </div>
@@ -91,16 +102,17 @@ export default function Landing() {
       {/* ============ HERO ============ */}
       <div className="flex-grow flex flex-col items-center justify-start text-center px-6 pt-20 pb-16">
         <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full mb-8">
-          <ShoppingBag size={14} /> Built for Amazon, Shopify & Etsy Sellers
+          <ArrowRightLeft size={14} /> Cross-Platform Listing Localization
         </div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight max-w-5xl">
-          Sell in Every Market. <br />
-          <span className="text-yellow-400">Localize Your Listings in Minutes.</span>
+          One Upload. Every Marketplace. <br />
+          <span className="text-yellow-400">Every Language.</span>
         </h1>
 
         <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-          Upload your Amazon, Shopify, or Etsy listings. Get marketplace-optimized translations that actually convert. Not word-for-word — <strong className="text-white">localized to sell</strong>.
+          Upload your Amazon, Shopify, or Etsy listings. Get localized, marketplace-ready files for 5 international markets.
+          Buzztate doesn't just translate — it <strong className="text-white">converts your listings across platforms</strong> and generates missing fields automatically.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 mb-16">
@@ -112,165 +124,362 @@ export default function Landing() {
           </button>
         </div>
 
-        {/* Marketplace badges */}
-        <div className="flex flex-wrap justify-center gap-3">
-          {MARKETPLACES.map((m) => (
-            <span key={m.name} className="text-xs bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-full text-gray-400 flex items-center gap-2">
-              <span>{m.flag}</span> {m.name}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* ============ PAIN POINT ============ */}
-      <div className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">
-            Google Translate <span className="text-red-400">Loses</span> You Sales
-          </h2>
-          <p className="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
-            See the difference between a literal translation and a marketplace-optimized localization for Amazon Germany.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Bad: Google Translate */}
-            <div className="bg-black border border-red-500/20 rounded-2xl p-8 relative">
-              <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg rounded-tr-2xl uppercase">
-                Google Translate
-              </div>
-              <p className="text-xs text-gray-500 uppercase font-bold mb-2">English Original</p>
-              <p className="text-gray-400 text-sm mb-6 italic">"Premium Stainless Steel Coffee Maker — Brews 12 Cups, Programmable Timer, Keep Warm Function"</p>
-              <p className="text-xs text-red-400 uppercase font-bold mb-2">German (Literal)</p>
-              <p className="text-white text-sm mb-6">"Premium Edelstahl Kaffee Hersteller — Braut 12 Tassen, Programmierbarer Timer, Warm Halten Funktion"</p>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-start gap-2 text-red-400"><X size={14} className="flex-shrink-0 mt-0.5" /> "Kaffee Hersteller" means "coffee manufacturer" — wrong compound noun</div>
-                <div className="flex items-start gap-2 text-red-400"><X size={14} className="flex-shrink-0 mt-0.5" /> "Braut" means "bride" — not "brews"</div>
-                <div className="flex items-start gap-2 text-red-400"><X size={14} className="flex-shrink-0 mt-0.5" /> Missing German search keywords shoppers actually use</div>
-              </div>
+        {/* Animated flow visual */}
+        <div className="w-full max-w-3xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
+            {/* Source */}
+            <div className="bg-gray-900/60 border border-gray-800 rounded-xl px-5 py-3 text-sm">
+              <span className="text-gray-500 text-xs block mb-1">Source</span>
+              <span className="text-white font-bold">Etsy CSV</span>
             </div>
 
-            {/* Good: Buzztate */}
-            <div className="bg-black border border-green-500/20 rounded-2xl p-8 relative">
-              <div className="absolute top-0 right-0 bg-green-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg rounded-tr-2xl uppercase">
-                Buzztate
+            {/* Arrow */}
+            <div className="flex flex-col items-center">
+              <ArrowRight size={20} className="text-yellow-400 hidden md:block" />
+              <ChevronDown size={20} className="text-yellow-400 md:hidden" />
+            </div>
+
+            {/* Buzztate */}
+            <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-xl px-5 py-3 text-sm">
+              <span className="text-yellow-400 font-extrabold">⚡ Buzztate</span>
+            </div>
+
+            {/* Arrow */}
+            <div className="flex flex-col items-center">
+              <ArrowRight size={20} className="text-yellow-400 hidden md:block" />
+              <ChevronDown size={20} className="text-yellow-400 md:hidden" />
+            </div>
+
+            {/* Outputs */}
+            <div className="flex flex-col gap-2">
+              <div className="bg-gray-900/60 border border-gray-800 rounded-lg px-4 py-2 text-xs flex items-center gap-2">
+                <span>🇩🇪</span> <span className="text-gray-300 font-mono">amazon_de.tsv</span>
               </div>
-              <p className="text-xs text-gray-500 uppercase font-bold mb-2">English Original</p>
-              <p className="text-gray-400 text-sm mb-6 italic">"Premium Stainless Steel Coffee Maker — Brews 12 Cups, Programmable Timer, Keep Warm Function"</p>
-              <p className="text-xs text-green-400 uppercase font-bold mb-2">German (Localized for Amazon.de)</p>
-              <p className="text-white text-sm mb-6">"Premium Edelstahl Kaffeemaschine — 12 Tassen, Programmierbare Zeitschaltuhr, Warmhaltefunktion"</p>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-start gap-2 text-green-400"><Check size={14} className="flex-shrink-0 mt-0.5" /> "Kaffeemaschine" — correct German compound noun shoppers search for</div>
-                <div className="flex items-start gap-2 text-green-400"><Check size={14} className="flex-shrink-0 mt-0.5" /> "Warmhaltefunktion" — natural German compound, not awkward word-by-word</div>
-                <div className="flex items-start gap-2 text-green-400"><Check size={14} className="flex-shrink-0 mt-0.5" /> Under Amazon's 200-character title limit, optimized for A9 search</div>
+              <div className="bg-gray-900/60 border border-gray-800 rounded-lg px-4 py-2 text-xs flex items-center gap-2">
+                <span>🇫🇷</span> <span className="text-gray-300 font-mono">amazon_fr.tsv</span>
+              </div>
+              <div className="bg-gray-900/60 border border-gray-800 rounded-lg px-4 py-2 text-xs flex items-center gap-2">
+                <span>🛍️</span> <span className="text-gray-300 font-mono">shopify_it.csv</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ============ HOW IT WORKS ============ */}
-      <div id="how-it-works" className="w-full py-24">
+      {/* ============ SECTION 1: THE PROBLEM ============ */}
+      <div className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">
+            Expanding internationally shouldn't take weeks
+          </h2>
+          <p className="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
+            Three problems every cross-border seller faces.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Card 1 */}
+            <div className="bg-black border border-gray-800 rounded-2xl p-8 hover:border-gray-700 transition-colors">
+              <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-5">
+                <X size={22} className="text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold mb-3">Translation tools miss the point</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Google Translate gives you words. Sellers need marketplace-optimized listings with the right keywords, character limits, and cultural tone for each market.
+              </p>
+            </div>
+
+            {/* Card 2 */}
+            <div className="bg-black border border-gray-800 rounded-2xl p-8 hover:border-gray-700 transition-colors">
+              <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-5">
+                <AlertTriangle size={22} className="text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold mb-3">Every platform has different rules</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Amazon wants 5 bullet points under 500 characters. Etsy wants 13 tags under 20 characters each. Shopify needs SEO meta descriptions at 160 characters. One listing format doesn't fit all.
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div className="bg-black border border-gray-800 rounded-2xl p-8 hover:border-gray-700 transition-colors">
+              <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-5">
+                <RefreshCw size={22} className="text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold mb-3">Cross-platform expansion is manual hell</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Selling on Etsy and want to expand to Amazon? You'd have to rewrite every listing from scratch — different format, different fields, different structure. Until now.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ============ SECTION 2: THREE SUPERPOWERS ============ */}
+      <div className="w-full py-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">
+            Three things Buzztate does that no translation tool can
+          </h2>
+          <p className="text-gray-400 text-center mb-20 max-w-2xl mx-auto">
+            It's not a translator. It's a cross-platform listing converter with built-in localization.
+          </p>
+
+          {/* Superpower 1: Cross-Platform Conversion */}
+          <div className="mb-24">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-yellow-400/10 rounded-xl flex items-center justify-center">
+                <ArrowRightLeft size={20} className="text-yellow-400" />
+              </div>
+              <h3 className="text-2xl font-extrabold">Cross-Platform Conversion</h3>
+            </div>
+            <p className="text-gray-400 mb-8 max-w-3xl leading-relaxed">
+              Upload Etsy listings, download Amazon-ready files. Upload Shopify products, get Etsy-formatted listings. Buzztate automatically maps fields between platforms and generates any missing ones — like creating 5 Amazon bullet points from your Etsy description.
+            </p>
+
+            {/* Field mapping diagram */}
+            <div className="bg-gray-900/30 border border-gray-800 rounded-2xl overflow-hidden max-w-3xl">
+              <div className="grid grid-cols-[1fr_auto_1fr] text-xs font-bold uppercase tracking-wider text-gray-500 border-b border-gray-800">
+                <div className="px-6 py-3">Etsy Listing</div>
+                <div className="px-4 py-3"></div>
+                <div className="px-6 py-3">Amazon Listing (DE)</div>
+              </div>
+              {FIELD_MAPPING_ROWS.map((row, i) => (
+                <div
+                  key={i}
+                  className={`grid grid-cols-[1fr_auto_1fr] text-sm ${
+                    i < FIELD_MAPPING_ROWS.length - 1 ? "border-b border-gray-800/50" : ""
+                  }`}
+                >
+                  <div className={`px-6 py-2.5 ${row.etsy ? "text-gray-400" : "text-gray-700 italic"}`}>
+                    {row.etsy || "—"}
+                  </div>
+                  <div className="px-4 py-2.5 flex items-center">
+                    <ArrowRight size={14} className="text-yellow-400/60" />
+                  </div>
+                  <div className={`px-6 py-2.5 font-mono ${
+                    row.highlight ? "text-yellow-400" : "text-gray-500"
+                  }`}>
+                    {row.amazon}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Superpower 2: Marketplace-Aware Localization */}
+          <div className="mb-24">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-yellow-400/10 rounded-xl flex items-center justify-center">
+                <Globe size={20} className="text-yellow-400" />
+              </div>
+              <h3 className="text-2xl font-extrabold">Marketplace-Aware Localization</h3>
+            </div>
+            <p className="text-gray-400 mb-8 max-w-3xl leading-relaxed">
+              Not word-for-word translation. Buzztate knows that German Amazon shoppers search with compound words, that Japanese listings need 3x more detail, and that French descriptions should feel elegant. Each marketplace gets content optimized for how local shoppers actually search and buy.
+            </p>
+
+            {/* Flag insight cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl">
+              {MARKET_INSIGHTS.map((m) => (
+                <div key={m.country} className="bg-black border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-2xl">{m.flag}</span>
+                    <span className="font-bold text-white text-sm">{m.country}</span>
+                  </div>
+                  <p className="text-xs text-gray-400 leading-relaxed">{m.insight}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Superpower 3: Quality Checks */}
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-yellow-400/10 rounded-xl flex items-center justify-center">
+                <Shield size={20} className="text-yellow-400" />
+              </div>
+              <h3 className="text-2xl font-extrabold">Quality Checks Built In</h3>
+            </div>
+            <p className="text-gray-400 max-w-3xl leading-relaxed">
+              Every localized listing is checked against platform-specific rules. Character limits, required fields, keyword density — Buzztate flags issues before you upload to Seller Central. No more rejected listings or truncated titles.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ============ SECTION 3: HOW IT WORKS ============ */}
+      <div id="how-it-works" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">How It Works</h2>
           <p className="text-gray-400 text-center mb-16 max-w-xl mx-auto">Three steps. CSV in, marketplace-ready files out.</p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-8 rounded-2xl bg-gray-900/30 border border-gray-800">
+            <div className="text-center p-8 rounded-2xl bg-black border border-gray-800">
               <div className="w-16 h-16 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Upload size={28} className="text-yellow-400" />
               </div>
               <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 1</div>
-              <h3 className="text-xl font-bold mb-3">Upload Your Listings</h3>
+              <h3 className="text-xl font-bold mb-3">Upload your listings</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                Export your listings as CSV or Excel from Amazon Seller Central, Shopify, or Etsy. Drop the file into Buzztate.
+                Export from Amazon Seller Central, Shopify Admin, or Etsy — CSV, XLSX, or TSV. Buzztate auto-detects your columns.
               </p>
             </div>
 
-            <div className="text-center p-8 rounded-2xl bg-gray-900/30 border border-gray-800">
+            <div className="text-center p-8 rounded-2xl bg-black border border-gray-800">
               <div className="w-16 h-16 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Globe size={28} className="text-yellow-400" />
               </div>
               <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 2</div>
-              <h3 className="text-xl font-bold mb-3">Pick Target Marketplaces</h3>
+              <h3 className="text-xl font-bold mb-3">Pick your target marketplaces</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                Select Amazon.de, Amazon.fr, Amazon.co.jp, Shopify, Etsy, or any supported marketplace. We know each one's rules.
+                Select any combination: Amazon Germany, France, Spain, Italy, Japan. Plus Shopify and Etsy in any supported language. Localize into multiple markets in a single run.
               </p>
             </div>
 
-            <div className="text-center p-8 rounded-2xl bg-gray-900/30 border border-gray-800">
+            <div className="text-center p-8 rounded-2xl bg-black border border-gray-800">
               <div className="w-16 h-16 bg-yellow-400/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Download size={28} className="text-yellow-400" />
               </div>
               <div className="text-xs text-yellow-400 font-bold uppercase tracking-wider mb-3">Step 3</div>
-              <h3 className="text-xl font-bold mb-3">Download & Upload</h3>
+              <h3 className="text-xl font-bold mb-3">Download marketplace-ready files</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                Download marketplace-ready files in the exact import format. Upload directly to Seller Central, Shopify, or Etsy.
+                Get a ZIP with one file per marketplace, formatted for direct import. Amazon TSV, Shopify CSV, Etsy CSV — each in the exact format the platform expects. Upload and sell.
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ============ MARKETPLACE SUPPORT ============ */}
-      <div id="marketplaces" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
-            We Know Each Marketplace's Rules
-          </h2>
-          <p className="text-gray-400 mb-16 max-w-2xl mx-auto">
-            Character limits, keyword patterns, search behavior, cultural expectations — Buzztate handles it all.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {[
-              { name: "Amazon Germany", locale: "de-DE", flag: "🇩🇪", detail: "Compound nouns, formal 'Sie', TÜV/CE certs, metric units" },
-              { name: "Amazon France", locale: "fr-FR", flag: "🇫🇷", detail: "Accented keywords, elegant copy, 'vous' address, EU formatting" },
-              { name: "Amazon Spain", locale: "es-ES", flag: "🇪🇸", detail: "European Spanish, benefit-driven copy, emotional tone" },
-              { name: "Amazon Italy", locale: "it-IT", flag: "🇮🇹", detail: "Lifestyle descriptions, design emphasis, formal 'Lei'" },
-              { name: "Amazon Japan", locale: "ja-JP", flag: "🇯🇵", detail: "Keigo politeness, katakana brands, exhaustive specs, usage scenarios" },
-              { name: "Shopify", locale: "Multi-market", flag: "🛍️", detail: "Google SEO optimized, HTML descriptions, meta titles & descriptions" },
-              { name: "Etsy", locale: "International", flag: "🎨", detail: "13 tags per listing, artisan tone, story-driven descriptions" },
-            ].map((mp) => (
-              <div key={mp.name} className="bg-black border border-gray-800 rounded-xl p-6 text-left hover:border-gray-700 transition-colors">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-2xl">{mp.flag}</span>
-                  <div>
-                    <h3 className="font-bold text-white text-sm">{mp.name}</h3>
-                    <p className="text-xs text-gray-500">{mp.locale}</p>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-400 leading-relaxed">{mp.detail}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ============ FEATURES GRID ============ */}
+      {/* ============ SECTION 4: BEFORE / AFTER ============ */}
       <div className="w-full py-24">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-8 rounded-2xl bg-gray-900/30 border border-gray-800 hover:border-gray-700 transition-colors">
-              <FileSpreadsheet size={24} className="text-yellow-400 mb-4" />
-              <h3 className="text-lg font-bold mb-2">CSV/Excel Import</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">Upload Amazon flat files, Shopify CSVs, or Etsy exports. Smart column detection maps your data automatically.</p>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">See the difference</h2>
+          <p className="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
+            An Etsy bread bag listing converted and localized for Amazon Germany — with bullet points generated automatically.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Original */}
+            <div className="bg-black border border-gray-800 rounded-2xl p-8">
+              <div className="flex items-center gap-2 mb-6">
+                <span className="text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded-full font-bold uppercase">Original — Etsy English</span>
+              </div>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <span className="text-xs text-gray-600 uppercase font-bold block mb-1">Title</span>
+                  <p className="text-gray-300">Linen Bread Bag - Reusable Baguette & Loaf Storage, Handmade from European Flax, Keeps Bread Fresh 3x Longer, Zero Waste Kitchen</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-600 uppercase font-bold block mb-1">Description</span>
+                  <p className="text-gray-500 text-xs leading-relaxed">Our handmade linen bread bag keeps your artisan bread, baguettes, and sourdough fresh up to 3x longer than plastic. Made from 100% European flax linen, hand-sewn with reinforced seams. Machine washable. Perfect zero-waste gift for bread lovers...</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-600 uppercase font-bold block mb-1">Tags</span>
+                  <p className="text-gray-500 text-xs">bread bag, linen bag, reusable bread storage, baguette bag, sourdough keeper, zero waste kitchen...</p>
+                </div>
+                <div className="text-xs text-gray-700 italic pt-2 border-t border-gray-800/50">No bullet points — Etsy doesn't use them</div>
+              </div>
             </div>
-            <div className="p-8 rounded-2xl bg-gray-900/30 border border-gray-800 hover:border-gray-700 transition-colors">
-              <Shield size={24} className="text-yellow-400 mb-4" />
-              <h3 className="text-lg font-bold mb-2">Quality Checks</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">Every localized listing is checked against marketplace character limits. Flags fields that are too long, too short, or empty.</p>
-            </div>
-            <div className="p-8 rounded-2xl bg-gray-900/30 border border-gray-800 hover:border-gray-700 transition-colors">
-              <Zap size={24} className="text-yellow-400 mb-4" />
-              <h3 className="text-lg font-bold mb-2">Marketplace-Format Export</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">Download in the exact format each platform expects — Amazon TSV, Shopify CSV, Etsy CSV, or XLSX with quality report.</p>
+
+            {/* Localized */}
+            <div className="bg-black border border-yellow-400/30 rounded-2xl p-8 relative">
+              <div className="absolute top-0 right-0 bg-yellow-400 text-black text-[10px] font-extrabold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wider">BUZZTATE</div>
+              <div className="flex items-center gap-2 mb-6">
+                <span className="text-xs bg-yellow-400/10 text-yellow-400 px-3 py-1 rounded-full font-bold uppercase">Localized — Amazon Germany</span>
+              </div>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <span className="text-xs text-yellow-400/60 uppercase font-bold block mb-1 font-mono">item_name</span>
+                  <p className="text-white">Leinen Brottasche - Wiederverwendbare Baguette- & Laiblagerung, Handgefertigt aus Europäischem Flachs</p>
+                </div>
+                <div>
+                  <span className="text-xs text-yellow-400/60 uppercase font-bold block mb-1 font-mono">bullet_point1</span>
+                  <p className="text-yellow-400 text-xs">Hält Brot bis zu 3x länger frisch als Plastikverpackung — natürliche Luftzirkulation durch Leinengewebe</p>
+                </div>
+                <div>
+                  <span className="text-xs text-yellow-400/60 uppercase font-bold block mb-1 font-mono">bullet_point2</span>
+                  <p className="text-yellow-400 text-xs">100% europäisches Flachsleinen — handgenäht mit verstärkten Nähten für jahrelange Haltbarkeit</p>
+                </div>
+                <div>
+                  <span className="text-xs text-yellow-400/60 uppercase font-bold block mb-1 font-mono">bullet_point3</span>
+                  <p className="text-yellow-400 text-xs">Maschinenwaschbar bei 30°C — pflegeleicht und hygienisch</p>
+                </div>
+                <div>
+                  <span className="text-xs text-yellow-400/60 uppercase font-bold block mb-1 font-mono">generic_keywords</span>
+                  <p className="text-gray-400 text-xs">Brottasche Leinen, Brotbeutel wiederverwendbar, Baguettetasche, Brotaufbewahrung...</p>
+                </div>
+              </div>
+              <div className="mt-6 pt-4 border-t border-gray-800/50">
+                <p className="text-xs text-green-400 flex items-center gap-1.5">
+                  <Check size={12} /> Bullet points generated from description. Ready for Seller Central import.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ============ PRICING ============ */}
-      <div id="pricing" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
+      {/* ============ SECTION 5: SUPPORTED PLATFORMS ============ */}
+      <div id="platforms" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-16">Supported Platforms</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-8 md:gap-12 items-start max-w-4xl mx-auto">
+            {/* Upload From */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-6">Upload From</h3>
+              <div className="space-y-3">
+                {[
+                  { icon: ShoppingBag, name: "Amazon", formats: ".csv / .tsv" },
+                  { icon: FileSpreadsheet, name: "Shopify", formats: ".csv" },
+                  { icon: Globe, name: "Etsy", formats: ".csv" },
+                ].map((p) => (
+                  <div key={p.name} className="flex items-center gap-3 bg-black border border-gray-800 rounded-xl px-5 py-4">
+                    <p.icon size={18} className="text-gray-500" />
+                    <span className="font-bold text-white text-sm">{p.name}</span>
+                    <span className="text-xs text-gray-600 ml-auto font-mono">{p.formats}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <div className="hidden md:flex items-center justify-center h-full pt-10">
+              <ArrowRight size={24} className="text-yellow-400" />
+            </div>
+            <div className="md:hidden flex justify-center">
+              <ChevronDown size={24} className="text-yellow-400" />
+            </div>
+
+            {/* Localize To */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-6">Localize To</h3>
+              <div className="space-y-3">
+                {[
+                  { flag: "🇩🇪", name: "Amazon Germany" },
+                  { flag: "🇫🇷", name: "Amazon France" },
+                  { flag: "🇪🇸", name: "Amazon Spain" },
+                  { flag: "🇮🇹", name: "Amazon Italy" },
+                  { flag: "🇯🇵", name: "Amazon Japan" },
+                  { flag: "🛍️", name: "Shopify (any language)" },
+                  { flag: "🎨", name: "Etsy (any language)" },
+                ].map((m) => (
+                  <div key={m.name} className="flex items-center gap-3 bg-black border border-gray-800 rounded-xl px-5 py-3">
+                    <span className="text-lg">{m.flag}</span>
+                    <span className="text-sm text-gray-300">{m.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <p className="text-center text-sm text-gray-600 mt-10">
+            More marketplaces coming soon — <a href="mailto:teamz@buzztate.com?subject=Marketplace%20Request&body=I%27d%20like%20to%20request%20support%20for%3A%20" className="text-yellow-400/70 hover:text-yellow-400 underline underline-offset-2 transition-colors">request yours</a>.
+          </p>
+        </div>
+      </div>
+
+      {/* ============ SECTION 6: PRICING ============ */}
+      <div id="pricing" className="w-full py-24">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">Simple, Transparent Pricing</h2>
           <p className="text-gray-400 text-center mb-16">Start free. Upgrade when you're ready to scale.</p>
@@ -309,79 +518,51 @@ export default function Landing() {
               </Link>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Supported Marketplaces */}
-          <div className="mt-16 text-center">
-            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-6">Supported Marketplaces</h3>
-            <div className="flex flex-wrap justify-center gap-4 mb-4">
-              {[
-                { flag: "\u{1F1E9}\u{1F1EA}", name: "Amazon Germany" },
-                { flag: "\u{1F1EB}\u{1F1F7}", name: "Amazon France" },
-                { flag: "\u{1F1EA}\u{1F1F8}", name: "Amazon Spain" },
-                { flag: "\u{1F1EE}\u{1F1F9}", name: "Amazon Italy" },
-                { flag: "\u{1F1EF}\u{1F1F5}", name: "Amazon Japan" },
-              ].map((mp) => (
-                <span key={mp.name} className="flex items-center gap-2 bg-gray-900 border border-gray-800 px-4 py-2 rounded-full text-sm text-gray-300">
-                  <span className="text-lg">{mp.flag}</span> {mp.name}
-                </span>
-              ))}
-            </div>
-            <p className="text-sm text-gray-600 mt-4">
-              More marketplaces coming soon — <a href="mailto:teamz@buzztate.com?subject=Marketplace%20Request&body=I%27d%20like%20to%20request%20support%20for%3A%20" className="text-yellow-400/70 hover:text-yellow-400 underline underline-offset-2 transition-colors">request yours</a>.
-            </p>
+      {/* ============ SECTION 7: FAQ ============ */}
+      <div id="faq" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
+        <div className="max-w-4xl mx-auto px-6">
+          <h2 className="text-3xl font-bold mb-10 text-center">Frequently Asked Questions</h2>
+          <div className="space-y-4">
+            {FAQS.map((faq, index) => {
+              const isOpen = openFaqIndex === index;
+              return (
+                <div key={index} className="bg-black rounded-xl border border-gray-800 transition-all duration-300 hover:border-gray-700">
+                  <button
+                    onClick={() => toggleFaq(index)}
+                    className="w-full flex justify-between items-center p-6 text-left cursor-pointer focus:outline-none"
+                  >
+                    <span className="font-bold text-lg pr-4">{faq.question}</span>
+                    <span className={`transition-transform duration-300 text-yellow-400 flex-shrink-0 ${isOpen ? "rotate-180" : ""}`}>
+                      <ChevronDown />
+                    </span>
+                  </button>
+                  <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                    <div className="overflow-hidden">
+                      <div className="px-6 pb-6 text-gray-400 leading-relaxed">
+                        {faq.answer}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* ============ FAQ ============ */}
-      <div id="faq" className="max-w-4xl mx-auto px-6 py-24">
-        <h2 className="text-3xl font-bold mb-10 text-center">Frequently Asked Questions</h2>
-        <div className="space-y-4">
-          {FAQS.map((faq, index) => {
-            const isOpen = openFaqIndex === index;
-            return (
-              <div key={index} className="bg-gray-900/50 rounded-xl border border-gray-800 transition-all duration-300 hover:border-gray-700">
-                <button
-                  onClick={() => toggleFaq(index)}
-                  className="w-full flex justify-between items-center p-6 text-left cursor-pointer focus:outline-none"
-                >
-                  <span className="font-bold text-lg">{faq.question}</span>
-                  <span className={`transition-transform duration-300 text-yellow-400 ${isOpen ? "rotate-180" : ""}`}>
-                    <ChevronDown />
-                  </span>
-                </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-                  <div className="overflow-hidden">
-                    <div className="px-6 pb-6 text-gray-400 leading-relaxed">
-                      {faq.answer}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ============ CONTACT ============ */}
-      <div id="contact" className="bg-gray-900 py-24 border-t border-gray-800">
+      {/* ============ SECTION 8: FINAL CTA ============ */}
+      <div className="w-full py-24">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold mb-4">Get in Touch</h2>
-          <p className="text-gray-400 mb-10">Questions about Buzztate or custom marketplace support?</p>
-
-          <form onSubmit={handleContactSubmit} className="bg-black p-8 rounded-2xl border border-gray-800 text-left space-y-4 shadow-xl">
-            <div>
-              <label className="text-xs font-bold uppercase text-gray-500 mb-2 block">Your Name</label>
-              <input type="text" value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Jane Doe" className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none" />
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase text-gray-500 mb-2 block">Message</label>
-              <textarea value={contactMsg} onChange={(e) => setContactMsg(e.target.value)} placeholder="I sell on Amazon EU and want to localize 500 listings..." rows={4} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-400 outline-none resize-none" />
-            </div>
-            <button type="submit" className="w-full bg-white hover:bg-gray-200 text-black font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
-              <Mail size={18} /> Send Message
-            </button>
-          </form>
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
+            Your listings. Every market. <span className="text-yellow-400">Ready in minutes.</span>
+          </h2>
+          <p className="text-gray-400 text-lg mb-10">No credit card required.</p>
+          <Link href="/auth?mode=signup" className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black px-10 py-5 rounded-xl font-extrabold text-lg transition-all shadow-[0_0_30px_rgba(250,204,21,0.2)]">
+            Try Free — 5 Listings <ArrowRight size={20} />
+          </Link>
         </div>
       </div>
 
@@ -399,9 +580,9 @@ export default function Landing() {
           <div>
             <span className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Amazon Markets</span>
             <ul className="space-y-3">
-              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Germany (.de)</Link></li>
+              <li><Link href="/amazon-de-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Germany (.de)</Link></li>
               <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon France (.fr)</Link></li>
-              <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Japan (.co.jp)</Link></li>
+              <li><Link href="/amazon-jp-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Japan (.co.jp)</Link></li>
               <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Spain (.es)</Link></li>
               <li><Link href="/amazon-listing-translation" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Amazon Italy (.it)</Link></li>
             </ul>
@@ -411,7 +592,7 @@ export default function Landing() {
             <ul className="space-y-3">
               <li><button onClick={() => scrollToSection("pricing")} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Pricing</button></li>
               <li><button onClick={() => scrollToSection("faq")} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">FAQ</button></li>
-              <li><button onClick={() => scrollToSection("contact")} className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Contact Us</button></li>
+              <li><a href="mailto:teamz@buzztate.com" className="text-gray-500 hover:text-yellow-400 text-sm transition-colors">Contact Us</a></li>
             </ul>
           </div>
         </div>
@@ -420,7 +601,7 @@ export default function Landing() {
           <p className="text-sm text-gray-500 mb-2">
             Need help? <a href="mailto:teamz@buzztate.com" className="text-yellow-400 hover:underline transition-colors">teamz@buzztate.com</a>
           </p>
-          <p className="text-xs text-gray-600 mt-2">© 2026 Buzztate. All rights reserved.</p>
+          <p className="text-xs text-gray-600 mt-2">&copy; 2026 Buzztate. All rights reserved.</p>
         </div>
       </footer>
     </div>
