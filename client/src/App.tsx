@@ -5,6 +5,7 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { supabase } from "@/lib/supabase";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import NetworkStatus from "@/components/NetworkStatus";
 
 // Pages
 import Home from "@/pages/home";
@@ -103,6 +104,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
+        <NetworkStatus />
         <Router />
         <Toaster />
       </QueryClientProvider>

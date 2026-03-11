@@ -234,6 +234,11 @@ export default async function handler(req: any, res: any) {
 /**
  * Localize a single listing via OpenAI.
  */
+/** Max retries for a single OpenAI call */
+const OPENAI_MAX_RETRIES = 2;
+/** Per-listing timeout in ms */
+const OPENAI_TIMEOUT_MS = 30_000;
+
 async function localizeSingleListing(
   listing: ParsedListing,
   marketplace: typeof MARKETPLACE_PROFILES[string],
@@ -244,25 +249,69 @@ async function localizeSingleListing(
   const userPrompt = buildLocalizationPrompt(marketplace, listing, targetLanguage);
   const systemMsg = buildSystemMessage(marketplace);
 
-  const completion = await openai.chat.completions.create({
-    messages: [
-      { role: "system", content: systemMsg },
-      { role: "user", content: userPrompt },
-    ],
-    model: "gpt-4o-mini",
-    response_format: { type: "json_object" },
-  });
+  let localized: LocalizedListing = { title: "", description: "" };
+  const qualityFlagsExtra: QualityFlag[] = [];
 
-  const raw = completion.choices[0].message.content || "{}";
-  let localized: LocalizedListing;
+  for (let attempt = 0; attempt <= OPENAI_MAX_RETRIES; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
 
-  try {
-    localized = JSON.parse(raw);
-  } catch {
-    localized = {
-      title: "",
-      description: "",
-    };
+      const completion = await openai.chat.completions.create(
+        {
+          messages: [
+            { role: "system", content: systemMsg },
+            { role: "user", content: userPrompt },
+          ],
+          model: "gpt-4o-mini",
+          response_format: { type: "json_object" },
+        },
+        { signal: controller.signal as any }
+      );
+
+      clearTimeout(timeout);
+
+      const raw = completion.choices[0].message.content || "{}";
+
+      try {
+        localized = JSON.parse(raw);
+      } catch {
+        localized = { title: "", description: "" };
+      }
+
+      // Success — break out of retry loop
+      break;
+    } catch (err: any) {
+      const isRateLimit = err?.status === 429;
+      const isTimeout = err?.name === "AbortError" || err?.code === "ETIMEDOUT";
+      const isContentFilter = err?.code === "content_filter";
+
+      if (isContentFilter) {
+        qualityFlagsExtra.push({
+          field: "title",
+          issue: "content_filter",
+          detail: "This listing couldn't be localized due to content restrictions. Please review the original text.",
+        });
+        break;
+      }
+
+      if ((isRateLimit || isTimeout) && attempt < OPENAI_MAX_RETRIES) {
+        // Wait before retrying: 2s for rate limit, 1s for timeout
+        await new Promise(r => setTimeout(r, isRateLimit ? 2000 : 1000));
+        continue;
+      }
+
+      // Final attempt failed — log and return empty result with a flag
+      console.error(`OpenAI error for listing ${index} (attempt ${attempt + 1}):`, err?.message || err);
+      if (attempt === OPENAI_MAX_RETRIES) {
+        qualityFlagsExtra.push({
+          field: "title",
+          issue: "api_error",
+          detail: "This listing could not be localized. Please retry.",
+        });
+      }
+      break;
+    }
   }
 
   // Ensure required fields exist
@@ -279,7 +328,10 @@ async function localizeSingleListing(
   }
 
   // Run quality checks
-  const qualityFlags = checkListingQuality(localized, marketplace, listing);
+  const qualityFlags = [
+    ...checkListingQuality(localized, marketplace, listing),
+    ...qualityFlagsExtra,
+  ];
 
   return {
     sourceRow: listing.sourceRow ?? index,

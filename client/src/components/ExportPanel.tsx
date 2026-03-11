@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Download, FileSpreadsheet, AlertTriangle, Check, ChevronDown } from "lucide-react";
+import { Download, FileSpreadsheet, AlertTriangle, Check, ChevronDown, Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import type { LocalizationResultItem, QualityFlag } from "@shared/schema";
 import { MARKETPLACE_PROFILES } from "../../../lib/marketplace-profiles";
 import {
@@ -121,8 +122,18 @@ export default function ExportPanel({
       link.download = filename;
       link.click();
       URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download started",
+        description: `${filename} is downloading.`,
+      });
     } catch (err) {
       console.error("Export failed:", err);
+      toast({
+        title: "Export failed",
+        description: "Something went wrong while preparing your download. Please try again.",
+        variant: "destructive",
+      });
     }
     setExporting(false);
   };
@@ -147,8 +158,8 @@ export default function ExportPanel({
             disabled={exporting || results.length === 0}
             className="bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-all"
           >
-            <Download size={14} />
-            {exporting ? "Exporting..." : "Download"}
+            {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+            {exporting ? "Preparing..." : "Download"}
           </button>
         </div>
       </div>

@@ -111,7 +111,7 @@ export interface LocalizedListing {
 /** Quality flag for a single field in a localized listing */
 export interface QualityFlag {
   field: string;
-  issue: "exceeded_limit" | "empty" | "suspiciously_short";
+  issue: "exceeded_limit" | "empty" | "suspiciously_short" | "content_filter" | "api_error";
   detail: string;
 }
 

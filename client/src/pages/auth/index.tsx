@@ -1,19 +1,34 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Mail, Lock, ArrowRight, CheckCircle, ArrowLeft } from "lucide-react"; // ✅ Added ArrowLeft
+import { Loader2, Mail, Lock, ArrowRight, CheckCircle, ArrowLeft, AlertCircle } from "lucide-react";
+
+/** Map common Supabase error messages to user-friendly text */
+function friendlyAuthError(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("invalid login credentials")) return "Invalid email or password. Please try again.";
+  if (lower.includes("email not confirmed")) return "Please check your email to confirm your account before logging in.";
+  if (lower.includes("user already registered")) return "An account with this email already exists. Try logging in instead.";
+  if (lower.includes("password should be at least")) return "Password must be at least 6 characters.";
+  if (lower.includes("email rate limit")) return "Too many attempts. Please wait a minute and try again.";
+  if (lower.includes("signup is disabled")) return "Signups are currently disabled. Please try again later.";
+  if (lower.includes("network") || lower.includes("fetch")) return "We're having trouble connecting. Please check your internet and try again.";
+  return message;
+}
 
 export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   // Modes: 'login' | 'signup' | 'forgot'
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>("login");
   const [resetSent, setResetSent] = useState(false);
   const [, setLocation] = useLocation();
 
-  // ✅ NEW: Read URL parameters to set initial mode (e.g. ?mode=signup)
+  // Read URL parameters to set initial mode (e.g. ?mode=signup)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlMode = params.get("mode");
@@ -22,9 +37,16 @@ export default function AuthPage() {
     }
   }, []);
 
+  // Clear error when mode changes
+  useEffect(() => {
+    setError(null);
+    setSignupSuccess(false);
+  }, [mode]);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       if (mode === "login") {
@@ -33,17 +55,17 @@ export default function AuthPage() {
           password,
         });
         if (error) throw error;
-        setLocation("/app"); // Redirect to app on success
+        setLocation("/app");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
           password,
         });
         if (error) throw error;
-        alert("Check your email for the confirmation link!");
+        setSignupSuccess(true);
       }
     } catch (error: any) {
-      alert(error.message);
+      setError(friendlyAuthError(error.message || "Something went wrong. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -51,11 +73,14 @@ export default function AuthPage() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return alert("Please enter your email address.");
+    if (!email) {
+      setError("Please enter your email address.");
+      return;
+    }
 
     setLoading(true);
+    setError(null);
     try {
-      // ✅ Sends a password reset email
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + "/app",
       });
@@ -63,7 +88,7 @@ export default function AuthPage() {
       if (error) throw error;
       setResetSent(true);
     } catch (error: any) {
-      alert(error.message);
+      setError(friendlyAuthError(error.message || "Could not send reset email. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -93,8 +118,33 @@ export default function AuthPage() {
           </p>
         </div>
 
-        {/* ---------------- FORGOT PASSWORD VIEW ---------------- */}
-        {mode === 'forgot' ? (
+        {/* Inline error message */}
+        {error && (
+          <div className="mb-6 flex items-start gap-2.5 text-red-300 text-sm bg-red-400/5 border border-red-400/20 rounded-xl p-3">
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5 text-red-400" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* ---------------- SIGNUP SUCCESS VIEW ---------------- */}
+        {signupSuccess ? (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle size={32} />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Check your email</h3>
+            <p className="text-gray-400 text-sm mb-6">
+              We've sent a confirmation link to <strong>{email}</strong>. Please confirm your email to get started.
+            </p>
+            <button
+              onClick={() => { setMode('login'); setSignupSuccess(false); }}
+              className="text-yellow-400 font-bold hover:underline"
+            >
+              Back to Log In
+            </button>
+          </div>
+        ) : mode === 'forgot' ? (
+          /* ---------------- FORGOT PASSWORD VIEW ---------------- */
           resetSent ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -104,7 +154,7 @@ export default function AuthPage() {
               <p className="text-gray-400 text-sm mb-6">
                 We've sent a password reset link to <strong>{email}</strong>.
               </p>
-              <button 
+              <button
                 onClick={() => { setMode('login'); setResetSent(false); }}
                 className="text-yellow-400 font-bold hover:underline"
               >
@@ -131,13 +181,13 @@ export default function AuthPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 mt-4"
+                className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
               >
                 {loading ? <Loader2 className="animate-spin" size={20} /> : "Send Reset Link"}
               </button>
 
               <div className="text-center mt-6">
-                <button 
+                <button
                   type="button"
                   onClick={() => setMode("login")}
                   className="text-sm text-gray-500 hover:text-white transition-colors font-medium"
@@ -159,7 +209,7 @@ export default function AuthPage() {
                   placeholder="name@example.com"
                   className="w-full bg-black/50 border border-gray-700 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-600 focus:border-yellow-400 outline-none transition-all"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setError(null); }}
                   required
                 />
               </div>
@@ -168,9 +218,8 @@ export default function AuthPage() {
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</label>
-                {/* ✅ FORGOT PASSWORD LINK */}
                 {mode === 'login' && (
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setMode('forgot')}
                     className="text-xs text-yellow-400 hover:text-yellow-300 font-bold transition-colors"
@@ -186,7 +235,7 @@ export default function AuthPage() {
                   placeholder="••••••••"
                   className="w-full bg-black/50 border border-gray-700 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-600 focus:border-yellow-400 outline-none transition-all"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setError(null); }}
                   required
                 />
               </div>
@@ -195,7 +244,7 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-yellow-400 text-black font-extrabold py-3.5 rounded-xl hover:bg-yellow-300 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.2)] mt-2"
+              className="w-full bg-yellow-400 text-black font-extrabold py-3.5 rounded-xl hover:bg-yellow-300 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.2)] mt-2 disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 className="animate-spin" size={20} />

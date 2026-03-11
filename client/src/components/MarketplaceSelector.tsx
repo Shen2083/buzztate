@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Globe, ShoppingBag, Store, Lock } from "lucide-react";
+import { Check, Globe, ShoppingBag, Store, Lock, Zap } from "lucide-react";
 import { MARKETPLACE_PROFILES, type MarketplaceId } from "../../../lib/marketplace-profiles";
 
 /** The first marketplace is free; the rest require Plus */
@@ -59,6 +59,7 @@ export default function MarketplaceSelector({
   isPro = false,
 }: MarketplaceSelectorProps) {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [showLockedHint, setShowLockedHint] = useState(false);
 
   const availableLanguages = selectedMarketplace
     ? MARKETPLACE_LANGUAGES[selectedMarketplace] || []
@@ -67,7 +68,11 @@ export default function MarketplaceSelector({
   const isMarketplaceLocked = (id: MarketplaceId) => !isPro && id !== FREE_MARKETPLACE;
 
   const handleMarketplaceSelect = (id: MarketplaceId) => {
-    if (isMarketplaceLocked(id)) return;
+    if (isMarketplaceLocked(id)) {
+      setShowLockedHint(true);
+      setTimeout(() => setShowLockedHint(false), 3000);
+      return;
+    }
     onSelect(id);
     // Auto-select the first (or only) language for this marketplace
     const langs = MARKETPLACE_LANGUAGES[id] || [];
@@ -85,6 +90,13 @@ export default function MarketplaceSelector({
         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">
           Target Marketplace
         </label>
+
+        {showLockedHint && (
+          <div className="mb-3 flex items-center gap-2 text-xs bg-yellow-400/10 border border-yellow-400/20 rounded-lg p-2.5 text-yellow-300 animate-in fade-in">
+            <Zap size={12} className="text-yellow-400 flex-shrink-0" />
+            <span>Upgrade to Plus to localize into all marketplaces.</span>
+          </div>
+        )}
 
         <div className="space-y-2">
           {MARKETPLACE_GROUPS.map((group) => {
