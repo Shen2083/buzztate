@@ -1,6 +1,130 @@
 import type { LocalizationResultItem, ParsedListing, LocalizedListing } from "../shared/schema";
 import type { MarketplaceProfile } from "./marketplace-profiles";
 
+// ---- Source platform detection ----
+
+type SourcePlatform = "amazon" | "shopify" | "etsy" | "unknown";
+
+function detectSourcePlatform(headers: string[]): SourcePlatform {
+  const lower = new Set(headers.map(h => h.toLowerCase().trim()));
+  if (lower.has("listing id") || lower.has("who made") || lower.has("when made")) return "etsy";
+  if (lower.has("body (html)") || lower.has("handle") || lower.has("variant sku")) return "shopify";
+  if (lower.has("item_name") || lower.has("bullet_point1") || lower.has("product_description")) return "amazon";
+  return "unknown";
+}
+
+/** Case-insensitive lookup of a value in an original row */
+function findValueCI(row: Record<string, string>, targetColumn: string): string | undefined {
+  const lower = targetColumn.toLowerCase();
+  for (const [key, val] of Object.entries(row)) {
+    if (key.toLowerCase().trim() === lower) return val;
+  }
+  return undefined;
+}
+
+// ---- Escaping helpers ----
+
+function csvEscape(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n") || value.includes("\r")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function tsvEscape(value: string): string {
+  if (value.includes("\t") || value.includes("\n") || value.includes("\r") || value.includes('"')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // strip diacritics
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .substring(0, 100);
+}
+
+// ---- Amazon column definitions ----
+
+/** Translatable Amazon columns and how to populate them from localized results */
+const AMAZON_TRANSLATABLE: Record<string, (r: LocalizationResultItem) => string> = {
+  item_name: (r) => r.localized.title,
+  product_description: (r) => r.localized.description,
+  bullet_point1: (r) => r.localized.bullet_points?.[0] || "",
+  bullet_point2: (r) => r.localized.bullet_points?.[1] || "",
+  bullet_point3: (r) => r.localized.bullet_points?.[2] || "",
+  bullet_point4: (r) => r.localized.bullet_points?.[3] || "",
+  bullet_point5: (r) => r.localized.bullet_points?.[4] || "",
+  generic_keyword: (r) => r.localized.keywords || "",
+};
+
+/** Canonical Amazon Seller Central columns for cross-platform export */
+const AMAZON_STANDARD_COLUMNS = [
+  "sku", "brand_name", "item_name", "product_description",
+  "bullet_point1", "bullet_point2", "bullet_point3", "bullet_point4", "bullet_point5",
+  "generic_keyword", "standard_price",
+];
+
+/** Map source platform columns → Amazon non-translatable columns (case-insensitive keys) */
+const PASSTHROUGH_TO_AMAZON: Record<string, [string, string][]> = {
+  etsy: [["sku", "sku"], ["price", "standard_price"]],
+  shopify: [["variant sku", "sku"], ["variant price", "standard_price"], ["vendor", "brand_name"]],
+  unknown: [],
+};
+
+// ---- Shopify column definitions ----
+
+/** Shopify translatable columns and how to populate them */
+const SHOPIFY_TRANSLATABLE: Record<string, (r: LocalizationResultItem) => string> = {
+  "handle": (r) => slugify(r.localized.title || r.original.title),
+  "title": (r) => r.localized.title,
+  "body (html)": (r) => r.localized.description,
+  "tags": (r) => r.localized.keywords || "",
+  "seo title": (r) => r.localized.seo_meta_title || "",
+  "seo description": (r) => r.localized.seo_meta_description || "",
+};
+
+/** Minimal Shopify columns for cross-platform export */
+const SHOPIFY_CROSS_PLATFORM_COLUMNS = [
+  "Handle", "Title", "Body (HTML)", "Vendor", "Type", "Tags", "Published",
+  "Variant SKU", "Variant Price", "Image Src", "Image Alt Text",
+  "SEO Title", "SEO Description", "Status",
+];
+
+const PASSTHROUGH_TO_SHOPIFY: Record<string, [string, string][]> = {
+  etsy: [["sku", "variant sku"], ["price", "variant price"], ["image url 1", "image src"]],
+  amazon: [["sku", "variant sku"], ["standard_price", "variant price"], ["brand_name", "vendor"]],
+  unknown: [],
+};
+
+// ---- Etsy column definitions ----
+
+/** Etsy translatable columns */
+const ETSY_TRANSLATABLE: Record<string, (r: LocalizationResultItem) => string> = {
+  "title": (r) => r.localized.title,
+  "description": (r) => r.localized.description,
+  "tags": (r) => r.localized.keywords || "",
+};
+
+/** Minimal Etsy columns for cross-platform export */
+const ETSY_CROSS_PLATFORM_COLUMNS = [
+  "Title", "Description", "Tags", "Price", "Currency Code", "Quantity", "SKU",
+];
+
+const PASSTHROUGH_TO_ETSY: Record<string, [string, string][]> = {
+  shopify: [["variant sku", "sku"], ["variant price", "price"]],
+  amazon: [["sku", "sku"], ["standard_price", "price"]],
+  unknown: [],
+};
+
+// ==============================================================
+// Export functions
+// ==============================================================
+
 /**
  * Generate a generic side-by-side CSV with original + localized columns.
  */
@@ -8,7 +132,6 @@ export function exportGenericCSV(
   results: LocalizationResultItem[],
   targetLanguage: string
 ): string {
-  // Always include exactly 5 bullet point pairs for consistent CSV structure
   const BULLET_COUNT = 5;
 
   const headers = [
@@ -50,79 +173,83 @@ export function exportGenericCSV(
 
 /**
  * Generate an Amazon Seller Central flat file (tab-delimited).
+ * Handles both same-platform and cross-platform exports.
  */
 export function exportAmazonFlatFile(
   results: LocalizationResultItem[],
   originalRows: Record<string, string>[]
 ): string {
-  if (originalRows.length === 0) return "";
+  if (results.length === 0) return "";
 
-  const headers = Object.keys(originalRows[0]);
+  const sourceHeaders = originalRows.length > 0 ? Object.keys(originalRows[0]) : [];
+  const sourcePlatform = detectSourcePlatform(sourceHeaders);
 
-  // Map of internal field → Amazon column names
-  const fieldToAmazon: Record<string, string> = {
-    title: "item_name",
-    description: "product_description",
-    "bullet_points.0": "bullet_point1",
-    "bullet_points.1": "bullet_point2",
-    "bullet_points.2": "bullet_point3",
-    "bullet_points.3": "bullet_point4",
-    "bullet_points.4": "bullet_point5",
-    keywords: "generic_keyword",
-  };
+  if (sourcePlatform === "amazon" && sourceHeaders.length > 0) {
+    // Same-platform: preserve ALL original columns, replace translatable ones
+    return exportSamePlatformTSV(results, originalRows, sourceHeaders, AMAZON_TRANSLATABLE);
+  }
+
+  // Cross-platform: generate Amazon format columns
+  const headers = AMAZON_STANDARD_COLUMNS;
+  const passthroughPairs = PASSTHROUGH_TO_AMAZON[sourcePlatform] || [];
 
   const rows = results.map((r) => {
     const originalRow = originalRows[r.sourceRow] || {};
-    const row = { ...originalRow };
 
-    // Overwrite translatable fields with localized values
-    for (const [field, amazonCol] of Object.entries(fieldToAmazon)) {
-      if (!(amazonCol in row)) continue;
-
-      if (field === "title") {
-        row[amazonCol] = r.localized.title;
-      } else if (field === "description") {
-        row[amazonCol] = r.localized.description;
-      } else if (field === "keywords") {
-        row[amazonCol] = r.localized.keywords || "";
-      } else if (field.startsWith("bullet_points.")) {
-        const idx = parseInt(field.split(".")[1], 10);
-        row[amazonCol] = r.localized.bullet_points?.[idx] || "";
-      }
+    // Build passthrough lookup: amazonCol → value
+    const passthrough: Record<string, string> = {};
+    for (const [sourceCol, amazonCol] of passthroughPairs) {
+      const val = findValueCI(originalRow, sourceCol);
+      if (val !== undefined) passthrough[amazonCol] = val;
     }
 
-    return headers.map((h) => row[h] || "");
+    return headers.map((h) => {
+      const getter = AMAZON_TRANSLATABLE[h];
+      if (getter) return tsvEscape(getter(r));
+      return tsvEscape(passthrough[h] || "");
+    });
   });
 
-  // Tab-delimited
   return [headers.join("\t"), ...rows.map((r) => r.join("\t"))].join("\n");
 }
 
 /**
  * Generate a Shopify-compatible CSV export.
+ * Handles both same-platform (all columns preserved) and cross-platform exports.
  */
 export function exportShopifyCSV(
-  results: LocalizationResultItem[]
+  results: LocalizationResultItem[],
+  originalRows: Record<string, string>[]
 ): string {
-  const headers = [
-    "Handle",
-    "Title",
-    "Body (HTML)",
-    "Tags",
-    "SEO Title",
-    "SEO Description",
-  ];
+  if (results.length === 0) return "";
+
+  const sourceHeaders = originalRows.length > 0 ? Object.keys(originalRows[0]) : [];
+  const sourcePlatform = detectSourcePlatform(sourceHeaders);
+
+  if (sourcePlatform === "shopify" && sourceHeaders.length > 0) {
+    // Same-platform: preserve ALL original columns, replace translatable ones
+    return exportSamePlatformCSV(results, originalRows, sourceHeaders, SHOPIFY_TRANSLATABLE);
+  }
+
+  // Cross-platform: generate Shopify format columns
+  const headers = SHOPIFY_CROSS_PLATFORM_COLUMNS;
+  const passthroughPairs = PASSTHROUGH_TO_SHOPIFY[sourcePlatform] || [];
 
   const rows = results.map((r) => {
-    const handle = slugify(r.localized.title || r.original.title);
-    return [
-      csvEscape(handle),
-      csvEscape(r.localized.title),
-      csvEscape(r.localized.description),
-      csvEscape(r.localized.keywords || ""),
-      csvEscape(r.localized.seo_meta_title || ""),
-      csvEscape(r.localized.seo_meta_description || ""),
-    ];
+    const originalRow = originalRows[r.sourceRow] || {};
+
+    const passthrough: Record<string, string> = {};
+    for (const [sourceCol, shopifyCol] of passthroughPairs) {
+      const val = findValueCI(originalRow, sourceCol);
+      if (val !== undefined) passthrough[shopifyCol] = val;
+    }
+
+    return headers.map((h) => {
+      const lower = h.toLowerCase();
+      const getter = SHOPIFY_TRANSLATABLE[lower];
+      if (getter) return csvEscape(getter(r));
+      return csvEscape(passthrough[lower] || "");
+    });
   });
 
   return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
@@ -130,26 +257,95 @@ export function exportShopifyCSV(
 
 /**
  * Generate an Etsy-compatible CSV export.
+ * Handles both same-platform (all columns preserved) and cross-platform exports.
  */
 export function exportEtsyCSV(
-  results: LocalizationResultItem[]
+  results: LocalizationResultItem[],
+  originalRows: Record<string, string>[]
 ): string {
-  // Etsy tags are comma-separated, max 13 tags, each under 20 chars
-  const headers = ["Title", "Description", "Tags"];
+  if (results.length === 0) return "";
 
-  const rows = results.map((r) => [
-    csvEscape(r.localized.title),
-    csvEscape(r.localized.description),
-    csvEscape(r.localized.keywords || ""),
-  ]);
+  const sourceHeaders = originalRows.length > 0 ? Object.keys(originalRows[0]) : [];
+  const sourcePlatform = detectSourcePlatform(sourceHeaders);
+
+  if (sourcePlatform === "etsy" && sourceHeaders.length > 0) {
+    // Same-platform: preserve ALL original columns, replace translatable ones
+    return exportSamePlatformCSV(results, originalRows, sourceHeaders, ETSY_TRANSLATABLE);
+  }
+
+  // Cross-platform: generate Etsy format columns
+  const headers = ETSY_CROSS_PLATFORM_COLUMNS;
+  const passthroughPairs = PASSTHROUGH_TO_ETSY[sourcePlatform] || [];
+
+  const rows = results.map((r) => {
+    const originalRow = originalRows[r.sourceRow] || {};
+
+    const passthrough: Record<string, string> = {};
+    for (const [sourceCol, etsyCol] of passthroughPairs) {
+      const val = findValueCI(originalRow, sourceCol);
+      if (val !== undefined) passthrough[etsyCol] = val;
+    }
+
+    return headers.map((h) => {
+      const lower = h.toLowerCase();
+      const getter = ETSY_TRANSLATABLE[lower];
+      if (getter) return csvEscape(getter(r));
+      return csvEscape(passthrough[lower] || "");
+    });
+  });
+
+  return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+}
+
+// ---- Shared same-platform helpers ----
+
+/**
+ * Same-platform CSV export: preserves ALL original columns, replaces translatable fields.
+ */
+function exportSamePlatformCSV(
+  results: LocalizationResultItem[],
+  originalRows: Record<string, string>[],
+  headers: string[],
+  translatableMap: Record<string, (r: LocalizationResultItem) => string>,
+): string {
+  const rows = results.map((r) => {
+    const originalRow = originalRows[r.sourceRow] || {};
+    return headers.map((h) => {
+      const lower = h.toLowerCase().trim();
+      const getter = translatableMap[lower];
+      if (getter) return csvEscape(getter(r));
+      return csvEscape(originalRow[h] || "");
+    });
+  });
 
   return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
 }
 
 /**
+ * Same-platform TSV export: preserves ALL original columns, replaces translatable fields.
+ * Used for Amazon flat file format.
+ */
+function exportSamePlatformTSV(
+  results: LocalizationResultItem[],
+  originalRows: Record<string, string>[],
+  headers: string[],
+  translatableMap: Record<string, (r: LocalizationResultItem) => string>,
+): string {
+  const rows = results.map((r) => {
+    const originalRow = originalRows[r.sourceRow] || {};
+    return headers.map((h) => {
+      const lower = h.toLowerCase().trim();
+      const getter = translatableMap[lower];
+      if (getter) return tsvEscape(getter(r));
+      return tsvEscape(originalRow[h] || "");
+    });
+  });
+
+  return [headers.join("\t"), ...rows.map((r) => r.join("\t"))].join("\n");
+}
+
+/**
  * Generate an XLSX workbook buffer from results.
- * Returns a base64-encoded string of the workbook.
- * Uses dynamic import of xlsx so this can run in Node or browser.
  */
 export async function exportXLSX(
   results: LocalizationResultItem[],
@@ -160,7 +356,6 @@ export async function exportXLSX(
 
   const wb = XLSX.utils.book_new();
 
-  // Main results sheet
   const mainData = results.map((r) => ({
     Row: r.sourceRow,
     "Original Title": r.original.title,
@@ -182,7 +377,6 @@ export async function exportXLSX(
   const ws = XLSX.utils.json_to_sheet(mainData);
   XLSX.utils.book_append_sheet(wb, ws, "Localized Listings");
 
-  // Quality report sheet
   const qualityData = results
     .filter((r) => r.qualityFlags.length > 0)
     .flatMap((r) =>
@@ -201,22 +395,4 @@ export async function exportXLSX(
   }
 
   return XLSX.write(wb, { type: "array", bookType: "xlsx" }) as Uint8Array;
-}
-
-// ---- Helpers ----
-
-function csvEscape(value: string): string {
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .substring(0, 100);
 }
