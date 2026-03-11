@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { ArrowLeft, Check, Store, ArrowRight } from "lucide-react";
+import Footer from "@/components/Footer";
 
 export default function ShopifyProductTranslation() {
   return (
@@ -92,9 +93,7 @@ export default function ShopifyProductTranslation() {
         </Link>
       </div>
 
-      <footer className="py-8 text-center border-t border-gray-900">
-        <p className="text-xs text-gray-600">© 2026 Buzztate. All rights reserved.</p>
-      </footer>
+      <Footer />
     </div>
   );
 }

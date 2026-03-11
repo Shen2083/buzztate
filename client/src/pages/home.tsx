@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Zap, History, Clock, Copy, LogOut, Loader2, AlertTriangle, X } from "lucide-react";
+import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import type { ColumnMapping, ParsedListing, LocalizationResultItem } from "@shared/schema";
@@ -1015,6 +1016,7 @@ export default function Home({ session }: { session: any }) {
         );
       })()}
 
+      <Footer minimal />
     </div>
   );
 }

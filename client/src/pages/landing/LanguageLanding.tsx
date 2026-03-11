@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { ArrowLeft, Globe, Star, Check } from "lucide-react";
+import Footer from "@/components/Footer";
 
 export default function LanguageLanding({ lang }: { lang: string }) {
   // Capitalize first letter for display (e.g., "spanish" -> "Spanish")
@@ -97,6 +98,7 @@ export default function LanguageLanding({ lang }: { lang: string }) {
         </Link>
       </div>
 
+      <Footer />
     </div>
   );
 }

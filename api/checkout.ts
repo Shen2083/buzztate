@@ -70,6 +70,14 @@ export default async function handler(req: any, res: any) {
         },
       ],
       mode: 'subscription',
+      consent_collection: {
+        terms_of_service: 'required',
+      },
+      custom_text: {
+        terms_of_service_acceptance: {
+          message: `By subscribing, you agree to our [Terms of Service](${origin}/terms) and [Privacy Policy](${origin}/privacy).`,
+        },
+      },
       success_url: `${origin}/app?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/app`,
     });
