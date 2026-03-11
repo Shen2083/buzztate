@@ -11,7 +11,9 @@ import FileUpload from "@/components/FileUpload";
 import ColumnMapper from "@/components/ColumnMapper";
 import MarketplaceSelector from "@/components/MarketplaceSelector";
 import ExportPanel from "@/components/ExportPanel";
+import type { MultiMarketplaceResults } from "@/components/ExportPanel";
 import LocalizationProgress from "@/components/LocalizationProgress";
+import type { MarketplaceProgress } from "@/components/LocalizationProgress";
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -23,6 +25,17 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   }
   return { "Content-Type": "application/json" };
 }
+
+/** Map each marketplace to its target language for localization */
+const MARKETPLACE_TARGET_LANGUAGE: Record<string, string> = {
+  amazon_de: "German",
+  amazon_fr: "French",
+  amazon_es: "Spanish",
+  amazon_it: "Italian",
+  amazon_jp: "Japanese",
+  shopify_international: "", // User must select
+  etsy_international: "",    // User must select
+};
 
 export default function Home({ session }: { session: any }) {
   const [isPro, setIsPro] = useState(false);
@@ -41,11 +54,8 @@ export default function Home({ session }: { session: any }) {
   const [parsedFile, setParsedFile] = useState<ParsedFileResult | null>(null);
   const [confirmedMappings, setConfirmedMappings] = useState<ColumnMapping[] | null>(null);
   const [parsedListings, setParsedListings] = useState<ParsedListing[]>([]);
-  const [selectedMarketplace, setSelectedMarketplace] = useState<MarketplaceId | null>(null);
-  const [selectedLocalizeLang, setSelectedLocalizeLang] = useState("");
-  const [localizeResults, setLocalizeResults] = useState<LocalizationResultItem[]>([]);
+  const [selectedMarketplaces, setSelectedMarketplaces] = useState<MarketplaceId[]>([]);
   const [localizeLoading, setLocalizeLoading] = useState(false);
-  const [localizeProgress, setLocalizeProgress] = useState({ done: 0, total: 0 });
   const [localizeCancelled, setLocalizeCancelled] = useState(false);
   const [localizeCompleted, setLocalizeCompleted] = useState(false);
   const [currentListingTitle, setCurrentListingTitle] = useState("");
@@ -54,6 +64,12 @@ export default function Home({ session }: { session: any }) {
   const cancelRef = useRef(false);
   const MAX_BATCH_SIZE = 200;
   const FREE_TIER_LIMIT = 5;
+
+  // Multi-marketplace progress tracking
+  const [marketplaceProgressList, setMarketplaceProgressList] = useState<MarketplaceProgress[]>([]);
+  const [multiResults, setMultiResults] = useState<MultiMarketplaceResults>({});
+  const [totalLocalizations, setTotalLocalizations] = useState(0);
+  const [doneLocalizations, setDoneLocalizations] = useState(0);
 
   // 1. CHECK PRO STATUS & VERIFY PAYMENT
   useEffect(() => {
@@ -231,13 +247,12 @@ export default function Home({ session }: { session: any }) {
     setFileParseError(null);
     setConfirmedMappings(null);
     setParsedListings([]);
-    setLocalizeResults([]);
+    setMultiResults({});
     setLocalizeCompleted(false);
     setLocalizeCancelled(false);
     try {
       const result = await parseUploadedFile(file);
 
-      // Validate parsed content
       if (result.headers.length === 0) {
         setFileParseError("We couldn't read this file. Please check it's a valid .csv, .xlsx, or .tsv file with product listings.");
         setParsedFile(null);
@@ -275,8 +290,6 @@ export default function Home({ session }: { session: any }) {
     });
   }, [parsedFile]);
 
-  const effectiveMaxBatch = isPro ? MAX_BATCH_SIZE : FREE_TIER_LIMIT;
-
   const trimToLimit = (limit: number) => {
     setParsedListings((prev) => prev.slice(0, limit));
     toast({
@@ -285,83 +298,181 @@ export default function Home({ session }: { session: any }) {
     });
   };
 
+  // Batch limit calculations
+  const selectedMarketCount = selectedMarketplaces.length;
+  const totalLocalizationCount = parsedListings.length * selectedMarketCount;
+  const effectiveMaxBatch = isPro ? MAX_BATCH_SIZE : FREE_TIER_LIMIT;
+  const exceedsBatchLimit = isPro && totalLocalizationCount > MAX_BATCH_SIZE;
+  const maxListingsForBatch = selectedMarketCount > 0 ? Math.floor(MAX_BATCH_SIZE / selectedMarketCount) : MAX_BATCH_SIZE;
+
   /** Send listings in small chunks to avoid Vercel function timeouts */
   const LOCALIZE_CHUNK_SIZE = 3;
 
   const handleLocalize = async () => {
-    if (parsedListings.length === 0 || !selectedMarketplace || !selectedLocalizeLang) {
+    if (parsedListings.length === 0 || selectedMarketplaces.length === 0) {
       toast({
         title: "Missing selection",
-        description: "Please upload a file, map columns, and select a marketplace + language.",
+        description: "Please upload a file, map columns, and select at least one marketplace.",
         variant: "destructive",
       });
       return;
     }
 
+    // Determine listings to process (respect batch limit)
+    let listingsToProcess = parsedListings;
+    if (isPro && totalLocalizationCount > MAX_BATCH_SIZE) {
+      listingsToProcess = parsedListings.slice(0, maxListingsForBatch);
+    } else if (!isPro && parsedListings.length > FREE_TIER_LIMIT) {
+      listingsToProcess = parsedListings.slice(0, FREE_TIER_LIMIT);
+    }
+
+    const totalCount = listingsToProcess.length * selectedMarketplaces.length;
+
     cancelRef.current = false;
     setLocalizeLoading(true);
-    setLocalizeResults([]);
+    setMultiResults({});
     setLocalizeCompleted(false);
     setLocalizeCancelled(false);
-    setLocalizeProgress({ done: 0, total: parsedListings.length });
-    setCurrentListingTitle(parsedListings[0]?.title || "");
+    setTotalLocalizations(totalCount);
+    setDoneLocalizations(0);
+    setCurrentListingTitle(listingsToProcess[0]?.title || "");
 
-    const allResults: LocalizationResultItem[] = [];
+    // Initialize per-marketplace progress
+    const initialProgress: MarketplaceProgress[] = selectedMarketplaces.map((mpId, idx) => ({
+      marketplaceId: mpId,
+      marketplaceName: MARKETPLACE_PROFILES[mpId]?.name || mpId,
+      targetLanguage: MARKETPLACE_TARGET_LANGUAGE[mpId] || mpId,
+      status: idx === 0 ? "in_progress" : "pending",
+      listingsDone: 0,
+      listingsTotal: listingsToProcess.length,
+    }));
+    setMarketplaceProgressList(initialProgress);
+
+    const allMultiResults: MultiMarketplaceResults = {};
+    let globalDone = 0;
     let lastUsage: any = null;
     let failed = false;
 
     try {
       const authHeaders = await getAuthHeaders();
 
-      for (let i = 0; i < parsedListings.length; i += LOCALIZE_CHUNK_SIZE) {
-        // Check for cancellation
+      // Sequential processing: one marketplace at a time
+      for (let mpIdx = 0; mpIdx < selectedMarketplaces.length; mpIdx++) {
         if (cancelRef.current) {
           setLocalizeCancelled(true);
+          // Mark remaining marketplaces as cancelled
+          setMarketplaceProgressList((prev) =>
+            prev.map((mp, i) =>
+              i >= mpIdx ? { ...mp, status: "cancelled" as const } : mp
+            )
+          );
           break;
         }
 
-        const chunk = parsedListings.slice(i, i + LOCALIZE_CHUNK_SIZE);
-        setCurrentListingTitle(chunk[0]?.title || "");
+        const mpId = selectedMarketplaces[mpIdx];
+        const targetLanguage = MARKETPLACE_TARGET_LANGUAGE[mpId];
 
-        let response: Response;
-        try {
-          response = await fetchWithRetry("/api/localize", {
-            method: "POST",
-            headers: authHeaders,
-            body: JSON.stringify({
-              listings: chunk,
-              marketplace: selectedMarketplace,
-              targetLanguage: selectedLocalizeLang,
-              userId: session.user.id,
-            }),
-          }, 2); // max 2 retries for localization
-        } catch {
-          toast({
-            title: "Connection lost",
-            description: "We're having trouble connecting. Your uploaded file is still ready — please try again.",
-            variant: "destructive",
-          });
-          failed = true;
+        // Mark this marketplace as in_progress
+        setMarketplaceProgressList((prev) =>
+          prev.map((mp, i) =>
+            i === mpIdx ? { ...mp, status: "in_progress" as const } : mp
+          )
+        );
+
+        const mpResults: LocalizationResultItem[] = [];
+
+        // Process listings one chunk at a time
+        for (let i = 0; i < listingsToProcess.length; i += LOCALIZE_CHUNK_SIZE) {
+          if (cancelRef.current) {
+            setLocalizeCancelled(true);
+            break;
+          }
+
+          const chunk = listingsToProcess.slice(i, i + LOCALIZE_CHUNK_SIZE);
+          setCurrentListingTitle(chunk[0]?.title || "");
+
+          let response: Response;
+          try {
+            response = await fetchWithRetry("/api/localize", {
+              method: "POST",
+              headers: authHeaders,
+              body: JSON.stringify({
+                listings: chunk,
+                marketplace: mpId,
+                targetLanguage,
+                userId: session.user.id,
+              }),
+            }, 2);
+          } catch {
+            toast({
+              title: "Connection lost",
+              description: "We're having trouble connecting. Your uploaded file is still ready — please try again.",
+              variant: "destructive",
+            });
+            failed = true;
+            break;
+          }
+
+          const data = await response.json();
+
+          if (response.ok && data.results) {
+            mpResults.push(...data.results);
+            lastUsage = data.usage;
+            globalDone += data.results.length;
+
+            // Update per-marketplace progress
+            setMarketplaceProgressList((prev) =>
+              prev.map((mp, idx) =>
+                idx === mpIdx ? { ...mp, listingsDone: mpResults.length } : mp
+              )
+            );
+
+            setDoneLocalizations(globalDone);
+            setCurrentListingTitle(
+              i + LOCALIZE_CHUNK_SIZE < listingsToProcess.length
+                ? listingsToProcess[i + LOCALIZE_CHUNK_SIZE]?.title || ""
+                : ""
+            );
+          } else {
+            const apiErr = parseApiError(response, data);
+            toast({
+              title: "Localization error",
+              description: apiErr?.message || "Something went wrong.",
+              variant: "destructive",
+            });
+            failed = true;
+            break;
+          }
+        }
+
+        // Store results for this marketplace
+        if (mpResults.length > 0) {
+          allMultiResults[mpId] = { results: mpResults, targetLanguage };
+          setMultiResults({ ...allMultiResults });
+        }
+
+        if (failed || cancelRef.current) {
+          // Mark current + remaining as cancelled
+          setMarketplaceProgressList((prev) =>
+            prev.map((mp, i) => {
+              if (i === mpIdx && mpResults.length === listingsToProcess.length) {
+                return { ...mp, status: "completed" as const, listingsDone: mpResults.length };
+              }
+              if (i >= mpIdx && mp.status !== "completed") {
+                return { ...mp, status: "cancelled" as const, listingsDone: i === mpIdx ? mpResults.length : 0 };
+              }
+              return mp;
+            })
+          );
           break;
         }
 
-        const data = await response.json();
-
-        if (response.ok && data.results) {
-          allResults.push(...data.results);
-          lastUsage = data.usage;
-          setLocalizeProgress({ done: allResults.length, total: parsedListings.length });
-          setLocalizeResults([...allResults]);
-        } else {
-          const apiErr = parseApiError(response, data);
-          toast({
-            title: "Localization error",
-            description: apiErr?.message || "Something went wrong.",
-            variant: "destructive",
-          });
-          failed = true;
-          break;
-        }
+        // Mark this marketplace as completed
+        setMarketplaceProgressList((prev) =>
+          prev.map((mp, i) =>
+            i === mpIdx ? { ...mp, status: "completed" as const, listingsDone: mpResults.length } : mp
+          )
+        );
       }
 
       if (!failed && !cancelRef.current) {
@@ -369,6 +480,8 @@ export default function Home({ session }: { session: any }) {
           setUsageCount(lastUsage.used);
         }
         setLocalizeCompleted(true);
+      } else if (cancelRef.current && !failed) {
+        setLocalizeCancelled(true);
       }
     } catch (err) {
       toast({
@@ -388,18 +501,31 @@ export default function Home({ session }: { session: any }) {
     setParsedFile(null);
     setConfirmedMappings(null);
     setParsedListings([]);
-    setLocalizeResults([]);
+    setMultiResults({});
     setLocalizeCompleted(false);
     setLocalizeCancelled(false);
-    setSelectedMarketplace(null);
-    setSelectedLocalizeLang("");
+    setSelectedMarketplaces([]);
     setFileParseError(null);
     setCurrentListingTitle("");
+    setMarketplaceProgressList([]);
+    setTotalLocalizations(0);
+    setDoneLocalizations(0);
   };
 
-  // Computed values for progress component
-  const warningCount = localizeResults.reduce((s, r) => s + r.qualityFlags.length, 0);
-  const marketplaceName = selectedMarketplace ? (MARKETPLACE_PROFILES[selectedMarketplace]?.name || selectedMarketplace) : "";
+  // Computed values
+  const allResultsFlat = Object.values(multiResults).flatMap((m) => m.results);
+  const warningCount = allResultsFlat.reduce((s, r) => s + r.qualityFlags.length, 0);
+  const isSingleMarketplace = selectedMarketplaces.length === 1;
+  const hasMarketplaceSelection = selectedMarketplaces.length > 0;
+
+  // Button label
+  const localizeButtonLabel = (() => {
+    if (localizeLoading) return null; // handled separately
+    if (parsedListings.length === 0) return "Localize Listings";
+    if (selectedMarketCount === 0) return `Localize ${parsedListings.length} Listing${parsedListings.length !== 1 ? "s" : ""}`;
+    if (selectedMarketCount === 1) return `Localize ${parsedListings.length} Listing${parsedListings.length !== 1 ? "s" : ""}`;
+    return `Localize ${parsedListings.length} Listing${parsedListings.length !== 1 ? "s" : ""} × ${selectedMarketCount} Markets`;
+  })();
 
   // ==================== RENDER ====================
 
@@ -566,11 +692,11 @@ export default function Home({ session }: { session: any }) {
               2. Map Columns
             </span>
             <span className="text-gray-700">&rarr;</span>
-            <span className={selectedMarketplace && selectedLocalizeLang ? "text-green-400" : confirmedMappings ? "text-yellow-400 font-bold" : ""}>
-              3. Pick Marketplace
+            <span className={hasMarketplaceSelection ? "text-green-400" : confirmedMappings ? "text-yellow-400 font-bold" : ""}>
+              3. Pick Marketplace{isPro ? "s" : ""}
             </span>
             <span className="text-gray-700">&rarr;</span>
-            <span className={localizeResults.length > 0 ? "text-green-400" : ""}>
+            <span className={allResultsFlat.length > 0 ? "text-green-400" : ""}>
               4. Localize & Export
             </span>
           </div>
@@ -583,19 +709,19 @@ export default function Home({ session }: { session: any }) {
             {/* Localization Progress (replaces upload area during processing) */}
             {(localizeLoading || localizeCompleted || localizeCancelled) && (
               <LocalizationProgress
-                total={localizeProgress.total}
-                done={localizeProgress.done}
+                totalLocalizations={totalLocalizations}
+                doneLocalizations={doneLocalizations}
                 currentTitle={currentListingTitle}
                 isRunning={localizeLoading}
                 onCancel={handleCancelLocalize}
-                marketplace={marketplaceName}
-                targetLanguage={selectedLocalizeLang}
-                successCount={localizeResults.length}
+                marketplaceProgress={marketplaceProgressList}
+                successCount={allResultsFlat.length}
                 warningCount={warningCount}
-                failCount={localizeProgress.total - localizeResults.length > 0 && !localizeLoading ? localizeProgress.total - localizeResults.length : 0}
+                failCount={totalLocalizations - allResultsFlat.length > 0 && !localizeLoading ? totalLocalizations - allResultsFlat.length : 0}
                 completed={localizeCompleted}
                 cancelled={localizeCancelled}
                 onStartOver={resetLocalizeFlow}
+                isSingleMarketplace={isSingleMarketplace}
               />
             )}
 
@@ -620,7 +746,7 @@ export default function Home({ session }: { session: any }) {
             )}
 
             {/* Parsed listings preview (after columns confirmed, before localization) */}
-            {confirmedMappings && parsedListings.length > 0 && !localizeLoading && !localizeCompleted && !localizeCancelled && !localizeResults.length && (
+            {confirmedMappings && parsedListings.length > 0 && !localizeLoading && !localizeCompleted && !localizeCancelled && allResultsFlat.length === 0 && (
               <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-4">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-sm font-bold text-white">
@@ -663,8 +789,29 @@ export default function Home({ session }: { session: any }) {
                   </div>
                 )}
 
-                {/* Plus batch limit warning */}
-                {isPro && parsedListings.length > MAX_BATCH_SIZE && (
+                {/* Multi-marketplace batch limit warning */}
+                {isPro && exceedsBatchLimit && selectedMarketCount > 0 && (
+                  <div className="flex items-start gap-3 bg-yellow-400/5 border border-yellow-400/20 rounded-xl p-4 mb-3">
+                    <AlertTriangle size={18} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-grow">
+                      <p className="text-sm text-yellow-200 font-medium">
+                        That's {totalLocalizationCount} localizations (listings × marketplaces). We'll process up to 200 per batch.
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Either reduce listings or marketplaces, or we can process the first {maxListingsForBatch} listings across all selected marketplaces.
+                      </p>
+                      <button
+                        onClick={() => trimToLimit(maxListingsForBatch)}
+                        className="mt-2 text-xs bg-yellow-400 text-black font-bold px-3 py-1.5 rounded-lg hover:bg-yellow-300 transition-colors"
+                      >
+                        Localize first {maxListingsForBatch} × {selectedMarketCount} markets
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Simple Plus batch limit warning (single marketplace) */}
+                {isPro && !exceedsBatchLimit && parsedListings.length > MAX_BATCH_SIZE && (
                   <div className="flex items-start gap-3 bg-yellow-400/5 border border-yellow-400/20 rounded-xl p-4 mb-3">
                     <AlertTriangle size={18} className="text-yellow-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-grow">
@@ -704,12 +851,11 @@ export default function Home({ session }: { session: any }) {
             )}
 
             {/* Export Panel (after localization complete or cancelled with partial results) */}
-            {localizeResults.length > 0 && (localizeCompleted || localizeCancelled) && selectedMarketplace && (
+            {Object.keys(multiResults).length > 0 && (localizeCompleted || localizeCancelled) && (
               <ExportPanel
-                results={localizeResults}
-                marketplace={selectedMarketplace}
-                targetLanguage={selectedLocalizeLang}
+                multiResults={multiResults}
                 originalRows={parsedFile?.rows}
+                isSingleMarketplace={isSingleMarketplace}
               />
             )}
           </div>
@@ -718,16 +864,14 @@ export default function Home({ session }: { session: any }) {
           <div className="lg:col-span-4">
             <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 shadow-xl space-y-6">
               <MarketplaceSelector
-                selectedMarketplace={selectedMarketplace}
-                onSelect={setSelectedMarketplace}
-                selectedLanguage={selectedLocalizeLang}
-                onLanguageChange={setSelectedLocalizeLang}
+                selectedMarketplaces={selectedMarketplaces}
+                onSelect={setSelectedMarketplaces}
                 isPro={isPro}
               />
 
               <button
                 onClick={handleLocalize}
-                disabled={localizeLoading || parsedListings.length === 0 || !selectedMarketplace || !selectedLocalizeLang || !navigator.onLine}
+                disabled={localizeLoading || parsedListings.length === 0 || selectedMarketplaces.length === 0 || !navigator.onLine}
                 className="w-full bg-yellow-400 text-black font-extrabold py-5 rounded-xl hover:bg-yellow-300 disabled:bg-gray-800 disabled:text-gray-500 transition-all text-lg flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(250,204,21,0.2)]"
               >
                 {localizeLoading ? (
@@ -738,7 +882,7 @@ export default function Home({ session }: { session: any }) {
                 ) : (
                   <>
                     <Zap size={18} fill="black" />
-                    Localize {parsedListings.length > 0 ? `${parsedListings.length} Listing${parsedListings.length !== 1 ? "s" : ""}` : "Listings"}
+                    {localizeButtonLabel}
                   </>
                 )}
               </button>

@@ -1,21 +1,28 @@
 import { useState, useEffect, useRef } from "react";
-import { Loader2, X, Check, AlertTriangle, Download } from "lucide-react";
+import { Loader2, X, Check, AlertTriangle, Circle } from "lucide-react";
+
+export interface MarketplaceProgress {
+  marketplaceId: string;
+  marketplaceName: string;
+  targetLanguage: string;
+  status: "pending" | "in_progress" | "completed" | "cancelled";
+  listingsDone: number;
+  listingsTotal: number;
+}
 
 interface LocalizationProgressProps {
-  /** Total listings being processed */
-  total: number;
-  /** How many are done so far */
-  done: number;
+  /** Total listings being processed across all marketplaces */
+  totalLocalizations: number;
+  /** How many localizations are done so far (across all marketplaces) */
+  doneLocalizations: number;
   /** Title of the listing currently being processed */
   currentTitle?: string;
   /** True while the localization is in progress */
   isRunning: boolean;
   /** Called when user clicks Cancel */
   onCancel: () => void;
-  /** Marketplace display name */
-  marketplace: string;
-  /** Target language */
-  targetLanguage: string;
+  /** Per-marketplace progress entries */
+  marketplaceProgress: MarketplaceProgress[];
   /** Number of successful results */
   successCount?: number;
   /** Number of warnings */
@@ -28,6 +35,8 @@ interface LocalizationProgressProps {
   cancelled?: boolean;
   /** Called to start over */
   onStartOver?: () => void;
+  /** Is this a single-marketplace run? (legacy mode) */
+  isSingleMarketplace?: boolean;
 }
 
 function formatTime(seconds: number): string {
@@ -37,19 +46,19 @@ function formatTime(seconds: number): string {
 }
 
 export default function LocalizationProgress({
-  total,
-  done,
+  totalLocalizations,
+  doneLocalizations,
   currentTitle,
   isRunning,
   onCancel,
-  marketplace,
-  targetLanguage,
+  marketplaceProgress,
   successCount = 0,
   warningCount = 0,
   failCount = 0,
   completed = false,
   cancelled = false,
   onStartOver,
+  isSingleMarketplace = false,
 }: LocalizationProgressProps) {
   const [elapsed, setElapsed] = useState(0);
   const [showSlowHint, setShowSlowHint] = useState(false);
@@ -66,7 +75,6 @@ export default function LocalizationProgress({
       setElapsed(Math.floor((Date.now() - startTime.current) / 1000));
     }, 1000);
 
-    // Show slow hint after 10 seconds
     slowTimer.current = setTimeout(() => setShowSlowHint(true), 10_000);
 
     return () => {
@@ -75,19 +83,24 @@ export default function LocalizationProgress({
     };
   }, [isRunning]);
 
-  // Hide slow hint once first result comes in
   useEffect(() => {
-    if (done > 0) setShowSlowHint(false);
-  }, [done]);
+    if (doneLocalizations > 0) setShowSlowHint(false);
+  }, [doneLocalizations]);
 
-  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+  const percent = totalLocalizations > 0 ? Math.round((doneLocalizations / totalLocalizations) * 100) : 0;
   const estimatedRemaining =
-    done > 0 && isRunning
-      ? Math.round((elapsed / done) * (total - done))
+    doneLocalizations > 0 && isRunning
+      ? Math.round((elapsed / doneLocalizations) * (totalLocalizations - doneLocalizations))
       : 0;
+
+  const currentMarketplace = marketplaceProgress.find((m) => m.status === "in_progress");
+  const completedMarketplaces = marketplaceProgress.filter((m) => m.status === "completed");
+  const marketplaceCount = marketplaceProgress.length;
+  const currentMarketplaceIndex = completedMarketplaces.length + 1;
 
   // Completed or cancelled state
   if (completed || cancelled) {
+    const totalMarkets = marketplaceProgress.length;
     return (
       <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
         <div className="text-center">
@@ -115,9 +128,34 @@ export default function LocalizationProgress({
 
           <p className="text-sm text-gray-400 mb-4">
             {cancelled
-              ? `${done} of ${total} listings were completed. You can download partial results or start again.`
-              : `${successCount} listing${successCount !== 1 ? "s" : ""} localized into ${targetLanguage} for ${marketplace}.`}
+              ? `${doneLocalizations} of ${totalLocalizations} localizations were completed.${completedMarketplaces.length > 0 ? ` ${completedMarketplaces.length} marketplace${completedMarketplaces.length !== 1 ? "s" : ""} fully completed.` : ""}`
+              : isSingleMarketplace
+                ? `${successCount} listing${successCount !== 1 ? "s" : ""} localized for ${marketplaceProgress[0]?.marketplaceName}.`
+                : `${doneLocalizations} listings localized across ${totalMarkets} marketplace${totalMarkets !== 1 ? "s" : ""}`}
           </p>
+
+          {/* Per-marketplace breakdown (multi-marketplace only) */}
+          {!isSingleMarketplace && marketplaceProgress.length > 1 && (
+            <div className="mb-4 space-y-1 text-left max-w-sm mx-auto">
+              {marketplaceProgress.map((mp) => (
+                <div key={mp.marketplaceId} className="flex items-center gap-2 text-xs">
+                  {mp.status === "completed" ? (
+                    <Check size={12} className="text-green-400 flex-shrink-0" />
+                  ) : mp.status === "cancelled" ? (
+                    <X size={12} className="text-gray-500 flex-shrink-0" />
+                  ) : (
+                    <Circle size={12} className="text-gray-600 flex-shrink-0" />
+                  )}
+                  <span className={mp.status === "completed" ? "text-gray-300" : "text-gray-500"}>
+                    {mp.marketplaceName}
+                  </span>
+                  <span className="text-gray-600 ml-auto">
+                    {mp.listingsDone}/{mp.listingsTotal}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Summary badges */}
           <div className="flex justify-center gap-3 mb-6">
@@ -163,10 +201,21 @@ export default function LocalizationProgress({
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-sm font-bold text-white">
-            Localizing {total} listing{total !== 1 ? "s" : ""} into {targetLanguage}
-          </h3>
-          <p className="text-xs text-gray-500 mt-1">{marketplace}</p>
+          {isSingleMarketplace ? (
+            <>
+              <h3 className="text-sm font-bold text-white">
+                Localizing {currentMarketplace?.listingsTotal || 0} listing{(currentMarketplace?.listingsTotal || 0) !== 1 ? "s" : ""} into {currentMarketplace?.targetLanguage}
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">{currentMarketplace?.marketplaceName}</p>
+            </>
+          ) : (
+            <>
+              <h3 className="text-sm font-bold text-white">
+                Localizing into {currentMarketplace?.targetLanguage} ({currentMarketplaceIndex} of {marketplaceCount} marketplaces)
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">{currentMarketplace?.marketplaceName}</p>
+            </>
+          )}
         </div>
         <button
           onClick={onCancel}
@@ -177,20 +226,59 @@ export default function LocalizationProgress({
         </button>
       </div>
 
-      {/* Progress bar */}
-      <div className="w-full bg-gray-800 rounded-full h-2.5 mb-3 overflow-hidden">
-        <div
-          className="h-full bg-yellow-400 rounded-full transition-all duration-500 ease-out"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
+      {/* Per-marketplace progress list (multi-marketplace only) */}
+      {!isSingleMarketplace && marketplaceProgress.length > 1 && (
+        <div className="mb-4 space-y-1.5">
+          {marketplaceProgress.map((mp) => (
+            <div key={mp.marketplaceId} className="flex items-center gap-2 text-xs">
+              {mp.status === "completed" ? (
+                <Check size={12} className="text-green-400 flex-shrink-0" />
+              ) : mp.status === "in_progress" ? (
+                <Loader2 size={12} className="text-yellow-400 animate-spin flex-shrink-0" />
+              ) : (
+                <Circle size={12} className="text-gray-700 flex-shrink-0" />
+              )}
+              <span className={
+                mp.status === "completed" ? "text-green-400" :
+                mp.status === "in_progress" ? "text-white font-medium" :
+                "text-gray-600"
+              }>
+                {mp.status === "completed"
+                  ? `${mp.targetLanguage} — ${mp.listingsDone} listings complete`
+                  : mp.status === "in_progress"
+                    ? `${mp.targetLanguage} — Localizing listing ${mp.listingsDone + 1} of ${mp.listingsTotal}...`
+                    : `${mp.targetLanguage} — Pending`
+                }
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* Stats row */}
+      {/* Current marketplace progress bar */}
+      {currentMarketplace && (
+        <div className="mb-3">
+          <div className="w-full bg-gray-800 rounded-full h-2.5 overflow-hidden">
+            <div
+              className="h-full bg-yellow-400 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${currentMarketplace.listingsTotal > 0 ? Math.round((currentMarketplace.listingsDone / currentMarketplace.listingsTotal) * 100) : 0}%` }}
+            />
+          </div>
+          <div className="flex justify-between items-center text-[10px] text-gray-600 mt-1">
+            <span>Listing {currentMarketplace.listingsDone + 1} of {currentMarketplace.listingsTotal}</span>
+            {currentTitle && (
+              <span className="truncate ml-4 max-w-[200px]">{currentTitle}</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Overall progress */}
       <div className="flex justify-between items-center text-xs text-gray-500 mb-4">
-        <span>{percent}% complete ({done}/{total})</span>
+        <span>Overall: {doneLocalizations} of {totalLocalizations} localizations complete</span>
         <div className="flex gap-4">
           <span>Elapsed: {formatTime(elapsed)}</span>
-          {done > 0 && done < total && (
+          {doneLocalizations > 0 && doneLocalizations < totalLocalizations && (
             <span>~{formatTime(estimatedRemaining)} remaining</span>
           )}
         </div>
@@ -201,7 +289,9 @@ export default function LocalizationProgress({
         <Loader2 size={16} className="text-yellow-400 animate-spin flex-shrink-0" />
         <div className="min-w-0 flex-grow">
           <p className="text-xs text-gray-400">
-            Localizing listing {done + 1} of {total}
+            {currentMarketplace
+              ? `Localizing for ${currentMarketplace.marketplaceName}`
+              : "Preparing..."}
           </p>
           {currentTitle && (
             <p className="text-xs text-gray-300 truncate mt-0.5 font-medium">
@@ -212,7 +302,7 @@ export default function LocalizationProgress({
       </div>
 
       {/* Slow connection hint */}
-      {showSlowHint && done === 0 && (
+      {showSlowHint && doneLocalizations === 0 && (
         <p className="text-xs text-gray-500 mt-3 text-center">
           This is taking a bit longer than usual. Hang tight...
         </p>
