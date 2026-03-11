@@ -27,7 +27,7 @@ export default function PrivacyPolicy() {
 
           <h2>1. Who we are</h2>
           <p>Buzztate ("we", "us", "our") provides an e-commerce listing localization service at buzztate.com. We are based in the United Kingdom.</p>
-          <p>Contact: <a href="mailto:privacy@buzztate.com">privacy@buzztate.com</a></p>
+          <p>Contact: <a href="mailto:teamz@buzztate.com">teamz@buzztate.com</a></p>
 
           <h2>2. What data we collect</h2>
 
@@ -119,7 +119,7 @@ export default function PrivacyPolicy() {
             <li><strong>Object</strong> to processing based on legitimate interests</li>
             <li><strong>Withdraw consent</strong> at any time where processing is based on consent</li>
           </ul>
-          <p>To exercise any of these rights, email <a href="mailto:privacy@buzztate.com">privacy@buzztate.com</a>. We will respond within 30 days.</p>
+          <p>To exercise any of these rights, email <a href="mailto:teamz@buzztate.com">teamz@buzztate.com</a>. We will respond within 30 days.</p>
 
           <h2>7. Data security</h2>
           <p>We implement appropriate technical measures to protect your data, including: encrypted connections (HTTPS/TLS) for all data in transit, encrypted data at rest in our database, authentication via secure token-based sessions, and access controls limiting data access to essential services only.</p>
@@ -139,7 +139,7 @@ export default function PrivacyPolicy() {
 
           <h2>12. Contact</h2>
           <p>For any privacy-related questions or requests:</p>
-          <p>Email: <a href="mailto:privacy@buzztate.com">privacy@buzztate.com</a></p>
+          <p>Email: <a href="mailto:teamz@buzztate.com">teamz@buzztate.com</a></p>
         </article>
       </div>
 
