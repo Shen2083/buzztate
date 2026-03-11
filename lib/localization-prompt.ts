@@ -2,6 +2,25 @@ import type { MarketplaceProfile } from "./marketplace-profiles";
 import type { ParsedListing } from "../shared/schema";
 
 /**
+ * German-specific keyword localization rules.
+ * Only included when the target marketplace is German.
+ */
+const GERMAN_KEYWORD_RULES = `6. KEYWORD LOCALIZATION RULES:
+   - Keep these terms in English even in German output, as shoppers search for them this way: Hot Yoga, Bikram, Business (as in Business-Laptop), Indoor, Smart, Premium, Pro, LED, OLED, USB, Wi-Fi, SSD, Thunderbolt, Memory Foam
+   - Always translate these terms to German (never leave in English): Grinder → Mahlwerk, Countertop → Arbeitsplatte/Küchenarbeitsplatte, Home → Heim/Zuhause, Self-watering → Selbstbewässernd, Non-slip → Rutschfest, Waterproof → Wasserdicht, Machine-washable → Maschinenwaschbar
+   - For compound search terms, include BOTH the compound form and the separated form in keywords. Example: include both 'Espressomaschine' and 'Espresso Maschine', both 'Hundebett' and 'Hunde Bett'. German Amazon search matches both but ranks compound words higher.`;
+
+/**
+ * Default keyword localization rules for non-German marketplaces.
+ */
+function getDefaultKeywordRules(targetLanguage: string): string {
+  return `6. KEYWORD LOCALIZATION RULES:
+   - Keep these terms in English even in ${targetLanguage} output, as they are universally recognized: LED, OLED, USB, Wi-Fi, SSD, Thunderbolt
+   - Translate ALL other English words to ${targetLanguage}. Product features, materials, and descriptive terms must be in ${targetLanguage}.
+   - If unsure whether a term should stay in English, translate it.`;
+}
+
+/**
  * Builds a marketplace-aware localization prompt for GPT-4o-mini.
  * This is NOT a generic translator — it produces copy that sells on the target marketplace.
  */
@@ -41,6 +60,26 @@ export function buildLocalizationPrompt(
       ? `"bullet_points": ["bullet 1", "bullet 2", "bullet 3", "bullet 4", "bullet 5"],`
       : "";
 
+  // Use German-specific keyword rules only for German marketplaces
+  const isGerman = marketplace.id === "amazon_de" || targetLanguage.toLowerCase().includes("german") || targetLanguage.toLowerCase() === "de";
+  const keywordRules = isGerman ? GERMAN_KEYWORD_RULES : getDefaultKeywordRules(targetLanguage);
+
+  // SEO fields section (Shopify)
+  const seoSection = productData.seoMetaTitle || productData.seoMetaDescription
+    ? `\nSEO Title: ${productData.seoMetaTitle || "(generate a compelling SEO title, 50-60 chars)"}
+SEO Description: ${productData.seoMetaDescription || "(generate a compelling SEO meta description, 150-160 chars)"}`
+    : "";
+
+  // Image Alt Text section
+  const imageAltSection = productData.imageAltText
+    ? `\nImage Alt Text: ${productData.imageAltText}`
+    : "";
+
+  // Image alt text in JSON schema
+  const imageAltSchema = productData.imageAltText
+    ? `"image_alt_text": "localized image alt text for SEO",`
+    : "";
+
   return `You are an expert e-commerce listing localizer. Your task is to localize a product listing for ${marketplace.name} in ${targetLanguage}.
 
 IMPORTANT: You are NOT just translating. You are creating a listing that will SELL on ${marketplace.name}. This means:
@@ -67,10 +106,7 @@ ${marketplace.formattingRules.map((r) => `   - ${r}`).join("\n")}
    - The ONLY exceptions are universally recognized technical terms and proper brand names (see keyword rules below).
    - If unsure whether a term should stay in English, translate it.
 
-6. KEYWORD LOCALIZATION RULES:
-   - Keep these terms in English even in ${targetLanguage} output, as shoppers search for them this way: Hot Yoga, Bikram, Business (as in Business-Laptop), Indoor, Smart, Premium, Pro, LED, OLED, USB, Wi-Fi, SSD, Thunderbolt, Memory Foam
-   - Always translate these terms to ${targetLanguage} (never leave in English): Grinder → Mahlwerk, Countertop → Arbeitsplatte/Küchenarbeitsplatte, Home → Heim/Zuhause, Self-watering → Selbstbewässernd, Non-slip → Rutschfest, Waterproof → Wasserdicht, Machine-washable → Maschinenwaschbar
-   - For compound search terms, include BOTH the compound form and the separated form in keywords. Example: include both 'Espressomaschine' and 'Espresso Maschine', both 'Hundebett' and 'Hunde Bett'. German Amazon search matches both but ranks compound words higher.
+${keywordRules}
 
 ${marketplace.bulletPointCount > 0 ? `7. BULLET POINTS:
    - You MUST return exactly ${marketplace.bulletPointCount} bullet points in the "bullet_points" array.
@@ -82,7 +118,7 @@ ORIGINAL LISTING:
 Title: ${productData.title}
 Description: ${productData.description}
 ${originalBullets}
-${originalKeywords}
+${originalKeywords}${seoSection}${imageAltSection}
 
 Respond ONLY with a JSON object:
 {
@@ -91,7 +127,8 @@ Respond ONLY with a JSON object:
   ${bulletPointsSchema}
   "keywords": "localized keywords",
   "seo_meta_title": "if applicable",
-  "seo_meta_description": "if applicable"
+  "seo_meta_description": "if applicable"${productData.imageAltText ? `,
+  ${imageAltSchema.replace(/,$/, "")}` : ""}
 }`;
 }
 

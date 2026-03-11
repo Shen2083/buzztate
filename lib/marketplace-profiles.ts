@@ -101,6 +101,7 @@ export const MARKETPLACE_PROFILES: Record<string, MarketplaceProfile> = {
       "Detailed specifications are expected (more is more)",
       "Include size in cm, weight in g/kg",
       "Add usage scenarios — Japanese shoppers want to visualize using the product",
+      "Convert all imperial measurements to metric (oz → ml, inches → cm, lbs → kg, Fahrenheit → Celsius)",
     ],
   },
   shopify_international: {

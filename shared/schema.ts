@@ -109,6 +109,7 @@ export interface LocalizedListing {
   keywords?: string;
   seo_meta_title?: string;
   seo_meta_description?: string;
+  image_alt_text?: string;
 }
 
 /** Quality flag for a single field in a localized listing */
@@ -182,6 +183,9 @@ export const localizeRequestSchema = z.object({
     keywords: z.string().optional(),
     price: z.string().optional(),
     category: z.string().optional(),
+    seoMetaTitle: z.string().optional(),
+    seoMetaDescription: z.string().optional(),
+    imageAltText: z.string().optional(),
     sourceRow: z.number().optional(),
     extraFields: z.record(z.string()).optional(),
   }),
