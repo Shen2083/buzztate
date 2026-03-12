@@ -8,7 +8,7 @@ import { useState } from "react";
 
 // ---- Data ----
 
-const FAQS = [
+const FAQS: { question: string; answer: React.ReactNode }[] = [
   {
     question: "What is Buzztate?",
     answer: "Buzztate is a cross-platform listing localization tool for e-commerce sellers. It converts and localizes product listings between Amazon, Shopify, and Etsy, generating marketplace-ready files for Germany, France, Spain, Italy, and Japan.",
@@ -31,7 +31,7 @@ const FAQS = [
   },
   {
     question: "How much does Buzztate cost?",
-    answer: "Buzztate offers 5 free listing localizations to try the product. Paid plans are available for sellers with larger catalogs. Visit buzztate.com/pricing for current pricing.",
+    answer: <>Buzztate offers 5 free listing localizations to try the product. Paid plans are available for sellers with larger catalogs. See the <button onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })} className="text-yellow-400 underline hover:text-yellow-300">pricing section above</button> for current plans.</>,
   },
   {
     question: "Can I convert an Etsy listing to Amazon format?",
@@ -109,7 +109,7 @@ export default function Landing() {
       </nav>
 
       {/* ============ HERO ============ */}
-      <div className="flex flex-col items-center justify-start text-center px-6 pt-20 pb-16">
+      <div id="hero" className="flex flex-col items-center justify-start text-center px-6 pt-20 pb-16">
         <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 text-xs lg:text-sm font-bold uppercase tracking-wider px-4 py-2 rounded-full mb-8">
           <ArrowRightLeft size={14} /> Cross-Platform Listing Localization
         </div>
@@ -176,7 +176,7 @@ export default function Landing() {
       </div>
 
       {/* ============ SECTION 1: THE PROBLEM ============ */}
-      <div className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
+      <div id="problem" className="w-full bg-gray-900/20 py-24 border-y border-gray-800">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-4">
             Expanding internationally shouldn't take weeks
@@ -223,7 +223,7 @@ export default function Landing() {
       </div>
 
       {/* ============ SECTION 2: THREE SUPERPOWERS ============ */}
-      <div className="w-full py-24">
+      <div id="features" className="w-full py-24">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-4">
             Three things Buzztate does that no translation tool can
@@ -359,7 +359,7 @@ export default function Landing() {
       </div>
 
       {/* ============ SECTION 4: BEFORE / AFTER ============ */}
-      <div className="w-full py-24">
+      <div id="demo" className="w-full py-24">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-4">See the difference</h2>
           <p className="text-gray-400 text-center mb-16 max-w-2xl mx-auto lg:text-lg">
