@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx vite build && npx tsx script/prerender.ts",
+  "buildCommand": "npx tsx script/generate-blog-data.ts && npx vite build && npx tsx script/prerender.ts",
   "outputDirectory": "dist/public",
   "framework": null,
   "redirects": [

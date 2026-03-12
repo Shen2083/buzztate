@@ -15,6 +15,11 @@ import EtsyListingTranslation from "@/pages/landing/EtsyListingTranslation";
 import AmazonDeTranslation from "@/pages/landing/AmazonDeTranslation";
 import AmazonJpTranslation from "@/pages/landing/AmazonJpTranslation";
 
+// Blog pages
+import BlogList from "@/pages/blog/BlogList";
+import BlogPost from "@/pages/blog/BlogPost";
+import { BLOG_POSTS } from "@/pages/blog/blogData";
+
 const ROUTE_MAP: Record<string, () => JSX.Element> = {
   "/": Landing,
   "/amazon-listing-translation": AmazonListingTranslation,
@@ -22,7 +27,14 @@ const ROUTE_MAP: Record<string, () => JSX.Element> = {
   "/etsy-listing-translation": EtsyListingTranslation,
   "/amazon-de-translation": AmazonDeTranslation,
   "/amazon-jp-translation": AmazonJpTranslation,
+  "/blog": BlogList,
+  // Individual blog post routes are added dynamically below
 };
+
+// Add each blog post as a route
+for (const post of BLOG_POSTS) {
+  ROUTE_MAP[`/blog/${post.slug}`] = BlogPost;
+}
 
 /**
  * SSR-safe hook for wouter's Router.
@@ -93,4 +105,17 @@ export const PAGE_SEO: Record<string, { title: string; description: string }> = 
     description:
       "Localize your listings for Amazon Japan. Polite keigo language, detailed specifications, and Japanese search keyword optimization built in.",
   },
+  "/blog": {
+    title: "Blog | Buzztate",
+    description:
+      "Guides, tips, and insights for e-commerce sellers expanding internationally with Buzztate.",
+  },
 };
+
+// Add per-post SEO from blog data
+for (const post of BLOG_POSTS) {
+  PAGE_SEO[`/blog/${post.slug}`] = {
+    title: `${post.title} | Buzztate`,
+    description: post.excerpt,
+  };
+}
