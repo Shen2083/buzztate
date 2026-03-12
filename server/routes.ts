@@ -27,8 +27,12 @@ function asyncHandler(fn: (req: Request, res: Response) => Promise<any>) {
 }
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<void> {
-  // 301 redirect: old generic translation pages → new "For Sellers" homepage
+  // 301 redirect: www → non-www + old generic translation pages → homepage
   app.use((req, res, next) => {
+    const host = req.hostname;
+    if (host === "www.buzztate.com") {
+      return res.redirect(301, `https://buzztate.com${req.originalUrl}`);
+    }
     if (req.path.startsWith("/translate/")) {
       return res.redirect(301, "/");
     }
