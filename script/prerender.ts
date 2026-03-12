@@ -69,7 +69,7 @@ async function prerender() {
     console.log(`  prerendering ${route}...`);
     const html = render(route);
 
-    // Inject per-page title and meta description into the shell
+    // Inject per-page title and meta descriptions into the shell
     let fullHtml = beforeRoot + html + afterRoot;
     const seo = PAGE_SEO?.[route];
     if (seo) {
@@ -80,6 +80,14 @@ async function prerender() {
       fullHtml = fullHtml.replace(
         /name="description" content="[^"]*"/,
         `name="description" content="${seo.description}"`,
+      );
+      fullHtml = fullHtml.replace(
+        /property="og:description" content="[^"]*"/,
+        `property="og:description" content="${seo.description}"`,
+      );
+      fullHtml = fullHtml.replace(
+        /name="twitter:description" content="[^"]*"/,
+        `name="twitter:description" content="${seo.description}"`,
       );
     }
 

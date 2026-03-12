@@ -9,32 +9,32 @@ const PAGE_SEO: Record<string, { title: string; description: string }> = {
   "/": {
     title: "Buzztate \u2014 Localize Listings for Amazon, Shopify & Etsy",
     description:
-      "Upload Amazon, Shopify, or Etsy listings. Get localized, marketplace-ready files for 5 international markets. Try 5 listings free.",
+      "Buzztate converts and localizes Amazon, Shopify, and Etsy listings across platforms and languages. 5 markets, one upload. Try 5 listings free.",
   },
   "/amazon-listing-translation": {
     title: "Amazon Listing Localization for Sellers | Buzztate",
     description:
-      "Localize Amazon listings for Germany, France, Spain, Italy, and Japan. Marketplace-optimized titles, bullets, and keywords. Try free.",
+      "Localize your Amazon listings with marketplace-aware AI. Keyword-optimized bullet points, titles, and descriptions for every Amazon marketplace.",
   },
   "/shopify-product-translation": {
     title: "Shopify Product Localization for Sellers | Buzztate",
     description:
-      "Translate and localize Shopify products with SEO-optimized titles, descriptions, and meta tags for international stores. Try free.",
+      "Convert Shopify products into marketplace-ready Amazon or Etsy listings. Buzztate maps fields, generates missing content, and localizes for each market.",
   },
   "/etsy-listing-translation": {
     title: "Etsy Listing Localization for Sellers | Buzztate",
     description:
-      "Localize Etsy listings with marketplace-optimized tags, titles, and descriptions that preserve your artisan tone. Try free.",
+      "Turn Etsy listings into Amazon-ready files with localized titles, generated bullet points, and marketplace-optimized keywords. One upload, every market.",
   },
   "/amazon-de-translation": {
     title: "Localize Listings for Amazon Germany | Buzztate",
     description:
-      "Translate Amazon listings to German with compound nouns, metric units, and backend keywords optimized for Amazon.de search. Try free.",
+      "Localize your listings for Amazon Germany. German compound search terms, marketplace-compliant bullet points, and cultural adaptation built in.",
   },
   "/amazon-jp-translation": {
     title: "Localize Listings for Amazon Japan | Buzztate",
     description:
-      "Translate Amazon listings to Japanese with keigo language, detailed specs, and katakana brand names for Amazon.co.jp. Try free.",
+      "Localize your listings for Amazon Japan. Polite keigo language, detailed specifications, and Japanese search keyword optimization built in.",
   },
 };
 
@@ -42,6 +42,7 @@ const DEFAULT_SEO = PAGE_SEO["/"];
 
 /**
  * Sets <link rel="canonical">, <title>, <meta name="description">,
+ * <meta property="og:description">, <meta name="twitter:description">,
  * and <meta name="robots"> in <head> based on the current route.
  */
 export function useCanonical() {
@@ -62,16 +63,24 @@ export function useCanonical() {
     }
     link.href = canonicalHref;
 
-    // --- title + description ---
+    // --- title + descriptions ---
     const seo = PAGE_SEO[location] ?? DEFAULT_SEO;
     document.title = seo.title;
 
     const descMeta = document.querySelector<HTMLMetaElement>(
       'meta[name="description"]',
     );
-    if (descMeta) {
-      descMeta.content = seo.description;
-    }
+    if (descMeta) descMeta.content = seo.description;
+
+    const ogDesc = document.querySelector<HTMLMetaElement>(
+      'meta[property="og:description"]',
+    );
+    if (ogDesc) ogDesc.content = seo.description;
+
+    const twDesc = document.querySelector<HTMLMetaElement>(
+      'meta[name="twitter:description"]',
+    );
+    if (twDesc) twDesc.content = seo.description;
 
     // --- robots (noindex for auth pages) ---
     let robotsMeta = document.querySelector<HTMLMetaElement>(
