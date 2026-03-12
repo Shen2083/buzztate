@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
+import { BLOG_POSTS } from "@/pages/blog/blogData";
 
 const BASE_URL = "https://buzztate.com";
 const NOINDEX_PATHS = ["/auth"];
@@ -36,7 +37,20 @@ const PAGE_SEO: Record<string, { title: string; description: string }> = {
     description:
       "Localize your listings for Amazon Japan. Polite keigo language, detailed specifications, and Japanese search keyword optimization built in.",
   },
+  "/blog": {
+    title: "Blog | Buzztate",
+    description:
+      "Guides, tips, and insights for e-commerce sellers expanding internationally with Buzztate.",
+  },
 };
+
+// Add per-post SEO from blog data
+for (const post of BLOG_POSTS) {
+  PAGE_SEO[`/blog/${post.slug}`] = {
+    title: `${post.title} | Buzztate`,
+    description: post.excerpt,
+  };
+}
 
 const DEFAULT_SEO = PAGE_SEO["/"];
 

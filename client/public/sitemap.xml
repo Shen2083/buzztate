@@ -36,4 +36,16 @@
       <changefreq>weekly</changefreq>
       <priority>0.7</priority>
    </url>
+   <url>
+      <loc>https://buzztate.com/blog</loc>
+      <lastmod>2026-03-12</lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>0.7</priority>
+   </url>
+   <url>
+      <loc>https://buzztate.com/blog/localize-amazon-listings-germany</loc>
+      <lastmod>2026-03-12</lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.6</priority>
+   </url>
 </urlset>

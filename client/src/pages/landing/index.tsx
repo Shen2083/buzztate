@@ -90,6 +90,7 @@ export default function Landing() {
             <button onClick={() => scrollToSection("platforms")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Platforms</button>
             <button onClick={() => scrollToSection("pricing")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</button>
             <button onClick={() => scrollToSection("faq")} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">FAQ</button>
+            <Link href="/blog" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Blog</Link>
           </div>
 
           <div className="flex items-center gap-3 md:gap-4">

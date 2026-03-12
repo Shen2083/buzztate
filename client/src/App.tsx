@@ -21,6 +21,8 @@ import AmazonDeTranslation from "@/pages/landing/AmazonDeTranslation";
 import AmazonJpTranslation from "@/pages/landing/AmazonJpTranslation";
 import PrivacyPolicy from "@/pages/landing/PrivacyPolicy";
 import TermsOfService from "@/pages/landing/TermsOfService";
+import BlogList from "@/pages/blog/BlogList";
+import BlogPost from "@/pages/blog/BlogPost";
 
 /**
  * Auth-gated wrapper — only used for /app route.
@@ -92,6 +94,8 @@ function Router() {
       <Route path="/etsy-listing-translation" component={EtsyListingTranslation} />
       <Route path="/amazon-de-translation" component={AmazonDeTranslation} />
       <Route path="/amazon-jp-translation" component={AmazonJpTranslation} />
+      <Route path="/blog" component={BlogList} />
+      <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
       {/* Protected app — only this route waits for auth */}
