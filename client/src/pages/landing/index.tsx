@@ -74,6 +74,50 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-yellow-400 selection:text-black flex flex-col">
 
+      {/* JSON-LD: SoftwareApplication */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "Buzztate",
+            applicationCategory: "BusinessApplication",
+            operatingSystem: "Web Browser",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+            description:
+              "Cross-platform listing localization for Amazon, Shopify, and Etsy sellers. Upload from any platform, get marketplace-ready files with auto-generated fields.",
+            featureList:
+              "Cross-Platform Listing Conversion, Marketplace-Aware Localization, Amazon Listing Translation, Shopify Product Localization, Etsy Tag Optimization, Auto-Generated Bullet Points, Quality Checks",
+            screenshot: "https://buzztate.com/og-image.png",
+            author: { "@type": "Organization", name: "Buzztate" },
+          }),
+        }}
+      />
+
+      {/* JSON-LD: FAQPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map((faq) => ({
+              "@type": "Question",
+              name: faq.question,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: typeof faq.answer === "string"
+                  ? faq.answer
+                  : faq.question === "How much does Buzztate cost?"
+                    ? "Buzztate offers 5 free listing localizations to try the product. Paid plans are available for sellers with larger catalogs. See the pricing section on the homepage for current plans."
+                    : String(faq.answer),
+              },
+            })),
+          }),
+        }}
+      />
+
       {/* ============ NAVIGATION ============ */}
       <nav className="w-full border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex justify-between items-center">
