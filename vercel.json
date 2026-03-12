@@ -2,6 +2,9 @@
   "buildCommand": "npx vite build",
   "outputDirectory": "dist/public",
   "framework": null,
+  "redirects": [
+    { "source": "/translate/:lang", "destination": "/", "statusCode": 301 }
+  ],
   "functions": {
     "api/localize.ts": {
       "memory": 1024,

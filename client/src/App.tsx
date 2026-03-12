@@ -12,7 +12,7 @@ import Home from "@/pages/home";
 import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth";
-import LanguageLanding from "@/pages/landing/LanguageLanding";
+
 import AmazonListingTranslation from "@/pages/landing/AmazonListingTranslation";
 import ShopifyProductTranslation from "@/pages/landing/ShopifyProductTranslation";
 import EtsyListingTranslation from "@/pages/landing/EtsyListingTranslation";
@@ -92,10 +92,6 @@ function Router() {
       <Route path="/amazon-jp-translation" component={AmazonJpTranslation} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
-      <Route path="/translate/:lang">
-        {(params) => <LanguageLanding lang={params.lang} />}
-      </Route>
-
       {/* Protected app — only this route waits for auth */}
       <Route path="/app" component={ProtectedRoute} />
 
