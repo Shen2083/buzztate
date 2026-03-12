@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { supabase } from "@/lib/supabase";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import NetworkStatus from "@/components/NetworkStatus";
+import { useCanonical } from "@/hooks/useCanonical";
 
 // Pages
 import Home from "@/pages/home";
@@ -70,6 +71,7 @@ function ProtectedRoute() {
 
 function Router() {
   const [location, setLocation] = useLocation();
+  useCanonical();
 
   // Redirect /auth to /app if user navigates there directly while logged in
   useEffect(() => {
