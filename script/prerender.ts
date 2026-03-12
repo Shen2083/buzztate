@@ -45,7 +45,7 @@ async function prerender() {
   const ssrModule = await import(
     path.resolve(ROOT, "dist/ssr/entry-prerender.js")
   );
-  const { render, routes } = ssrModule;
+  const { render, routes, PAGE_SEO } = ssrModule;
 
   // Read the Vite-built index.html shell
   const shellHtml = await readFile(path.resolve(DIST, "index.html"), "utf-8");
@@ -69,7 +69,19 @@ async function prerender() {
     console.log(`  prerendering ${route}...`);
     const html = render(route);
 
-    const fullHtml = beforeRoot + html + afterRoot;
+    // Inject per-page title and meta description into the shell
+    let fullHtml = beforeRoot + html + afterRoot;
+    const seo = PAGE_SEO?.[route];
+    if (seo) {
+      fullHtml = fullHtml.replace(
+        /<title>[^<]*<\/title>/,
+        `<title>${seo.title}</title>`,
+      );
+      fullHtml = fullHtml.replace(
+        /name="description" content="[^"]*"/,
+        `name="description" content="${seo.description}"`,
+      );
+    }
 
     // Determine output path
     if (route === "/") {
