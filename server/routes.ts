@@ -27,6 +27,14 @@ function asyncHandler(fn: (req: Request, res: Response) => Promise<any>) {
 }
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<void> {
+  // 301 redirect: old generic translation pages → new "For Sellers" homepage
+  app.use((req, res, next) => {
+    if (req.path.startsWith("/translate/")) {
+      return res.redirect(301, "/");
+    }
+    next();
+  });
+
   // Apply general rate limiting to all API routes
   app.use("/api", generalLimiter);
 
