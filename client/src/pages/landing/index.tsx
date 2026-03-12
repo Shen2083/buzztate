@@ -10,28 +10,32 @@ import { useState } from "react";
 
 const FAQS = [
   {
-    question: "Is this just Google Translate with a CSV wrapper?",
-    answer: "No. Buzztate uses marketplace-specific AI that understands how shoppers search on each platform. A German Amazon shopper searches differently to a German Google user. We optimize for marketplace conversion, not just linguistic accuracy.",
+    question: "What is Buzztate?",
+    answer: "Buzztate is a cross-platform listing localization tool for e-commerce sellers. It converts and localizes product listings between Amazon, Shopify, and Etsy, generating marketplace-ready files for Germany, France, Spain, Italy, and Japan.",
   },
   {
-    question: "Can I upload Etsy listings and get Amazon files?",
-    answer: "Yes — cross-platform conversion is one of our core features. Upload from any supported platform and download files formatted for any other. We even generate missing fields, like creating Amazon bullet points from your Etsy descriptions.",
+    question: "How is Buzztate different from Google Translate or DeepL?",
+    answer: "Translation tools give you words. Buzztate gives you marketplace-ready listings. It understands Amazon\u2019s bullet point requirements, Shopify\u2019s SEO fields, and Etsy\u2019s tag system. It also generates missing fields \u2014 like creating 5 Amazon bullet points from an Etsy description \u2014 and uses marketplace-specific keywords, not just translated versions of your existing ones.",
   },
   {
-    question: "What happens to fields like SKU, price, and images?",
-    answer: "They pass through unchanged. We only localize text content — titles, descriptions, bullet points, tags, and keywords. Your SKUs, prices, image URLs, and platform-specific settings are preserved exactly as they are.",
+    question: "What platforms does Buzztate support?",
+    answer: "Buzztate supports Amazon, Shopify, and Etsy. You can upload listings from any of these platforms and download localized, marketplace-ready files for any combination of the others. Supported file formats include Amazon TSV, Shopify CSV, and Etsy CSV.",
   },
   {
-    question: "How is this different from hiring a translator?",
-    answer: "Speed and marketplace expertise. A translator gives you accurate language. Buzztate gives you marketplace-optimized listings with the right keywords, character limits, and cultural tone for each platform. Plus it handles 200 listings in minutes, not weeks.",
+    question: "What languages and markets does Buzztate support?",
+    answer: "Buzztate currently supports localization for Amazon Germany, France, Spain, Italy, and Japan, plus Shopify and Etsy in any supported language. Each market gets content optimized for how local shoppers actually search and buy \u2014 German compound search terms, formal French keywords, Japanese keigo language, and more.",
   },
   {
-    question: "What if I'm on the Free plan?",
-    answer: "You get 5 listings per month into 1 marketplace. Enough to test the quality with your actual products before committing.",
+    question: "Does Buzztate generate Amazon bullet points automatically?",
+    answer: "Yes. If your source listing doesn\u2019t have bullet points (for example, an Etsy listing), Buzztate automatically generates 5 Amazon-compliant bullet points under 500 characters each, localized with marketplace-specific keywords for your target market.",
   },
   {
-    question: "Can I request a new marketplace?",
-    answer: "Absolutely. We're adding new markets based on seller demand. Use the request form and we'll notify you when your market goes live.",
+    question: "How much does Buzztate cost?",
+    answer: "Buzztate offers 5 free listing localizations to try the product. Paid plans are available for sellers with larger catalogs. Visit buzztate.com/pricing for current pricing.",
+  },
+  {
+    question: "Can I convert an Etsy listing to Amazon format?",
+    answer: "Yes. Upload your Etsy CSV and Buzztate will map your fields to Amazon\u2019s format, generate missing fields like bullet points, localize the content for your target marketplace, and output an Amazon-ready TSV file you can upload directly to Seller Central.",
   },
 ];
 
