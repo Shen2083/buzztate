@@ -39,6 +39,9 @@ async function buildAll() {
   console.log("generating blog data...");
   execSync("npx tsx script/generate-blog-data.ts", { stdio: "inherit" });
 
+  console.log("generating sitemap...");
+  execSync("npx tsx script/generate-sitemap.ts", { stdio: "inherit" });
+
   console.log("building client...");
   await viteBuild();
 

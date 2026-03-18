@@ -5,6 +5,48 @@ import Footer from "@/components/Footer";
 export default function ShopifyProductTranslation() {
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col">
+      {/* JSON-LD: WebPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Shopify Product Localization for Sellers",
+            description: "Convert Shopify products into marketplace-ready Amazon or Etsy listings. Buzztate maps fields, generates missing content, and localizes for each market.",
+            url: "https://buzztate.com/shopify-product-translation",
+            isPartOf: { "@type": "WebSite", name: "Buzztate", url: "https://buzztate.com" },
+            breadcrumb: {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://buzztate.com/" },
+                { "@type": "ListItem", position: 2, name: "Shopify Product Localization", item: "https://buzztate.com/shopify-product-translation" },
+              ],
+            },
+          }),
+        }}
+      />
+
+      {/* JSON-LD: HowTo */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "HowTo",
+            name: "How to Localize Shopify Products for International Markets",
+            description: "Translate and localize your Shopify product catalog for global sales in 4 steps using Buzztate.",
+            step: [
+              { "@type": "HowToStep", position: 1, name: "Export from Shopify", text: "Go to your Shopify admin, navigate to Products, and click Export to download your product catalog as a CSV file." },
+              { "@type": "HowToStep", position: 2, name: "Upload to Buzztate", text: "Upload the CSV to Buzztate. Shopify columns (Title, Body HTML, Tags) are auto-detected and mapped." },
+              { "@type": "HowToStep", position: 3, name: "Select target language", text: "Select Shopify (Multi-market) as your target and choose your target language. Buzztate generates Google SEO-optimized translations." },
+              { "@type": "HowToStep", position: 4, name: "Download and import", text: "Download the Shopify-format CSV and import it back through Shopify's bulk product editor." },
+            ],
+            tool: { "@type": "SoftwareApplication", name: "Buzztate" },
+          }),
+        }}
+      />
+
       {/* Nav */}
       <nav className="p-6 border-b border-gray-800 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
@@ -29,6 +71,16 @@ export default function ShopifyProductTranslation() {
         <Link href="/auth?mode=signup" className="bg-yellow-400 hover:bg-yellow-300 text-black px-8 py-4 rounded-xl font-extrabold text-lg transition-all flex items-center gap-2">
           Start Localizing <ArrowRight size={18} />
         </Link>
+      </div>
+
+      {/* What is Shopify Product Localization — structured for AI extraction */}
+      <div className="max-w-4xl mx-auto px-6 pt-8 pb-4">
+        <div className="bg-gray-900/40 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-lg font-bold mb-2">What is Shopify Product Localization?</h2>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Shopify product localization is the process of translating and adapting your Shopify product catalog for international markets. Unlike Amazon, Shopify product discovery is Google-driven, so localized products need Google SEO-optimized titles, meta descriptions, and HTML body content in each target language. Buzztate generates all of this from a standard Shopify CSV export.
+          </p>
+        </div>
       </div>
 
       {/* Content */}
@@ -81,6 +133,33 @@ export default function ShopifyProductTranslation() {
           <p className="text-gray-400 leading-relaxed">
             <strong className="text-white">Step 4:</strong> Download the Shopify-format CSV and import it back through Shopify's bulk product editor or use the Shopify Markets translation feature.
           </p>
+        </section>
+
+        {/* Related reading — internal cross-links */}
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Related Reading</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link href="/amazon-listing-translation" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Platform Guide</p>
+              <p className="text-white font-medium text-sm">Amazon Listing Localization</p>
+              <p className="text-gray-500 text-xs mt-1">Localize for Amazon's international marketplaces</p>
+            </Link>
+            <Link href="/etsy-listing-translation" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Platform Guide</p>
+              <p className="text-white font-medium text-sm">Etsy Listing Localization</p>
+              <p className="text-gray-500 text-xs mt-1">Tag-optimized translations for Etsy's international markets</p>
+            </Link>
+            <Link href="/blog/amazon-seller-localization-tools-2026" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Blog</p>
+              <p className="text-white font-medium text-sm">Amazon Seller Localization Tools Compared</p>
+              <p className="text-gray-500 text-xs mt-1">The complete 2026 comparison of localization options</p>
+            </Link>
+            <Link href="/blog/why-keyword-research-not-enough-localize-amazon-listings" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Blog</p>
+              <p className="text-white font-medium text-sm">Why Keyword Research Isn't Enough</p>
+              <p className="text-gray-500 text-xs mt-1">What marketplace localization really requires</p>
+            </Link>
+          </div>
         </section>
       </div>
 

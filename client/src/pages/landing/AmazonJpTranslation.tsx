@@ -5,6 +5,66 @@ import Footer from "@/components/Footer";
 export default function AmazonJpTranslation() {
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col">
+      {/* JSON-LD: WebPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Localize Listings for Amazon Japan",
+            description: "Localize your listings for Amazon Japan with polite keigo language, detailed specifications, and Japanese search keyword optimization.",
+            url: "https://buzztate.com/amazon-jp-translation",
+            isPartOf: { "@type": "WebSite", name: "Buzztate", url: "https://buzztate.com" },
+            breadcrumb: {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://buzztate.com/" },
+                { "@type": "ListItem", position: 2, name: "Amazon Listing Localization", item: "https://buzztate.com/amazon-listing-translation" },
+                { "@type": "ListItem", position: 3, name: "Amazon Japan", item: "https://buzztate.com/amazon-jp-translation" },
+              ],
+            },
+          }),
+        }}
+      />
+
+      {/* JSON-LD: FAQPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "What is keigo and why does it matter for Amazon Japan listings?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Keigo (敬語) is the Japanese politeness system. Product listings on Amazon.co.jp must use consistent formal keigo (ございます, いただけます, ご利用ください). Using casual language signals unprofessionalism and reduces conversion rates. Generic translation tools often produce inconsistent politeness levels.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "How big is the Amazon Japan marketplace?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Amazon.co.jp is the fourth-largest Amazon marketplace globally with ¥3.5 trillion in annual GMV and over 52 million monthly active shoppers.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "How should brand names be written in Japanese Amazon listings?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Foreign brand names must be rendered in katakana (e.g., Apple → アップル) while preserving the original English spelling for searchability. Buzztate handles this automatically for all brand names in your listings.",
+                },
+              },
+            ],
+          }),
+        }}
+      />
+
       {/* Nav */}
       <nav className="p-6 border-b border-gray-800 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
@@ -29,6 +89,16 @@ export default function AmazonJpTranslation() {
         <Link href="/auth?mode=signup" className="bg-yellow-400 hover:bg-yellow-300 text-black px-8 py-4 rounded-xl font-extrabold text-lg transition-all flex items-center gap-2">
           Start Localizing for Amazon.co.jp <ArrowRight size={18} />
         </Link>
+      </div>
+
+      {/* What is Amazon Japan Localization — structured for AI extraction */}
+      <div className="max-w-4xl mx-auto px-6 pt-8 pb-4">
+        <div className="bg-gray-900/40 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-lg font-bold mb-2">What is Amazon Japan Listing Localization?</h2>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Amazon Japan (Amazon.co.jp) listing localization adapts product listings for Japanese shoppers on Amazon's fourth-largest global marketplace. It requires consistent keigo (敬語) politeness throughout, katakana rendering of foreign brand names, exhaustive product specifications, gift-giving context (贈り物), and mixed-script backend keywords (kanji + hiragana + katakana). Amazon.co.jp has ¥3.5T in annual GMV and 52M+ monthly shoppers.
+          </p>
+        </div>
       </div>
 
       {/* Content */}
@@ -108,6 +178,33 @@ export default function AmazonJpTranslation() {
               <p className="text-2xl font-bold text-yellow-400 mb-1">#4</p>
               <p className="text-xs text-gray-500">Largest Amazon marketplace globally</p>
             </div>
+          </div>
+        </section>
+
+        {/* Related reading — internal cross-links */}
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Related Reading</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link href="/amazon-listing-translation" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Platform Guide</p>
+              <p className="text-white font-medium text-sm">Amazon Listing Localization</p>
+              <p className="text-gray-500 text-xs mt-1">All Amazon international marketplaces</p>
+            </Link>
+            <Link href="/amazon-de-translation" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Market Guide</p>
+              <p className="text-white font-medium text-sm">Localize for Amazon Germany</p>
+              <p className="text-gray-500 text-xs mt-1">Compound nouns, formal address, and more</p>
+            </Link>
+            <Link href="/blog/localize-amazon-listings-germany" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Blog</p>
+              <p className="text-white font-medium text-sm">How to Localize Amazon Listings for Germany</p>
+              <p className="text-gray-500 text-xs mt-1">In-depth guide to the German marketplace</p>
+            </Link>
+            <Link href="/blog/amazon-seller-localization-tools-2026" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Blog</p>
+              <p className="text-white font-medium text-sm">Amazon Seller Localization Tools Compared</p>
+              <p className="text-gray-500 text-xs mt-1">The complete 2026 comparison</p>
+            </Link>
           </div>
         </section>
       </div>

@@ -5,6 +5,48 @@ import Footer from "@/components/Footer";
 export default function EtsyListingTranslation() {
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col">
+      {/* JSON-LD: WebPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Etsy Listing Localization for Sellers",
+            description: "Turn Etsy listings into Amazon-ready files with localized titles, generated bullet points, and marketplace-optimized keywords.",
+            url: "https://buzztate.com/etsy-listing-translation",
+            isPartOf: { "@type": "WebSite", name: "Buzztate", url: "https://buzztate.com" },
+            breadcrumb: {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://buzztate.com/" },
+                { "@type": "ListItem", position: 2, name: "Etsy Listing Localization", item: "https://buzztate.com/etsy-listing-translation" },
+              ],
+            },
+          }),
+        }}
+      />
+
+      {/* JSON-LD: HowTo */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "HowTo",
+            name: "How to Localize Etsy Listings for International Markets",
+            description: "Translate and optimize your Etsy listings for international shoppers in 4 steps using Buzztate.",
+            step: [
+              { "@type": "HowToStep", position: 1, name: "Export from Etsy", text: "Go to your Etsy Shop Manager and download your listings as a CSV using the Download Data option." },
+              { "@type": "HowToStep", position: 2, name: "Upload to Buzztate", text: "Upload the CSV to Buzztate. Etsy's Title, Description, and Tags columns are auto-detected." },
+              { "@type": "HowToStep", position: 3, name: "Select target language", text: "Select Etsy (International) as your marketplace and choose your target language." },
+              { "@type": "HowToStep", position: 4, name: "Download and import", text: "Download the Etsy-format CSV and use it to create or update your localized listings." },
+            ],
+            tool: { "@type": "SoftwareApplication", name: "Buzztate" },
+          }),
+        }}
+      />
+
       {/* Nav */}
       <nav className="p-6 border-b border-gray-800 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
@@ -29,6 +71,16 @@ export default function EtsyListingTranslation() {
         <Link href="/auth?mode=signup" className="bg-yellow-400 hover:bg-yellow-300 text-black px-8 py-4 rounded-xl font-extrabold text-lg transition-all flex items-center gap-2">
           Start Localizing <ArrowRight size={18} />
         </Link>
+      </div>
+
+      {/* What is Etsy Listing Localization — structured for AI extraction */}
+      <div className="max-w-4xl mx-auto px-6 pt-8 pb-4">
+        <div className="bg-gray-900/40 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-lg font-bold mb-2">What is Etsy Listing Localization?</h2>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Etsy listing localization is the process of translating and optimizing Etsy product listings for international shoppers. Etsy's search is tag-driven — each listing has 13 tags limited to 20 characters. Effective localization requires generating multi-word tag phrases in the target language, preserving the artisan tone Etsy shoppers expect, and adapting materials, dimensions, and care instructions to local standards. Buzztate handles all of this from a single CSV upload.
+          </p>
+        </div>
       </div>
 
       {/* Content */}
@@ -113,6 +165,33 @@ export default function EtsyListingTranslation() {
           <p className="text-gray-400 leading-relaxed">
             <strong className="text-white">Step 4:</strong> Download the Etsy-format CSV and use it to create or update your localized listings in Etsy's listing manager.
           </p>
+        </section>
+
+        {/* Related reading — internal cross-links */}
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Related Reading</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link href="/amazon-listing-translation" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Platform Guide</p>
+              <p className="text-white font-medium text-sm">Amazon Listing Localization</p>
+              <p className="text-gray-500 text-xs mt-1">Keyword-optimized for Amazon's international marketplaces</p>
+            </Link>
+            <Link href="/shopify-product-translation" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Platform Guide</p>
+              <p className="text-white font-medium text-sm">Shopify Product Localization</p>
+              <p className="text-gray-500 text-xs mt-1">Google SEO-optimized for Shopify Markets</p>
+            </Link>
+            <Link href="/blog/why-keyword-research-not-enough-localize-amazon-listings" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Blog</p>
+              <p className="text-white font-medium text-sm">Why Keyword Research Isn't Enough</p>
+              <p className="text-gray-500 text-xs mt-1">What marketplace localization really requires</p>
+            </Link>
+            <Link href="/blog/amazon-seller-localization-tools-2026" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Blog</p>
+              <p className="text-white font-medium text-sm">Amazon Seller Localization Tools Compared</p>
+              <p className="text-gray-500 text-xs mt-1">The complete 2026 comparison of localization options</p>
+            </Link>
+          </div>
         </section>
       </div>
 

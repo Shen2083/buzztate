@@ -17,6 +17,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const DIST = path.resolve(ROOT, "dist/public");
+const BASE_URL = "https://buzztate.com";
 
 async function prerender() {
   console.log("prerendering: building SSR bundle...");
@@ -72,6 +73,8 @@ async function prerender() {
     // Inject per-page title and meta descriptions into the shell
     let fullHtml = beforeRoot + html + afterRoot;
     const seo = PAGE_SEO?.[route];
+    const canonicalUrl = route === "/" ? `${BASE_URL}/` : `${BASE_URL}${route}`;
+
     if (seo) {
       fullHtml = fullHtml.replace(
         /<title>[^<]*<\/title>/,
@@ -89,7 +92,33 @@ async function prerender() {
         /name="twitter:description" content="[^"]*"/,
         `name="twitter:description" content="${seo.description}"`,
       );
+      // Inject og:title and twitter:title
+      fullHtml = fullHtml.replace(
+        /property="og:title" content="[^"]*"/,
+        `property="og:title" content="${seo.title}"`,
+      );
+      fullHtml = fullHtml.replace(
+        /name="twitter:title" content="[^"]*"/,
+        `name="twitter:title" content="${seo.title}"`,
+      );
     }
+
+    // Inject canonical URL
+    const canonicalTag = `<link rel="canonical" href="${canonicalUrl}">`;
+    fullHtml = fullHtml.replace(
+      "</head>",
+      `    ${canonicalTag}\n  </head>`,
+    );
+
+    // Inject og:url and twitter:url
+    fullHtml = fullHtml.replace(
+      /property="og:url" content="[^"]*"/,
+      `property="og:url" content="${canonicalUrl}"`,
+    );
+    fullHtml = fullHtml.replace(
+      /name="twitter:url" content="[^"]*"/,
+      `name="twitter:url" content="${canonicalUrl}"`,
+    );
 
     // Determine output path
     if (route === "/") {

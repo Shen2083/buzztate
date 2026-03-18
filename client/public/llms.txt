@@ -1,0 +1,56 @@
+# Buzztate
+
+> Cross-platform listing localization for e-commerce sellers on Amazon, Shopify, and Etsy.
+
+Buzztate is a SaaS tool that converts and localizes product listings across e-commerce platforms and languages. Sellers upload a CSV/TSV from one marketplace and download marketplace-ready files for international markets — not just translated, but fully adapted with local keywords, cultural tone, and platform-specific formatting.
+
+## What Buzztate Does
+
+- Converts listings between Amazon, Shopify, and Etsy formats
+- Localizes product titles, descriptions, bullet points, tags, and backend keywords
+- Generates missing fields automatically (e.g., creates 5 Amazon bullet points from an Etsy description)
+- Enforces marketplace character limits and formatting rules
+- Handles cultural adaptation: German compound nouns, Japanese keigo, formal address conventions
+
+## Supported Platforms
+
+- Amazon Seller Central (TSV/CSV flat file import/export)
+- Shopify (CSV with SEO meta fields)
+- Etsy (CSV with 13-tag optimization)
+
+## Supported Markets
+
+- Amazon Germany (.de) — German compound nouns, formal "Sie" address, metric conversion
+- Amazon France (.fr) — Accent-correct keywords, elegant copy style
+- Amazon Spain (.es) — European Spanish, benefit-driven descriptions
+- Amazon Italy (.it) — Lifestyle-oriented, design emphasis
+- Amazon Japan (.co.jp) — Keigo politeness, katakana brand names, exhaustive detail
+- Shopify Markets — All major languages including German, French, Spanish, Italian, Japanese, Portuguese, Dutch, Polish, Swedish, Danish, Norwegian, Finnish, and more
+- Etsy International — German, French, Spanish, Italian, Japanese, Portuguese, Dutch, Polish, Swedish, Danish, Norwegian, Finnish
+
+## Pricing
+
+- Free: 5 listings per month, 1 marketplace
+- Plus: $49/month, unlimited listings (up to 200 per batch), all marketplaces
+
+## How It Works
+
+1. Export listings from your source marketplace (Amazon, Shopify, or Etsy)
+2. Upload the CSV/TSV file to Buzztate
+3. Select target marketplace and language
+4. Download the localized, marketplace-ready file
+5. Import into the target marketplace
+
+## Key Pages
+
+- Homepage: https://buzztate.com/
+- Amazon Listing Localization: https://buzztate.com/amazon-listing-translation
+- Shopify Product Localization: https://buzztate.com/shopify-product-translation
+- Etsy Listing Localization: https://buzztate.com/etsy-listing-translation
+- Amazon Germany Localization: https://buzztate.com/amazon-de-translation
+- Amazon Japan Localization: https://buzztate.com/amazon-jp-translation
+- Blog: https://buzztate.com/blog
+
+## Contact
+
+- Website: https://buzztate.com

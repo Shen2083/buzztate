@@ -5,6 +5,66 @@ import Footer from "@/components/Footer";
 export default function AmazonDeTranslation() {
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col">
+      {/* JSON-LD: WebPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Localize Listings for Amazon Germany",
+            description: "Localize your listings for Amazon Germany with German compound search terms, marketplace-compliant bullet points, and cultural adaptation.",
+            url: "https://buzztate.com/amazon-de-translation",
+            isPartOf: { "@type": "WebSite", name: "Buzztate", url: "https://buzztate.com" },
+            breadcrumb: {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://buzztate.com/" },
+                { "@type": "ListItem", position: 2, name: "Amazon Listing Localization", item: "https://buzztate.com/amazon-listing-translation" },
+                { "@type": "ListItem", position: 3, name: "Amazon Germany", item: "https://buzztate.com/amazon-de-translation" },
+              ],
+            },
+          }),
+        }}
+      />
+
+      {/* JSON-LD: FAQPage for compound noun questions */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "Why are German compound nouns important for Amazon.de listings?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "German uses compound nouns where English uses multiple words. 'Coffee machine' becomes 'Kaffeemaschine' — one word. If your listing splits it into 'Kaffee Maschine' (two words), Amazon's A9 algorithm won't match it to German shoppers' searches, making your product invisible in search results.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "How big is the Amazon Germany marketplace?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Amazon.de is Amazon's second-largest marketplace globally with €37.4 billion in annual GMV and over 44 million monthly active shoppers.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Should I use 'du' or 'Sie' in German Amazon listings?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Always use the formal 'Sie' form in German Amazon listings. Using the informal 'du' signals unprofessionalism to German shoppers. 'You'll love this product' should be translated as 'Sie werden dieses Produkt lieben,' never 'Du wirst dieses Produkt lieben.'",
+                },
+              },
+            ],
+          }),
+        }}
+      />
+
       {/* Nav */}
       <nav className="p-6 border-b border-gray-800 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
@@ -29,6 +89,16 @@ export default function AmazonDeTranslation() {
         <Link href="/auth?mode=signup" className="bg-yellow-400 hover:bg-yellow-300 text-black px-8 py-4 rounded-xl font-extrabold text-lg transition-all flex items-center gap-2">
           Start Localizing for Amazon.de <ArrowRight size={18} />
         </Link>
+      </div>
+
+      {/* What is Amazon Germany Localization — structured for AI extraction */}
+      <div className="max-w-4xl mx-auto px-6 pt-8 pb-4">
+        <div className="bg-gray-900/40 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-lg font-bold mb-2">What is Amazon Germany Listing Localization?</h2>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Amazon Germany (Amazon.de) listing localization adapts your product listings for German-speaking shoppers on Amazon's second-largest global marketplace. It goes beyond translation to include German compound nouns (Kaffeemaschine, not Kaffee Maschine), formal "Sie" address, metric unit conversion, €-format number formatting (€1.299,99), and backend keyword optimization with umlauts (ä, ö, ü). Amazon.de has €37.4B in annual GMV and 44M+ monthly shoppers.
+          </p>
+        </div>
       </div>
 
       {/* Content */}
@@ -114,6 +184,33 @@ export default function AmazonDeTranslation() {
               <p className="text-2xl font-bold text-yellow-400 mb-1">#2</p>
               <p className="text-xs text-gray-500">Largest Amazon marketplace globally</p>
             </div>
+          </div>
+        </section>
+
+        {/* Related reading — internal cross-links */}
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Related Reading</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link href="/amazon-listing-translation" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Platform Guide</p>
+              <p className="text-white font-medium text-sm">Amazon Listing Localization</p>
+              <p className="text-gray-500 text-xs mt-1">All Amazon international marketplaces</p>
+            </Link>
+            <Link href="/amazon-jp-translation" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Market Guide</p>
+              <p className="text-white font-medium text-sm">Localize for Amazon Japan</p>
+              <p className="text-gray-500 text-xs mt-1">Keigo, katakana, and Japanese search patterns</p>
+            </Link>
+            <Link href="/blog/localize-amazon-listings-germany" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Blog</p>
+              <p className="text-white font-medium text-sm">How to Localize Amazon Listings for Germany</p>
+              <p className="text-gray-500 text-xs mt-1">In-depth guide to the German marketplace</p>
+            </Link>
+            <Link href="/blog/amazon-seller-localization-tools-2026" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Blog</p>
+              <p className="text-white font-medium text-sm">Amazon Seller Localization Tools Compared</p>
+              <p className="text-gray-500 text-xs mt-1">The complete 2026 comparison</p>
+            </Link>
           </div>
         </section>
       </div>

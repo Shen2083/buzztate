@@ -1,0 +1,122 @@
+# Buzztate — Full Reference
+
+> Cross-platform listing localization for e-commerce sellers on Amazon, Shopify, and Etsy.
+
+Buzztate is a SaaS tool that converts and localizes product listings across e-commerce platforms and languages. It is purpose-built for online sellers who want to expand to international marketplaces without spending weeks on manual translation and format conversion.
+
+## Problem Buzztate Solves
+
+Selling internationally on Amazon, Shopify, or Etsy requires more than translation:
+
+- **Different platforms use different file formats and field structures.** Amazon uses flat files (TSV) with specific columns like `bullet_point1` through `bullet_point5` and `generic_keyword`. Shopify uses CSV with `Body (HTML)`, `SEO Title`, and `SEO Description`. Etsy uses CSV with 13 tags limited to 20 characters each.
+- **Each marketplace has different search algorithms.** Amazon's A9/A10 algorithm indexes backend keywords and bullet points differently per locale. Shopify product discovery is Google-driven, so SEO meta tags matter. Etsy is tag-driven — multi-word tag phrases outperform single-word translations.
+- **Cultural adaptation matters for conversion.** German shoppers expect compound nouns ("Kaffeemaschine" not "Kaffee Maschine"), formal "Sie" address, and metric units. Japanese shoppers expect keigo (polite language), katakana brand names, exhaustive specifications, and gift-giving context. French shoppers respond to elegant, brand-prestige copy.
+- **Missing fields need to be generated.** An Etsy listing might have a description but no bullet points. Buzztate generates Amazon-style bullet points from the description content rather than leaving fields blank.
+
+Generic translation tools (Google Translate, DeepL) produce word-for-word translations that miss all of these requirements.
+
+## What Buzztate Does
+
+### Cross-Platform Conversion
+Upload a listing from one platform and download it formatted for another:
+- Amazon → Shopify, Etsy
+- Shopify → Amazon, Etsy
+- Etsy → Amazon, Shopify
+
+### Marketplace-Aware Localization
+Each target marketplace gets content optimized for its search algorithm and audience:
+- Amazon: Keyword-optimized bullet points, backend search terms, character limit compliance
+- Shopify: Google SEO-optimized titles and meta descriptions, HTML-formatted descriptions
+- Etsy: 13 multi-word tags under 20 characters each, artisan-tone descriptions
+
+### Auto-Generated Fields
+Buzztate generates missing fields that the target platform requires:
+- Creates 5 Amazon bullet points from an Etsy description
+- Generates SEO meta titles and descriptions for Shopify
+- Produces 13 localized Etsy tags from Amazon keywords
+
+### Cultural and Linguistic Adaptation
+- German: Compound nouns (Edelstahl-Trinkflasche), formal Sie address, metric measurements, CE/TÜV certification mentions, number formatting (€1.299,99)
+- French: Accent-correct keywords, formal "vous" address, elegant brand-oriented copy
+- Spanish: European Spanish (not Latin American), benefit-driven emotional copy, usted form
+- Italian: Lifestyle-oriented descriptions emphasizing design and craftsmanship, Lei address
+- Japanese: Consistent keigo (ございます, いただけます), katakana brand names (Apple → アップル), exhaustive specifications, gift context (贈り物), mixed-script keywords (kanji + hiragana + katakana)
+
+### Quality Checks
+- Character limit enforcement (Amazon title: 200 chars, Etsy title: 140 chars, Etsy tags: 20 chars each)
+- Brand name, SKU, ASIN, UPC, and browse node ID protection (never translated)
+- Field validation before download
+
+## Supported Platforms and Formats
+
+| Platform | Format | Key Fields |
+|----------|--------|------------|
+| Amazon Seller Central | TSV/CSV flat file | item_name, product_description, bullet_point1-5, generic_keyword |
+| Shopify | CSV | Title, Body (HTML), Tags, SEO Title, SEO Description |
+| Etsy | CSV | Title, Description, Tags (13 tags, 20 chars each) |
+
+## Supported Markets
+
+### Amazon Marketplaces
+| Market | Language | Key Requirements |
+|--------|----------|-----------------|
+| Amazon.de (Germany) | German | Compound nouns, formal Sie, metric units, €37.4B annual GMV, 44M+ monthly shoppers |
+| Amazon.fr (France) | French | Accented keywords, formal vous, EU number formatting |
+| Amazon.es (Spain) | European Spanish | Benefit-driven copy, usted form |
+| Amazon.it (Italy) | Italian | Design/lifestyle emphasis, Lei address |
+| Amazon.co.jp (Japan) | Japanese | Keigo, katakana brands, exhaustive specs, ¥3.5T GMV, 52M+ shoppers |
+
+### Shopify Markets
+All major languages including German, French, Spanish, Italian, Japanese, Portuguese, Chinese (Simplified), Korean, Dutch, Swedish, Danish, Norwegian, Finnish, Polish, Czech, Hungarian, Romanian, Turkish, Arabic, Hindi, Thai, Vietnamese, and Indonesian.
+
+### Etsy International
+German, French, Spanish, Italian, Japanese, Portuguese, Dutch, Polish, Swedish, Danish, Norwegian, and Finnish.
+
+## Pricing
+
+| Plan | Price | Listings | Marketplaces |
+|------|-------|----------|-------------|
+| Free | $0/month | 5 per month | 1 marketplace |
+| Plus | $49/month | Unlimited (200 per batch) | All marketplaces |
+
+No credit card required for the free plan.
+
+## How It Works
+
+1. **Export** your listings from your source marketplace as a CSV or TSV file
+2. **Upload** the file to Buzztate — columns are auto-detected and mapped
+3. **Select** your target marketplace and language
+4. **Review** the localized output with quality check results
+5. **Download** the marketplace-ready file and import it to the target platform
+
+## Use Cases
+
+- **Amazon US seller expanding to Europe**: Upload Amazon.com flat file → download localized flat files for Amazon.de, .fr, .es, .it
+- **Amazon seller entering Japan**: Upload Amazon flat file → download Japanese flat file with keigo, katakana, and gift keywords
+- **Etsy seller adding Amazon listings**: Upload Etsy CSV → download Amazon flat file with auto-generated bullet points
+- **Shopify store going multilingual**: Upload Shopify CSV → download localized CSV with SEO meta tags for each language
+
+## Technical Details
+
+- Web-based application (no software installation)
+- Processes files entirely in-browser for upload/download
+- AI-powered localization using marketplace-specific prompts
+- Prerendered static pages for fast loading
+- Authentication via Supabase
+- Payments via Stripe
+
+## Pages
+
+- Homepage: https://buzztate.com/
+- Amazon Listing Localization: https://buzztate.com/amazon-listing-translation
+- Shopify Product Localization: https://buzztate.com/shopify-product-translation
+- Etsy Listing Localization: https://buzztate.com/etsy-listing-translation
+- Amazon Germany Localization: https://buzztate.com/amazon-de-translation
+- Amazon Japan Localization: https://buzztate.com/amazon-jp-translation
+- Blog: https://buzztate.com/blog
+- Privacy Policy: https://buzztate.com/privacy
+- Terms of Service: https://buzztate.com/terms
+
+## Contact
+
+- Website: https://buzztate.com
