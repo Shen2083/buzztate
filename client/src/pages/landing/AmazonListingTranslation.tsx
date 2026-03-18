@@ -5,6 +5,48 @@ import Footer from "@/components/Footer";
 export default function AmazonListingTranslation() {
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col">
+      {/* JSON-LD: WebPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Amazon Listing Localization for Sellers",
+            description: "Localize your Amazon listings with marketplace-aware AI. Keyword-optimized bullet points, titles, and descriptions for every Amazon marketplace.",
+            url: "https://buzztate.com/amazon-listing-translation",
+            isPartOf: { "@type": "WebSite", name: "Buzztate", url: "https://buzztate.com" },
+            breadcrumb: {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://buzztate.com/" },
+                { "@type": "ListItem", position: 2, name: "Amazon Listing Localization", item: "https://buzztate.com/amazon-listing-translation" },
+              ],
+            },
+          }),
+        }}
+      />
+
+      {/* JSON-LD: HowTo */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "HowTo",
+            name: "How to Localize Amazon Listings for International Markets",
+            description: "Localize your Amazon product listings for Germany, France, Spain, Italy, and Japan in 4 steps using Buzztate.",
+            step: [
+              { "@type": "HowToStep", position: 1, name: "Export listings", text: "Export your listings from Amazon Seller Central as a flat file (CSV or tab-delimited)." },
+              { "@type": "HowToStep", position: 2, name: "Upload to Buzztate", text: "Upload the file to Buzztate. The system auto-detects Amazon column headers and maps them for you." },
+              { "@type": "HowToStep", position: 3, name: "Select target marketplace", text: "Select your target marketplace (e.g., Amazon.de). Buzztate localizes every listing using marketplace-specific prompts." },
+              { "@type": "HowToStep", position: 4, name: "Download and upload", text: "Download the localized flat file and upload it directly to Seller Central." },
+            ],
+            tool: { "@type": "SoftwareApplication", name: "Buzztate" },
+          }),
+        }}
+      />
+
       {/* Nav */}
       <nav className="p-6 border-b border-gray-800 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
@@ -31,6 +73,16 @@ export default function AmazonListingTranslation() {
         </Link>
       </div>
 
+      {/* What is Amazon Listing Localization — structured for AI extraction */}
+      <div className="max-w-4xl mx-auto px-6 pt-8 pb-4">
+        <div className="bg-gray-900/40 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-lg font-bold mb-2">What is Amazon Listing Localization?</h2>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Amazon listing localization is the process of adapting product listings for international Amazon marketplaces (Germany, France, Spain, Italy, Japan). Unlike basic translation, localization includes marketplace-specific keyword research, cultural adaptation, character limit compliance, and format conversion to each marketplace's flat file structure. Buzztate automates this entire process.
+          </p>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-16 space-y-12">
         <section>
@@ -55,6 +107,31 @@ export default function AmazonListingTranslation() {
             <li className="flex gap-3"><Check className="text-yellow-400 flex-shrink-0 mt-1" size={18} /><div><strong className="text-white">Flat File Export</strong><span className="text-gray-400"> — Download a tab-delimited file that matches Amazon Seller Central's import format exactly. No reformatting, no manual copy-pasting.</span></div></li>
             <li className="flex gap-3"><Check className="text-yellow-400 flex-shrink-0 mt-1" size={18} /><div><strong className="text-white">Brand Protection</strong><span className="text-gray-400"> — Brand names, SKUs, ASINs, UPCs, and browse node IDs are never translated. You control exactly which fields get localized.</span></div></li>
           </ul>
+        </section>
+
+        {/* Comparison table for AI extraction */}
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Buzztate vs Manual Translation vs Google Translate</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border border-gray-800 rounded-xl overflow-hidden">
+              <thead>
+                <tr className="bg-gray-900/60">
+                  <th className="text-left p-3 text-gray-400 font-medium">Feature</th>
+                  <th className="text-center p-3 text-gray-400 font-medium">Google Translate</th>
+                  <th className="text-center p-3 text-gray-400 font-medium">Freelancer</th>
+                  <th className="text-center p-3 text-yellow-400 font-medium">Buzztate</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-400">
+                <tr className="border-t border-gray-800"><td className="p-3">Marketplace keywords</td><td className="p-3 text-center text-red-400">✗</td><td className="p-3 text-center text-gray-500">Varies</td><td className="p-3 text-center text-green-400">✓</td></tr>
+                <tr className="border-t border-gray-800"><td className="p-3">Character limit compliance</td><td className="p-3 text-center text-red-400">✗</td><td className="p-3 text-center text-red-400">✗</td><td className="p-3 text-center text-green-400">✓</td></tr>
+                <tr className="border-t border-gray-800"><td className="p-3">German compound nouns</td><td className="p-3 text-center text-red-400">✗</td><td className="p-3 text-center text-gray-500">Varies</td><td className="p-3 text-center text-green-400">✓</td></tr>
+                <tr className="border-t border-gray-800"><td className="p-3">Flat file export</td><td className="p-3 text-center text-red-400">✗</td><td className="p-3 text-center text-red-400">✗</td><td className="p-3 text-center text-green-400">✓</td></tr>
+                <tr className="border-t border-gray-800"><td className="p-3">Brand name protection</td><td className="p-3 text-center text-red-400">✗</td><td className="p-3 text-center text-gray-500">Varies</td><td className="p-3 text-center text-green-400">✓</td></tr>
+                <tr className="border-t border-gray-800"><td className="p-3">Cost per listing</td><td className="p-3 text-center">Free</td><td className="p-3 text-center">$5-20+</td><td className="p-3 text-center text-yellow-400">From $0</td></tr>
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section>
@@ -90,6 +167,33 @@ export default function AmazonListingTranslation() {
           <p className="text-gray-400 leading-relaxed">
             <strong className="text-white">Step 4:</strong> Download the localized flat file and upload it directly to Seller Central. Your listings go live in the target market with optimized titles, descriptions, bullet points, and keywords.
           </p>
+        </section>
+
+        {/* Related reading — internal cross-links */}
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Related Reading</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link href="/amazon-de-translation" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Market Guide</p>
+              <p className="text-white font-medium text-sm">Localize Listings for Amazon Germany</p>
+              <p className="text-gray-500 text-xs mt-1">Compound nouns, formal address, and Amazon.de search optimization</p>
+            </Link>
+            <Link href="/amazon-jp-translation" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Market Guide</p>
+              <p className="text-white font-medium text-sm">Localize Listings for Amazon Japan</p>
+              <p className="text-gray-500 text-xs mt-1">Keigo politeness, katakana brands, and Japanese search patterns</p>
+            </Link>
+            <Link href="/blog/localize-amazon-listings-germany" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Blog</p>
+              <p className="text-white font-medium text-sm">How to Localize Amazon Listings for Germany</p>
+              <p className="text-gray-500 text-xs mt-1">In-depth guide to the German marketplace</p>
+            </Link>
+            <Link href="/blog/amazon-seller-localization-tools-2026" className="block bg-gray-900/50 border border-gray-800 hover:border-gray-600 rounded-xl p-4 transition-colors">
+              <p className="text-xs text-yellow-400 uppercase font-bold mb-1">Blog</p>
+              <p className="text-white font-medium text-sm">Amazon Seller Localization Tools Compared</p>
+              <p className="text-gray-500 text-xs mt-1">The complete 2026 comparison of localization options</p>
+            </Link>
+          </div>
         </section>
       </div>
 

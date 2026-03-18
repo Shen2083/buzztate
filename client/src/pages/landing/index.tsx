@@ -122,6 +122,21 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-yellow-400 selection:text-black flex flex-col">
 
+      {/* JSON-LD: Organization */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Buzztate",
+            url: "https://buzztate.com",
+            logo: "https://buzztate.com/favicon.png",
+            description: "Cross-platform listing localization for Amazon, Shopify, and Etsy sellers.",
+          }),
+        }}
+      />
+
       {/* JSON-LD: SoftwareApplication */}
       <script
         type="application/ld+json"
