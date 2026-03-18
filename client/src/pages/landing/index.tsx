@@ -4,7 +4,8 @@ import {
   FileSpreadsheet, Zap, Upload, Download, Shield, Mail,
   ArrowRightLeft, AlertTriangle, RefreshCw,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { BLOG_POSTS } from "@/pages/blog/blogData";
 
 // ---- Data ----
 
@@ -59,6 +60,53 @@ const MARKET_INSIGHTS = [
   { flag: "\u{1F1EE}\u{1F1F9}", country: "Italy", insight: "Lifestyle-driven descriptions that emphasize design and craftsmanship" },
   { flag: "\u{1F1EF}\u{1F1F5}", country: "Japan", insight: "Detailed specifications and polite keigo language that Japanese shoppers expect" },
 ];
+
+const RECENT_POSTS = BLOG_POSTS.slice(0, 3);
+
+function BlogPill() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [transitioning, setTransitioning] = useState(false);
+  const paused = useRef(false);
+
+  useEffect(() => {
+    if (RECENT_POSTS.length <= 1) return;
+    const id = setInterval(() => {
+      if (paused.current) return;
+      setTransitioning(true);
+      setTimeout(() => {
+        setActiveIndex((i) => (i + 1) % RECENT_POSTS.length);
+        setTransitioning(false);
+      }, 300);
+    }, 4500);
+    return () => clearInterval(id);
+  }, []);
+
+  if (RECENT_POSTS.length === 0) return null;
+
+  const post = RECENT_POSTS[activeIndex];
+  const title = post.title.length > 60 ? post.title.slice(0, 57) + "..." : post.title;
+
+  return (
+    <Link
+      href={`/blog/${post.slug}`}
+      className="group inline-flex items-center gap-2 bg-white/5 border border-gray-800 hover:border-gray-600 rounded-full px-3 py-1.5 mb-4 transition-colors cursor-pointer"
+      onMouseEnter={() => { paused.current = true; }}
+      onMouseLeave={() => { paused.current = false; }}
+    >
+      <span className="shrink-0 text-[10px] font-extrabold uppercase tracking-wider bg-yellow-400/15 text-yellow-400 px-1.5 py-0.5 rounded">
+        New
+      </span>
+      <span
+        className={`text-xs text-gray-300 group-hover:text-white transition-all duration-300 truncate max-w-[15rem] sm:max-w-xs ${
+          transitioning ? "opacity-0 -translate-y-2" : "opacity-100 translate-y-0"
+        }`}
+      >
+        {title}
+      </span>
+      <ArrowRight size={12} className="shrink-0 text-gray-500 group-hover:text-yellow-400 transition-colors" />
+    </Link>
+  );
+}
 
 export default function Landing() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
@@ -155,6 +203,7 @@ export default function Landing() {
 
       {/* ============ HERO ============ */}
       <div id="hero" className="flex flex-col items-center justify-start text-center px-6 pt-20 pb-16">
+        <BlogPill />
         <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 text-xs lg:text-sm font-bold uppercase tracking-wider px-4 py-2 rounded-full mb-8">
           <ArrowRightLeft size={14} /> Cross-Platform Listing Localization
         </div>
