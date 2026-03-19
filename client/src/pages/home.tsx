@@ -85,22 +85,50 @@ export default function Home({ session }: { session: any }) {
     const checkStatus = async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('is_pro, plan_tier, listings_used_this_month, cancel_at_period_end, current_period_end')
+        .select('is_pro, plan_tier, listings_used_this_month, cancel_at_period_end, current_period_end, stripe_customer_id')
         .eq('id', session.user.id)
         .single();
 
       if (error && !data) {
         const { data: fallback } = await supabase
           .from('profiles')
-          .select('is_pro')
+          .select('is_pro, stripe_customer_id')
           .eq('id', session.user.id)
           .single();
         if (fallback?.is_pro) {
           setIsPro(true);
+        } else if (fallback?.stripe_customer_id && !fallback?.is_pro) {
+          // Self-healing: stripe_customer_id exists but is_pro is false — sync from Stripe
+          try {
+            const headers = await getAuthHeaders();
+            const syncRes = await fetch("/api/sync-subscription", { method: "POST", headers });
+            const syncResult = await syncRes.json();
+            if (syncResult.is_pro) {
+              setIsPro(true);
+              setCancelAtPeriodEnd(syncResult.cancel_at_period_end || false);
+              setCurrentPeriodEnd(syncResult.current_period_end || null);
+            }
+          } catch (e) {
+            console.error("Subscription sync failed:", e);
+          }
         }
       } else if (data) {
         if (data.is_pro) {
           setIsPro(true);
+        } else if (data.stripe_customer_id && !data.is_pro) {
+          // Self-healing: stripe_customer_id exists but is_pro is false — sync from Stripe
+          try {
+            const headers = await getAuthHeaders();
+            const syncRes = await fetch("/api/sync-subscription", { method: "POST", headers });
+            const syncResult = await syncRes.json();
+            if (syncResult.is_pro) {
+              setIsPro(true);
+              setCancelAtPeriodEnd(syncResult.cancel_at_period_end || false);
+              setCurrentPeriodEnd(syncResult.current_period_end || null);
+            }
+          } catch (e) {
+            console.error("Subscription sync failed:", e);
+          }
         }
         setUsageCount(data.listings_used_this_month || 0);
         setCancelAtPeriodEnd(data.cancel_at_period_end || false);

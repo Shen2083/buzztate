@@ -59,10 +59,19 @@ export default async function handler(req: any, res: any) {
       const customers = await stripe.customers.list({ email: profile.email, limit: 1 });
       if (customers.data.length > 0) {
         customerId = customers.data[0].id;
-        // Save this ID back to DB so we don't search next time
+        // Save ID and sync subscription status to prevent is_pro desync
+        const subscriptions = await stripe.subscriptions.list({
+          customer: customerId, status: 'active', limit: 1
+        });
+        const hasActive = subscriptions.data.length > 0;
         await supabase
           .from('profiles')
-          .update({ stripe_customer_id: customerId })
+          .update({
+            stripe_customer_id: customerId,
+            is_pro: hasActive,
+            plan_tier: hasActive ? 'plus' : 'free',
+            updated_at: new Date().toISOString(),
+          })
           .eq('id', userId);
       }
     }

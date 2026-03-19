@@ -9,6 +9,7 @@ import portalHandler from "../api/portal";
 import verifyPaymentHandler from "../api/verify-payment";
 import translateHandler from "../api/translate";
 import localizeHandler from "../api/localize";
+import syncSubscriptionHandler from "../api/sync-subscription";
 
 /**
  * Wraps an async handler so Express 4 catches rejected promises.
@@ -49,6 +50,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/checkout", asyncHandler((req, res) => checkoutHandler(req, res)));
   app.post("/api/portal", asyncHandler((req, res) => portalHandler(req, res)));
   app.post("/api/verify-payment", asyncHandler((req, res) => verifyPaymentHandler(req, res)));
+  app.post("/api/sync-subscription", asyncHandler((req, res) => syncSubscriptionHandler(req, res)));
 
   // Webhook route — uses req.rawBody for Stripe signature verification
   // (rawBody is captured by express.json verify callback in server/index.ts)
