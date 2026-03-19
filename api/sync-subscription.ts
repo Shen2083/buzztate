@@ -67,8 +67,10 @@ export default async function handler(req: any, res: any) {
 
     if (hasActive) {
       const sub = subscriptions.data[0];
-      updateData.cancel_at_period_end = sub.cancel_at_period_end;
-      updateData.current_period_end = new Date(sub.current_period_end * 1000).toISOString();
+      updateData.cancel_at_period_end = sub.cancel_at_period_end ?? false;
+      if (sub.current_period_end) {
+        updateData.current_period_end = new Date(sub.current_period_end * 1000).toISOString();
+      }
     }
 
     const { error: updateError } = await supabase
@@ -85,8 +87,10 @@ export default async function handler(req: any, res: any) {
     return res.json({
       is_pro: hasActive,
       synced: true,
-      cancel_at_period_end: hasActive ? subscriptions.data[0].cancel_at_period_end : false,
-      current_period_end: hasActive ? new Date(subscriptions.data[0].current_period_end * 1000).toISOString() : null,
+      cancel_at_period_end: hasActive ? (subscriptions.data[0].cancel_at_period_end ?? false) : false,
+      current_period_end: hasActive && subscriptions.data[0].current_period_end
+        ? new Date(subscriptions.data[0].current_period_end * 1000).toISOString()
+        : null,
     });
 
   } catch (error: any) {

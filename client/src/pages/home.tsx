@@ -64,6 +64,7 @@ export default function Home({ session }: { session: any }) {
   const [fileParseLoading, setFileParseLoading] = useState(false);
   const [fileParseError, setFileParseError] = useState<string | null>(null);
   const cancelRef = useRef(false);
+  const syncAttemptedRef = useRef(false);
   const MAX_BATCH_SIZE = 200;
   const FREE_TIER_LIMIT = 5;
 
@@ -97,8 +98,9 @@ export default function Home({ session }: { session: any }) {
           .single();
         if (fallback?.is_pro) {
           setIsPro(true);
-        } else if (fallback?.stripe_customer_id && !fallback?.is_pro) {
+        } else if (fallback?.stripe_customer_id && !fallback?.is_pro && !syncAttemptedRef.current) {
           // Self-healing: stripe_customer_id exists but is_pro is false — sync from Stripe
+          syncAttemptedRef.current = true;
           try {
             const headers = await getAuthHeaders();
             const syncRes = await fetch("/api/sync-subscription", { method: "POST", headers });
@@ -115,8 +117,9 @@ export default function Home({ session }: { session: any }) {
       } else if (data) {
         if (data.is_pro) {
           setIsPro(true);
-        } else if (data.stripe_customer_id && !data.is_pro) {
+        } else if (data.stripe_customer_id && !data.is_pro && !syncAttemptedRef.current) {
           // Self-healing: stripe_customer_id exists but is_pro is false — sync from Stripe
+          syncAttemptedRef.current = true;
           try {
             const headers = await getAuthHeaders();
             const syncRes = await fetch("/api/sync-subscription", { method: "POST", headers });
