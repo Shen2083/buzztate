@@ -23,7 +23,7 @@ export default function PrivacyPolicy() {
 
         <article className="legal-content">
           <h1>Privacy Policy</h1>
-          <p className="legal-meta"><strong>Buzztate for Sellers</strong><br />Last updated: 11 March 2026</p>
+          <p className="legal-meta"><strong>Buzztate for Sellers</strong><br />Last updated: 19 March 2026</p>
 
           <h2>1. Who we are</h2>
           <p>Buzztate ("we", "us", "our") provides an e-commerce listing localization service at buzztate.com. We are based in the United Kingdom.</p>
@@ -44,7 +44,14 @@ export default function PrivacyPolicy() {
           <p>We collect basic usage information: number of localizations performed, marketplaces selected, and timestamps. This helps us improve the service and enforce plan limits.</p>
 
           <h3>Technical data</h3>
-          <p>We collect standard web server logs including IP address, browser type, and referring URL. We use cookies only for authentication (keeping you logged in) and do not use tracking cookies or third-party advertising cookies.</p>
+          <p>We collect standard web server logs including IP address, browser type, and referring URL.</p>
+
+          <h3>Cookies</h3>
+          <p>We use two categories of cookies:</p>
+          <ul>
+            <li><strong>Essential cookies:</strong> Required for the service to function. These include authentication cookies (keeping you logged in) and local preferences such as column mappings and UI state. These are always active.</li>
+            <li><strong>Analytics cookies (optional):</strong> We use Google Analytics 4 to understand how visitors use the site (e.g., page views, feature usage). These cookies are only activated if you consent via our cookie banner. You can change your preference at any time by clearing your browser's local storage.</li>
+          </ul>
 
           <h2>3. How we use your data</h2>
           <p>We use your data for the following purposes only:</p>
@@ -92,6 +99,12 @@ export default function PrivacyPolicy() {
                   <td>Website hosting</td>
                   <td>IP address, browser information (server logs)</td>
                   <td><a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">vercel.com/legal/privacy-policy</a></td>
+                </tr>
+                <tr>
+                  <td>Google Analytics</td>
+                  <td>Website usage analytics (opt-in only)</td>
+                  <td>Anonymised page views, events, browser info, IP address (anonymised by default)</td>
+                  <td><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a></td>
                 </tr>
               </tbody>
             </table>
