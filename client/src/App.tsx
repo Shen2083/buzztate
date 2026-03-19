@@ -6,7 +6,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { supabase } from "@/lib/supabase";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import NetworkStatus from "@/components/NetworkStatus";
+import CookieConsent from "@/components/CookieConsent";
 import { useCanonical } from "@/hooks/useCanonical";
+import "@/lib/gtag"; // side-effect: sets up GA4 consent listener
 
 // Pages
 import Home from "@/pages/home";
@@ -113,6 +115,7 @@ export default function App() {
         <NetworkStatus />
         <Router />
         <Toaster />
+        <CookieConsent />
       </QueryClientProvider>
     </ErrorBoundary>
   );

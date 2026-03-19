@@ -1,13 +1,49 @@
 /**
  * Google Analytics 4 event tracking helpers.
  * GA4 property: G-7ZX06FWQQC
+ *
+ * GA4 is loaded dynamically only after the user consents to analytics cookies.
  */
+
+import { hasAnalyticsConsent } from "./cookieConsent";
 
 declare global {
   interface Window {
     gtag?: (...args: any[]) => void;
+    dataLayer?: any[];
   }
 }
+
+const GA_ID = "G-7ZX06FWQQC";
+let ga4Loaded = false;
+
+function loadGA4() {
+  if (ga4Loaded || typeof document === "undefined") return;
+  ga4Loaded = true;
+
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  document.head.appendChild(script);
+
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer!.push(arguments);
+  };
+  window.gtag("js", new Date());
+  window.gtag("config", GA_ID);
+}
+
+// Returning visitor who already accepted — load immediately
+if (hasAnalyticsConsent()) {
+  loadGA4();
+}
+
+// First-time visitor clicks "Accept" — load on consent event
+window.addEventListener("buzztate:consent", ((e: CustomEvent) => {
+  if (e.detail === "accepted") loadGA4();
+}) as EventListener);
 
 function gtag(...args: any[]) {
   if (typeof window !== "undefined" && window.gtag) {
